@@ -11,11 +11,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-      
+
       <main className="flex-1 overflow-y-auto h-screen p-6 md:p-8 space-y-6">
-        <div className="max-w-7xl mx-auto w-full">
-          {children}
-        </div>
+        <div className="max-w-7xl mx-auto w-full">{children}</div>
       </main>
     </div>
   );

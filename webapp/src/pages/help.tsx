@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { BookOpen, ExternalLink, HelpCircle, Info, Link2, Settings } from "lucide-react";
+import { useState } from "react";
 
 export function HelpPage() {
   const [activeTab, setActiveTab] = useState<"setup" | "api" | "links">("setup");
@@ -18,7 +18,9 @@ export function HelpPage() {
           <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
             Vircadia Help Hub
           </h2>
-          <p className="text-xs text-slate-400">Reference guides, JS API cheat-sheets, and community links</p>
+          <p className="text-xs text-slate-400">
+            Reference guides, JS API cheat-sheets, and community links
+          </p>
         </div>
       </div>
 
@@ -31,7 +33,8 @@ export function HelpPage() {
             border: "none",
             outline: "none",
             color: activeTab === "setup" ? "var(--accent-amber)" : "var(--text-secondary)",
-            borderBottom: activeTab === "setup" ? "2px solid var(--accent-amber)" : "2px solid transparent",
+            borderBottom:
+              activeTab === "setup" ? "2px solid var(--accent-amber)" : "2px solid transparent",
             paddingBottom: "8px",
             fontSize: "12px",
             cursor: "pointer",
@@ -47,7 +50,8 @@ export function HelpPage() {
             border: "none",
             outline: "none",
             color: activeTab === "api" ? "var(--accent-amber)" : "var(--text-secondary)",
-            borderBottom: activeTab === "api" ? "2px solid var(--accent-amber)" : "2px solid transparent",
+            borderBottom:
+              activeTab === "api" ? "2px solid var(--accent-amber)" : "2px solid transparent",
             paddingBottom: "8px",
             fontSize: "12px",
             cursor: "pointer",
@@ -63,7 +67,8 @@ export function HelpPage() {
             border: "none",
             outline: "none",
             color: activeTab === "links" ? "var(--accent-amber)" : "var(--text-secondary)",
-            borderBottom: activeTab === "links" ? "2px solid var(--accent-amber)" : "2px solid transparent",
+            borderBottom:
+              activeTab === "links" ? "2px solid var(--accent-amber)" : "2px solid transparent",
             paddingBottom: "8px",
             fontSize: "12px",
             cursor: "pointer",
@@ -81,28 +86,45 @@ export function HelpPage() {
             <div className="glass-panel space-y-4">
               <div className="flex items-center gap-2 border-b border-white/[0.05] pb-2">
                 <Settings className="w-4 h-4 text-amber-500" />
-                <h4 className="font-bold uppercase tracking-wider text-white">Local Sandbox Launcher</h4>
+                <h4 className="font-bold uppercase tracking-wider text-white">
+                  Local Sandbox Launcher
+                </h4>
               </div>
               <p>
-                The primary deployment method for development is the <strong>Local Sandbox</strong> server node. When you install Vircadia, run the <strong>Vircadia Server</strong> launcher to start a local background sandbox.
+                The primary deployment method for development is the <strong>Local Sandbox</strong>{" "}
+                server node. When you install Vircadia, run the <strong>Vircadia Server</strong>{" "}
+                launcher to start a local background sandbox.
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Admin Control Panel runs at <code>http://localhost:40100</code>.</li>
-                <li>Ensure default port mappings (40100, 40102) are not blocked by local firewalls.</li>
-                <li>Create an administrator username and password inside the control panel to authenticate secure script injection requests.</li>
+                <li>
+                  Admin Control Panel runs at <code>http://localhost:40100</code>.
+                </li>
+                <li>
+                  Ensure default port mappings (40100, 40102) are not blocked by local firewalls.
+                </li>
+                <li>
+                  Create an administrator username and password inside the control panel to
+                  authenticate secure script injection requests.
+                </li>
               </ul>
             </div>
 
             <div className="glass-panel space-y-3">
               <div className="flex items-center gap-2 border-b border-white/[0.05] pb-2">
                 <Info className="w-4 h-4 text-indigo-400" />
-                <h4 className="font-bold uppercase tracking-wider text-white">Deployment Warning (Goliath Server)</h4>
+                <h4 className="font-bold uppercase tracking-wider text-white">
+                  Deployment Warning (Goliath Server)
+                </h4>
               </div>
               <p>
-                Docker Desktop daemon on the workstation server <code>Goliath</code> experiences runtime instability (daemon crashes). <strong>Do not deploy domain containers via Docker Desktop on Goliath</strong> at this time.
+                Docker Desktop daemon on the workstation server <code>Goliath</code> experiences
+                runtime instability (daemon crashes).{" "}
+                <strong>Do not deploy domain containers via Docker Desktop on Goliath</strong> at
+                this time.
               </p>
               <p>
-                A migration plan to host Vircadia domains inside a lightweight container manager (like Podman) is in progress and will be detailed in future releases.
+                A migration plan to host Vircadia domains inside a lightweight container manager
+                (like Podman) is in progress and will be detailed in future releases.
               </p>
             </div>
           </div>
@@ -112,11 +134,14 @@ export function HelpPage() {
           <div className="glass-panel space-y-6">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-2">
               <BookOpen className="w-4 h-4 text-amber-500" />
-              <h4 className="font-bold uppercase tracking-wider text-white">Entity Javascript API reference</h4>
+              <h4 className="font-bold uppercase tracking-wider text-white">
+                Entity Javascript API reference
+              </h4>
             </div>
 
             <p>
-              Vircadia entity scripts run locally inside the client's JS engine. Here are common event callbacks to implement when writing behavior scripts:
+              Vircadia entity scripts run locally inside the client's JS engine. Here are common
+              event callbacks to implement when writing behavior scripts:
             </p>
 
             <div className="space-y-4 font-mono text-[10px] text-sky-400 bg-black/35 p-4 rounded-xl border border-white/[0.03]">
@@ -129,7 +154,9 @@ export function HelpPage() {
               </div>
 
               <div>
-                <p className="text-white font-bold">// 2. Trigger events (mouse clicks / trigger pulls)</p>
+                <p className="text-white font-bold">
+                  // 2. Trigger events (mouse clicks / trigger pulls)
+                </p>
                 <p>this.clickReleaseEvent = function(entityID, event) &#123;</p>
                 <p>&nbsp;&nbsp;console.log("Object clicked!");</p>
                 <p>&#125;;</p>
@@ -149,7 +176,9 @@ export function HelpPage() {
           <div className="glass-panel space-y-5">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-2">
               <Link2 className="w-4 h-4 text-amber-500" />
-              <h4 className="font-bold uppercase tracking-wider text-white">Useful Links & Documentation</h4>
+              <h4 className="font-bold uppercase tracking-wider text-white">
+                Useful Links & Documentation
+              </h4>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

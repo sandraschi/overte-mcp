@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 import {
   ChevronDown,
   ChevronLeft,
@@ -11,6 +9,8 @@ import {
   TreePine,
   Users,
 } from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "../../common/utils";
 
 interface SidebarProps {
@@ -86,7 +86,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <div className="flex flex-col animate-in fade-in duration-300">
             <span className="font-extrabold text-sm tracking-wider text-white">Vircadia</span>
-            <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">MCP</span>
+            <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">
+              MCP
+            </span>
           </div>
         )}
       </div>
@@ -127,7 +129,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         style={{
                           textDecoration: "none",
                           background: active ? "rgba(245, 158, 11, 0.08)" : "transparent",
-                          border: active ? "1px solid rgba(245, 158, 11, 0.2)" : "1px solid transparent",
+                          border: active
+                            ? "1px solid rgba(245, 158, 11, 0.2)"
+                            : "1px solid transparent",
                           color: active ? "var(--text-primary)" : "var(--text-secondary)",
                           borderRadius: "10px",
                           display: "flex",
@@ -136,7 +140,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         }}
                         className={cn(
                           "group relative px-3 py-2.5 text-xs font-semibold transition-all hover:text-white hover:bg-white/5",
-                          collapsed ? "" : "gap-3"
+                          collapsed ? "" : "gap-3",
                         )}
                       >
                         <Icon

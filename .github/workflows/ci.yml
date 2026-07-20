@@ -1,0 +1,55 @@
+name: CI - Windows Workflow
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install Astral uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: 'latest'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'webapp/package-lock.json'
+
+    # Backend Testing & Linting
+    - name: Install Python Dependencies
+      run: uv sync
+
+    - name: Run Ruff Lint Check
+      run: uv run ruff check
+
+    - name: Run Pytest (Unit & E2E)
+      run: uv run pytest
+
+    # Frontend Testing & Linting
+    - name: Install Webapp Dependencies
+      working-directory: ./webapp
+      run: npm ci
+
+    - name: Run Biome Lint Check
+      working-directory: ./webapp
+      run: npx biome check src
+
+    - name: Build Webapp Dashboard
+      working-directory: ./webapp
+      run: npm run build

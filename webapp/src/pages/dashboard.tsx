@@ -43,7 +43,9 @@ export function Dashboard() {
               Domain Control Panel
               <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
             </h2>
-            <p className="text-xs text-slate-400">Decentralized domain node monitoring and asset mapping</p>
+            <p className="text-xs text-slate-400">
+              Decentralized domain node monitoring and asset mapping
+            </p>
           </div>
         </div>
 
@@ -69,7 +71,9 @@ export function Dashboard() {
       <div className="glass-panel" style={{ padding: "16px" }}>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
-            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Domain Host</label>
+            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+              Domain Host
+            </label>
             <input
               type="text"
               value={host}
@@ -86,7 +90,9 @@ export function Dashboard() {
             />
           </div>
           <div className="flex flex-col gap-1 w-28">
-            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Port</label>
+            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+              Port
+            </label>
             <input
               type="number"
               value={port}
@@ -112,7 +118,9 @@ export function Dashboard() {
           <div className="glass-panel space-y-6">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
               <Globe className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Domain Overview</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                Domain Overview
+              </h3>
             </div>
 
             {isLoading ? (
@@ -125,20 +133,34 @@ export function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
                 <div className="space-y-1">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">World Name</span>
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    World Name
+                  </span>
                   <p className="text-sm font-bold text-white">{domain.name}</p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Uptime</span>
-                  <p className="text-sm font-bold text-white">{Math.round(domain.uptime_seconds / 3600)} Hours</p>
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    Uptime
+                  </span>
+                  <p className="text-sm font-bold text-white">
+                    {Math.round(domain.uptime_seconds / 3600)} Hours
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Server Target</span>
-                  <p className="text-sm font-bold text-white font-mono">{domain.host}:{domain.port}</p>
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    Server Target
+                  </span>
+                  <p className="text-sm font-bold text-white font-mono">
+                    {domain.host}:{domain.port}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Audio Protocol</span>
-                  <p className="text-sm font-bold text-white">{domain.settings.audio_spatialization || "Stereo Mix"}</p>
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    Audio Protocol
+                  </span>
+                  <p className="text-sm font-bold text-white">
+                    {domain.settings.audio_spatialization || "Stereo Mix"}
+                  </p>
                 </div>
               </div>
             )}
@@ -148,7 +170,9 @@ export function Dashboard() {
           <div className="glass-panel space-y-4">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
               <Users className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Inhabited Presence</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                Inhabited Presence
+              </h3>
             </div>
             {isLoading ? (
               <p className="text-xs text-slate-400 animate-pulse">Reading presence logs...</p>
@@ -162,7 +186,9 @@ export function Dashboard() {
                       <p className="text-xs font-bold text-white">{av.name}</p>
                       <p className="text-[10px] text-slate-500 font-mono">{av.uuid}</p>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-mono">[{av.position.join(", ")}]</p>
+                    <p className="text-[10px] text-slate-400 font-mono">
+                      [{av.position.join(", ")}]
+                    </p>
                   </div>
                 ))}
               </div>
@@ -175,7 +201,9 @@ export function Dashboard() {
           <div className="glass-panel space-y-4">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
               <Cpu className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">System Settings</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                System Settings
+              </h3>
             </div>
             {isLoading ? (
               <p className="text-xs text-slate-400 animate-pulse">Reading configuration...</p>
@@ -184,7 +212,10 @@ export function Dashboard() {
             ) : (
               <div className="space-y-3 text-xs">
                 {Object.entries(domain.settings).map(([key, value]) => (
-                  <div key={key} className="flex justify-between border-b border-white/[0.03] pb-1.5">
+                  <div
+                    key={key}
+                    className="flex justify-between border-b border-white/[0.03] pb-1.5"
+                  >
                     <span className="text-slate-500 capitalize">{key.replace("_", " ")}</span>
                     <span className="font-bold text-white">{String(value)}</span>
                   </div>

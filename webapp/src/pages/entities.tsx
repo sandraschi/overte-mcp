@@ -30,7 +30,7 @@ export function EntitiesPage() {
       // We leverage the status query fallback to read mock/live data
       const res = await fetch(apiUrl("/api/vircadia/status"));
       if (!res.ok) throw new Error("Failed to load domain entities");
-      
+
       // Seed with mock entities for the explorer UI
       return {
         items: [
@@ -57,8 +57,8 @@ export function EntitiesPage() {
             type: "Light",
             position: [-2.0, 3.0, -1.5],
             scale: [0.2, 0.2, 0.2],
-          }
-        ]
+          },
+        ],
       };
     },
   });
@@ -100,7 +100,9 @@ export function EntitiesPage() {
             <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               Entity Tree Explorer
             </h2>
-            <p className="text-xs text-slate-400">Traverse, edit, and spawn interactive domain entities</p>
+            <p className="text-xs text-slate-400">
+              Traverse, edit, and spawn interactive domain entities
+            </p>
           </div>
         </div>
       </div>
@@ -111,12 +113,16 @@ export function EntitiesPage() {
           <div className="glass-panel space-y-5">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
               <Plus className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Spawn Entity</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                Spawn Entity
+              </h3>
             </div>
 
             <div className="space-y-4 text-xs">
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Entity Name</label>
+                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  Entity Name
+                </label>
                 <input
                   type="text"
                   value={spawnName}
@@ -132,7 +138,9 @@ export function EntitiesPage() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Type</label>
+                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  Type
+                </label>
                 <select
                   value={spawnType}
                   onChange={(e) => setSpawnType(e.target.value)}
@@ -155,7 +163,9 @@ export function EntitiesPage() {
 
               {spawnType === "Model" && (
                 <div className="flex flex-col gap-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Model Resource URL</label>
+                  <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                    Model Resource URL
+                  </label>
                   <input
                     type="text"
                     value={modelUrl}
@@ -173,7 +183,9 @@ export function EntitiesPage() {
               )}
 
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Attach JavaScript URL</label>
+                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  Attach JavaScript URL
+                </label>
                 <input
                   type="text"
                   value={scriptUrl}
@@ -190,7 +202,9 @@ export function EntitiesPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Spawn Coordinates</label>
+                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  Spawn Coordinates
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   <input
                     type="number"
@@ -268,7 +282,9 @@ export function EntitiesPage() {
             <div className="flex items-center justify-between border-b border-white/[0.05] pb-3">
               <div className="flex items-center gap-2">
                 <Layers className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Domain Entity Tree</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                  Domain Entity Tree
+                </h3>
               </div>
               <span className="text-[10px] bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2 py-0.5 rounded-full">
                 {entities.length} items
@@ -286,7 +302,9 @@ export function EntitiesPage() {
                         <Box className="w-4 h-4 text-amber-500 flex-shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">{ent.name}</p>
-                          <p className="text-[9px] text-slate-500 font-mono tracking-tighter uppercase">{ent.id}</p>
+                          <p className="text-[9px] text-slate-500 font-mono tracking-tighter uppercase">
+                            {ent.id}
+                          </p>
                         </div>
                       </div>
                       <span className="text-[9px] font-bold uppercase tracking-wider bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-slate-400">
@@ -297,18 +315,24 @@ export function EntitiesPage() {
                     <div className="grid grid-cols-2 gap-4 text-[10px] bg-black/20 p-2.5 rounded-lg border border-white/[0.03]">
                       <div className="flex justify-between">
                         <span className="text-slate-500">Position:</span>
-                        <span className="font-mono text-slate-300">[{ent.position.map(n => n.toFixed(1)).join(", ")}]</span>
+                        <span className="font-mono text-slate-300">
+                          [{ent.position.map((n) => n.toFixed(1)).join(", ")}]
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Scale:</span>
-                        <span className="font-mono text-slate-300">[{ent.scale.map(n => n.toFixed(1)).join(", ")}]</span>
+                        <span className="font-mono text-slate-300">
+                          [{ent.scale.map((n) => n.toFixed(1)).join(", ")}]
+                        </span>
                       </div>
                     </div>
 
                     {ent.script_url && (
                       <div className="flex items-center gap-1.5 text-[9px] text-slate-400 bg-indigo-500/5 border border-indigo-500/10 p-2 rounded-lg">
                         <Code className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                        <span className="font-mono text-ellipsis overflow-hidden whitespace-nowrap w-full">{ent.script_url}</span>
+                        <span className="font-mono text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                          {ent.script_url}
+                        </span>
                       </div>
                     )}
                   </div>

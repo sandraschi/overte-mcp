@@ -9,7 +9,9 @@ interface Avatar {
 }
 
 export function AvatarsPage() {
-  const { data, isLoading, refetch, isRefetching } = useQuery<{ domain: { active_avatars: Avatar[] } }>({
+  const { data, isLoading, refetch, isRefetching } = useQuery<{
+    domain: { active_avatars: Avatar[] };
+  }>({
     queryKey: ["avatarsList"],
     queryFn: async () => {
       const res = await fetch(apiUrl("/api/vircadia/status"));
@@ -35,7 +37,9 @@ export function AvatarsPage() {
             <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               Avatar Mixer Console
             </h2>
-            <p className="text-xs text-slate-400">Live spatial audio feeds and presence coordinates</p>
+            <p className="text-xs text-slate-400">
+              Live spatial audio feeds and presence coordinates
+            </p>
           </div>
         </div>
         <button
@@ -65,7 +69,9 @@ export function AvatarsPage() {
         <div className="glass-panel text-center py-12 space-y-2">
           <User className="w-12 h-12 text-slate-600 mx-auto" />
           <p className="text-sm text-slate-400 font-bold">No avatars active in the domain</p>
-          <p className="text-xs text-slate-500">Connect using the Vircadia Interface client to join.</p>
+          <p className="text-xs text-slate-500">
+            Connect using the Vircadia Interface client to join.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -77,7 +83,9 @@ export function AvatarsPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white">{av.name}</h4>
-                  <p className="text-[10px] text-slate-500 font-mono tracking-tighter uppercase">{av.uuid}</p>
+                  <p className="text-[10px] text-slate-500 font-mono tracking-tighter uppercase">
+                    {av.uuid}
+                  </p>
                 </div>
               </div>
 
@@ -109,7 +117,9 @@ export function AvatarsPage() {
               {/* Location telemetry */}
               <div className="flex justify-between items-center text-[10px] bg-black/25 p-2.5 rounded-lg border border-white/[0.03] font-mono">
                 <span className="text-slate-500 font-bold uppercase tracking-wide">Position</span>
-                <span className="text-slate-300">[{av.position.map((v) => v.toFixed(2)).join(", ")}]</span>
+                <span className="text-slate-300">
+                  [{av.position.map((v) => v.toFixed(2)).join(", ")}]
+                </span>
               </div>
             </div>
           ))}

@@ -56,7 +56,9 @@ export function ScriptingPage() {
             <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               JavaScript Scripting Sandbox
             </h2>
-            <p className="text-xs text-slate-400">Compose and inject live ES6 scripts to govern in-world entities</p>
+            <p className="text-xs text-slate-400">
+              Compose and inject live ES6 scripts to govern in-world entities
+            </p>
           </div>
         </div>
       </div>
@@ -67,12 +69,16 @@ export function ScriptingPage() {
           <div className="glass-panel space-y-5">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
               <Play className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Injection Parameters</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                Injection Parameters
+              </h3>
             </div>
 
             <div className="space-y-4 text-xs">
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Target Entity UUID</label>
+                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  Target Entity UUID
+                </label>
                 <input
                   type="text"
                   value={entityId}
@@ -89,7 +95,9 @@ export function ScriptingPage() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Hosted Script URL</label>
+                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  Hosted Script URL
+                </label>
                 <input
                   type="text"
                   value={scriptUrl}
@@ -106,7 +114,9 @@ export function ScriptingPage() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Animation Speed (Scope Variable)</label>
+                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  Animation Speed (Scope Variable)
+                </label>
                 <input
                   type="number"
                   value={speed}
@@ -160,7 +170,9 @@ export function ScriptingPage() {
           <div className="glass-panel space-y-4">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
               <Code className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">JavaScript Source</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                JavaScript Source
+              </h3>
             </div>
 
             <div className="relative">

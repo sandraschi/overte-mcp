@@ -1,5 +1,5 @@
 :root {
-  --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: "Outfit", "Inter", system-ui, -apple-system, sans-serif;
   --bg-dark: #020617;
   --panel-bg: rgba(15, 23, 42, 0.45);
   --border-color: rgba(255, 255, 255, 0.08);
@@ -35,7 +35,9 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .glass-panel:hover {
