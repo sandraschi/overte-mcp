@@ -68,8 +68,11 @@ async def post_script_inject(request: ScriptInjectInput):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-def start_server(port: int = 10989):
+def start_server(port: int | None = None):
     """Start the uvicorn REST server."""
+    import os
+    if port is None:
+        port = int(os.environ.get("PORT", 10989))
     uvicorn.run(app, host="0.0.0.0", port=port)
 
 
