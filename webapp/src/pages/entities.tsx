@@ -26,34 +26,34 @@ export function EntitiesPage() {
   const { data, isLoading, refetch } = useQuery<{ items: Entity[] }>({
     queryKey: ["entitiesList"],
     queryFn: async () => {
-      // For Vircadia entities, we simulate listing or fetch a registered list
-      // We leverage the status query fallback to read mock/live data
-      const res = await fetch(apiUrl("/api/vircadia/status"));
+      // NOTE: there is no real "list entities" endpoint yet (no overte_entity_list
+      // tool exists -- see ARCHITECTURE.md). This is hardcoded MOCK DATA for UI
+      // layout purposes only, clearly labeled as such below and in the entity names.
+      const res = await fetch(apiUrl("/api/overte/status"));
       if (!res.ok) throw new Error("Failed to load domain entities");
 
-      // Seed with mock entities for the explorer UI
       return {
         items: [
           {
-            id: "eeb24f2a-c602-4bf1-a8e9-42b78b09c12b",
-            name: "Agent Core Hub",
+            id: "mock-0001",
+            name: "[MOCK] Joe Mocky's Hub Prop",
             type: "Model",
             position: [0.0, 1.5, -3.0],
             scale: [1.5, 1.5, 1.5],
-            model_url: "https://assets.vircadia.com/models/hub.glb",
-            script_url: "http://goliath/scripts/spinfaster.js",
+            model_url: "https://example.invalid/models/mock-hub.glb",
+            script_url: "http://example.invalid/scripts/mock-spin.js",
           },
           {
-            id: "4bf2-a8e9-eeb24f2ac602",
-            name: "Telemetry Display",
+            id: "mock-0002",
+            name: "[MOCK] Hannes Mockinger's Display",
             type: "Web",
             position: [2.5, 1.8, -2.5],
             scale: [1.2, 0.8, 0.05],
-            script_url: "http://goliath/scripts/telemetry.js",
+            script_url: "http://example.invalid/scripts/mock-telemetry.js",
           },
           {
-            id: "a8e9-c602-4bf2-eeb24f2a",
-            name: "Boundary Light",
+            id: "mock-0003",
+            name: "[MOCK] Boundary Light",
             type: "Light",
             position: [-2.0, 3.0, -1.5],
             scale: [0.2, 0.2, 0.2],
@@ -65,10 +65,11 @@ export function EntitiesPage() {
 
   const entities = data?.items || [];
 
-  // Spawn entity mutation
+  // Spawn entity mutation -- SIMULATED backend (see tools/entities.py); no real
+  // in-world entity gets created by this call yet.
   const spawnMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(apiUrl("/api/vircadia/spawn"), {
+      const res = await fetch(apiUrl("/api/overte/spawn"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -105,6 +106,12 @@ export function EntitiesPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="glass-panel border border-amber-500/30 text-amber-300 text-xs px-4 py-2">
+        Entity list below is MOCK DATA for layout purposes -- no "list entities" tool exists yet.
+        Spawn is wired to a real endpoint, but that endpoint currently returns SIMULATED results (no
+        live Overte bridge). See ARCHITECTURE.md.
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

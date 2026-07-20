@@ -1,40 +1,38 @@
-# 📥 Installing Vircadia & Vircadia MCP
+# Installing Overte & Overte MCP
 
-Follow these steps to set up, install dependencies, and run the **Vircadia MCP Server** locally.
+Follow these steps to set up, install dependencies, and run the **Overte MCP Server** locally.
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 * **Python**: Python 3.12 or newer is required.
 * **uv**: Astral's package manager (`uv`) is recommended.
-* **Vircadia Sandbox (Local Domain Server)**: You must have a Vircadia Domain Server running. 
+* **Overte Client + Server (Local Domain Server)**: You need an Overte Domain Server running to get real (non-simulated) results from `overte_domain_status`, and Interface running for anything visual.
 
 > [!IMPORTANT]
-> **Deployment Node Status:** Run the Vircadia Domain Server **locally on your workstation (Local Sandbox)** for development. 
-> Docker Desktop deployments on the server `Goliath` are currently **on hold** due to Docker Desktop daemon instability. A migration to a lightweight alternative (e.g. Podman) is planned.
+> **Deployment Node Status:** As of 2026-07-20, no Overte instance is installed anywhere in the fleet yet. Docker Desktop deployments on `Goliath` are on hold due to daemon instability; a migration to Podman is planned separately (see `podman-mcp`). Until Overte is installed, every tool call from this server will return `"source": "simulated"` labeled placeholder data — that's expected, not a bug.
 
 ---
 
-## 🛠️ Step 1: Start the Vircadia Local Sandbox
-1. Download and install the Vircadia package for your system from the [Vircadia Official Website](https://vircadia.com/).
-2. Run the **Vircadia Server (Sandbox)** launcher.
-3. Open your browser and navigate to the admin console at `http://localhost:40100`.
-4. Set up your administrator credentials. The `vircadia-mcp` server will query this local port to communicate with the world.
+## Step 1: Install Overte
+1. Download and install Overte Client + Server for your system from [overte.org/downloads](https://overte.org/downloads.html).
+2. Run the Overte Interface, which launches a local domain-server sandbox alongside it.
+3. Open your browser to the admin console at `http://localhost:40100/settings`.
+4. Set an administrator username/password there (fleet convention: `admin`/`admin`, since this is a local-only relaxed setup). `overte-mcp` needs these credentials to call the domain-server's Basic-Auth-protected `/nodes.json` and `/settings.json` endpoints.
 
 ---
 
-## 🛠️ Step 2: Install Vircadia MCP
+## Step 2: Install Overte MCP
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/sandraschi/vircadia-mcp
-cd vircadia-mcp
+git clone https://github.com/sandraschi/overte-mcp
+cd overte-mcp
 ```
 
 ### 2. Scaffold virtual environment & install dependencies
 Using `uv`:
 ```bash
-# Initialize and sync python environment
 uv sync
 ```
 Or using standard pip:
@@ -46,16 +44,26 @@ pip install -e .
 
 ---
 
-## 🛠️ Step 3: Run the Services
+## Step 3: Run the Services
 
 ### Start the REST HTTP API Server (Dashboard connection)
 ```bash
-uv run python -m src.vircadia_mcp.http_server
+uv run python -m overte_mcp.http_server
 ```
-*Hosts the backend REST API on port `10989`.*
+*Hosts the backend REST API on port `11110` (dashboard on `11111`). Prefer `.\start.ps1` / `start.bat` for both.*
 
 ### Start the Stdio MCP Server (IDE Agent connection)
 ```bash
-uv run vircadia-mcp
+uv run overte-mcp
 ```
 *Handles stdio communication for connected AI assistants.*
+
+### Add to Claude Desktop config
+```json
+"mcpServers": {
+  "overte-mcp": {
+    "command": "uv",
+    "args": ["--directory", "D:/Dev/repos/overte-mcp", "run", "overte-mcp"]
+  }
+}
+```

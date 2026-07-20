@@ -1,5 +1,5 @@
 export function apiUrl(path: string): string {
-  // Point to the FastAPI backend running on port 10989
-  const base = "http://localhost:10989";
+  // Fleet ports: backend 11110 / frontend 11111 (WEBAPP_PORTS.md)
+  const base = "http://localhost:11110";
   return `${base}${path}`;
 }

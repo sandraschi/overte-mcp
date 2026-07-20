@@ -85,7 +85,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <Globe className="h-6 w-6 text-amber-500 flex-shrink-0" />
         {!collapsed && (
           <div className="flex flex-col animate-in fade-in duration-300">
-            <span className="font-extrabold text-sm tracking-wider text-white">Vircadia</span>
+            <span className="font-extrabold text-sm tracking-wider text-white">Overte</span>
             <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">
               MCP
             </span>

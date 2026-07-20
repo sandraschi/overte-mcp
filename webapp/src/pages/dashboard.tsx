@@ -3,29 +3,40 @@ import { Activity, Cpu, Globe, RefreshCw, ShieldAlert, Sparkles, Users } from "l
 import { useState } from "react";
 import { apiUrl } from "../lib/api-base";
 
+interface DomainNode {
+  type?: string;
+  uuid?: string;
+  public?: { ip?: string };
+}
+
 interface DomainInfo {
-  name: string;
   host: string;
   port: number;
-  uptime_seconds: number;
-  active_avatars: Array<{ name: string; uuid: string; position: number[] }>;
-  settings: Record<string, string | number | boolean>;
+  nodes: DomainNode[];
+  settings: Record<string, unknown>;
 }
 
 export function Dashboard() {
   const [host, setHost] = useState("localhost");
   const [port, setPort] = useState(40100);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery<{ domain: DomainInfo }>({
+  const { data, isLoading, refetch, isRefetching } = useQuery<{
+    domain: DomainInfo;
+    source: "live" | "simulated";
+    warning?: string;
+  }>({
     queryKey: ["domainStatus", host, port],
     queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/vircadia/status?host=${host}&port=${port}`));
+      const res = await fetch(apiUrl(`/api/overte/status?host=${host}&port=${port}`));
       if (!res.ok) throw new Error("Server connection offline");
       return res.json();
     },
   });
 
   const domain = data?.domain;
+  const avatarNodes = (domain?.nodes || []).filter((n) =>
+    ["agent", "avatar-mixer"].includes(n.type ?? ""),
+  );
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -43,9 +54,7 @@ export function Dashboard() {
               Domain Control Panel
               <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
             </h2>
-            <p className="text-xs text-slate-400">
-              Decentralized domain node monitoring and asset mapping
-            </p>
+            <p className="text-xs text-slate-400">Overte domain-server node monitoring</p>
           </div>
         </div>
 
@@ -66,6 +75,15 @@ export function Dashboard() {
           </button>
         </div>
       </div>
+
+      {data?.source === "simulated" && (
+        <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-xs">
+          <ShieldAlert className="w-4 h-4 shrink-0" />
+          <span>
+            {data.warning ?? "Showing simulated data -- no live domain-server reachable."}
+          </span>
+        </div>
+      )}
 
       {/* Connection Config Bar */}
       <div className="glass-panel" style={{ padding: "16px" }}>
@@ -113,7 +131,7 @@ export function Dashboard() {
 
       {/* Grid Panels */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left Column: World Info */}
+        {/* Left Column: Domain Info */}
         <div className="md:col-span-8 space-y-6">
           <div className="glass-panel space-y-6">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
@@ -134,20 +152,6 @@ export function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
                 <div className="space-y-1">
                   <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                    World Name
-                  </span>
-                  <p className="text-sm font-bold text-white">{domain.name}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                    Uptime
-                  </span>
-                  <p className="text-sm font-bold text-white">
-                    {Math.round(domain.uptime_seconds / 3600)} Hours
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                     Server Target
                   </span>
                   <p className="text-sm font-bold text-white font-mono">
@@ -156,17 +160,15 @@ export function Dashboard() {
                 </div>
                 <div className="space-y-1">
                   <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                    Audio Protocol
+                    Connected Nodes
                   </span>
-                  <p className="text-sm font-bold text-white">
-                    {domain.settings.audio_spatialization || "Stereo Mix"}
-                  </p>
+                  <p className="text-sm font-bold text-white">{domain.nodes?.length ?? 0}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Active Avatars in Dashboard */}
+          {/* Avatar-like nodes */}
           <div className="glass-panel space-y-4">
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
               <Users className="w-5 h-5 text-indigo-400" />
@@ -175,19 +177,19 @@ export function Dashboard() {
               </h3>
             </div>
             {isLoading ? (
-              <p className="text-xs text-slate-400 animate-pulse">Reading presence logs...</p>
-            ) : !domain || domain.active_avatars.length === 0 ? (
-              <p className="text-xs text-slate-400">No active avatars in this zone</p>
+              <p className="text-xs text-slate-400 animate-pulse">Reading node list...</p>
+            ) : !domain || avatarNodes.length === 0 ? (
+              <p className="text-xs text-slate-400">No avatar nodes in this domain</p>
             ) : (
               <div className="space-y-2">
-                {domain.active_avatars.map((av) => (
-                  <div key={av.uuid} className="glass-card flex items-center justify-between">
+                {avatarNodes.map((n, i) => (
+                  <div key={n.uuid ?? i} className="glass-card flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-white">{av.name}</p>
-                      <p className="text-[10px] text-slate-500 font-mono">{av.uuid}</p>
+                      <p className="text-xs font-bold text-white">{n.type}</p>
+                      <p className="text-[10px] text-slate-500 font-mono">{n.uuid}</p>
                     </div>
                     <p className="text-[10px] text-slate-400 font-mono">
-                      [{av.position.join(", ")}]
+                      {n.public?.ip ?? "unknown"}
                     </p>
                   </div>
                 ))}
@@ -202,13 +204,13 @@ export function Dashboard() {
             <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
               <Cpu className="w-5 h-5 text-amber-500" />
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                System Settings
+                Domain Settings
               </h3>
             </div>
             {isLoading ? (
               <p className="text-xs text-slate-400 animate-pulse">Reading configuration...</p>
-            ) : !domain ? (
-              <p className="text-xs text-slate-400">Settings unavailable</p>
+            ) : !domain || Object.keys(domain.settings || {}).length === 0 ? (
+              <p className="text-xs text-slate-400">No settings returned</p>
             ) : (
               <div className="space-y-3 text-xs">
                 {Object.entries(domain.settings).map(([key, value]) => (

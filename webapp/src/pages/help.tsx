@@ -16,7 +16,7 @@ export function HelpPage() {
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            Vircadia Help Hub
+            Overte Help Hub
           </h2>
           <p className="text-xs text-slate-400">
             Reference guides, JS API cheat-sheets, and community links
@@ -92,7 +92,7 @@ export function HelpPage() {
               </div>
               <p>
                 The primary deployment method for development is the <strong>Local Sandbox</strong>{" "}
-                server node. When you install Vircadia, run the <strong>Vircadia Server</strong>{" "}
+                server node. When you install Overte, run the <strong>Overte Server</strong>{" "}
                 launcher to start a local background sandbox.
               </p>
               <ul className="list-disc pl-5 space-y-2">
@@ -123,8 +123,8 @@ export function HelpPage() {
                 this time.
               </p>
               <p>
-                A migration plan to host Vircadia domains inside a lightweight container manager
-                (like Podman) is in progress and will be detailed in future releases.
+                A migration plan to host Overte domains inside a lightweight container manager (like
+                Podman) is in progress and will be detailed in future releases.
               </p>
             </div>
           </div>
@@ -140,8 +140,8 @@ export function HelpPage() {
             </div>
 
             <p>
-              Vircadia entity scripts run locally inside the client's JS engine. Here are common
-              event callbacks to implement when writing behavior scripts:
+              Overte entity scripts run locally inside the client's JS engine. Here are common event
+              callbacks to implement when writing behavior scripts:
             </p>
 
             <div className="space-y-4 font-mono text-[10px] text-sky-400 bg-black/35 p-4 rounded-xl border border-white/[0.03]">
@@ -183,29 +183,29 @@ export function HelpPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <a
-                href="https://vircadia.com/"
+                href="https://overte.org/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="glass-card flex justify-between items-center group text-slate-300 hover:text-white"
                 style={{ textDecoration: "none" }}
               >
                 <div>
-                  <h5 className="font-bold text-white">Vircadia Official Website</h5>
+                  <h5 className="font-bold text-white">Overte Official Website</h5>
                   <p className="text-[10px] text-slate-400">Download clients and servers</p>
                 </div>
                 <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-amber-500 transition-colors" />
               </a>
 
               <a
-                href="https://github.com/vircadia"
+                href="https://github.com/overte-org"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="glass-card flex justify-between items-center group text-slate-300 hover:text-white"
                 style={{ textDecoration: "none" }}
               >
                 <div>
-                  <h5 className="font-bold text-white">Vircadia GitHub</h5>
-                  <p className="text-[10px] text-slate-400">Vircadia World repositories</p>
+                  <h5 className="font-bold text-white">Overte GitHub</h5>
+                  <p className="text-[10px] text-slate-400">Overte organization repositories</p>
                 </div>
                 <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-amber-500 transition-colors" />
               </a>

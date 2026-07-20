@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+.env.*
+*.log
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+dist/
+*.egg-info/
+
+# JS / webapp
+webapp/node_modules/
+webapp/dist/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local junk / installers (do not commit)
+*.bak
+*.bak.*
+OverteInstaller.exe
+*.msi
+*.dmg
+
+# Native / caches
+.cache/
+*.lance
+.lancedb/

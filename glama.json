@@ -1,10 +1,10 @@
 {
-  "name": "vircadia-mcp",
-  "displayName": "Vircadia MCP Server",
-  "description": "Model Context Protocol (MCP) server for Vircadia domain server administration, in-world entity spawning, and JavaScript hot-reload scripting.",
+  "name": "overte-mcp",
+  "displayName": "Overte MCP Server",
+  "description": "Model Context Protocol (MCP) server for Overte domain-server administration (real), with in-world entity spawning and JavaScript hot-reload scripting currently simulated pending a WebSocket bridge. Targets Overte, not current Vircadia (unrelated pivoted stack) -- see README.",
   "version": "0.1.0",
-  "homepage": "https://github.com/sandraschi/vircadia-mcp",
-  "repository": "https://github.com/sandraschi/vircadia-mcp.git",
+  "homepage": "https://github.com/sandraschi/overte-mcp",
+  "repository": "https://github.com/sandraschi/overte-mcp.git",
   "license": "MIT",
   "author": "sandraschi",
   "categories": [
@@ -15,27 +15,35 @@
   ],
   "tools": [
     {
-      "name": "vircadia_domain_status",
-      "description": "Retrieve runtime telemetry, active avatars, and settings from a Vircadia Domain Server.",
+      "name": "overte_domain_status",
+      "description": "Retrieve connected-node telemetry and settings from an Overte Domain Server via /nodes.json and /settings.json. Real, unverified against a live server; falls back to labeled simulated data if unreachable.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "host": {
             "type": "string",
             "default": "localhost",
-            "description": "Vircadia domain server host"
+            "description": "Overte domain server host"
           },
           "port": {
             "type": "integer",
             "default": 40100,
-            "description": "Vircadia domain administration port"
+            "description": "Overte domain administration port"
+          },
+          "username": {
+            "type": "string",
+            "description": "HTTP Basic Auth username for the domain-server admin API"
+          },
+          "password": {
+            "type": "string",
+            "description": "HTTP Basic Auth password for the domain-server admin API"
           }
         }
       }
     },
     {
-      "name": "vircadia_entity_spawn",
-      "description": "Spawn a virtual object or 3D GLB model in-world at specified coordinates.",
+      "name": "overte_entity_spawn",
+      "description": "SIMULATED ONLY: no live Overte bridge exists yet. Returns fake spawn confirmation shaped like a real one, for tool/UI testing.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -73,14 +81,14 @@
       }
     },
     {
-      "name": "vircadia_script_inject",
-      "description": "Inject a JavaScript script to govern behavior of an in-world entity.",
+      "name": "overte_script_inject",
+      "description": "SIMULATED ONLY: no live Overte bridge exists yet. Returns fake script-update confirmation shaped like a real one, for tool/UI testing.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "entity_id": {
             "type": "string",
-            "description": "Vircadia target entity UUID"
+            "description": "Overte target entity UUID"
           },
           "script_url": {
             "type": "string",

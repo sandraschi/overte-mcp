@@ -5,8 +5,8 @@ import { apiUrl } from "../lib/api-base";
 
 export function ScriptingPage() {
   const [entityId, setEntityId] = useState("eeb24f2a-c602-4bf1-a8e9-42b78b09c12b");
-  const [scriptUrl, setScriptUrl] = useState("http://localhost:10989/scripts/spin.js");
-  const [scriptCode, setScriptCode] = useState(`// Vircadia In-World Entity Behavior Script
+  const [scriptUrl, setScriptUrl] = useState("http://localhost:11110/scripts/spin.js");
+  const [scriptCode, setScriptCode] = useState(`// Overte In-World Entity Behavior Script
 (function() {
   var _entityID;
 
@@ -28,7 +28,7 @@ export function ScriptingPage() {
 
   const injectMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(apiUrl("/api/vircadia/inject"), {
+      const res = await fetch(apiUrl("/api/overte/inject"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

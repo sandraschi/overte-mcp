@@ -1,38 +1,38 @@
-# Vircadia MCP Server & Webapp Dashboard
+# Overte MCP Server & Webapp Dashboard
 
-Model Context Protocol (MCP) node integrating decentralized Vircadia social VR environments and Vircadia World agent ecosystems with LLM interfaces.
+Model Context Protocol (MCP) node integrating an Overte domain-server (open-source, Vircadia-lineage social VR) with LLM interfaces. Not compatible with current Vircadia World (unrelated pivoted stack) -- see README.md for the split explainer.
 
 ## System Overview
 - **Backend**: Python FastMCP stdio server and FastAPI REST server (default port `10989`).
 - **Frontend**: Vite React TS dashboard (default port `10988`) styled with Vanilla CSS and using TanStack React Query.
-- **VR Node Target**: Self-hosted Vircadia Domain Server Sandbox (default administration API on `localhost:40100`).
+- **VR Node Target**: Self-hosted Overte Domain Server (admin API on `localhost:40100`, real endpoints `/nodes.json` + `/settings.json`).
 
 ## Navigation & Webapp Routes
-- `/` - Domain Server Control Panel (telemetry, uptime, connection configs)
+- `/` - Domain Server Control Panel (telemetry, node list, connection configs)
 - `/avatars` - Avatar Mixer Console (active player lists, X/Y/Z coordinates, spatial voice gain meters)
-- `/entities` - Entity Tree Explorer (traverse scene graph, modify properties, spawn model/box/sphere primitives)
-- `/scripting` - JavaScript Sandbox (draft ES6 entity behavior scripts and hot-inject URLs into target entity UUIDs)
+- `/entities` - Entity Tree Explorer (traverse scene graph, modify properties, spawn model/box/sphere primitives) -- simulated only, no live bridge yet
+- `/scripting` - JavaScript Sandbox (draft ES6 entity behavior scripts and hot-inject URLs into target entity UUIDs) -- simulated only, no live bridge yet
 - `/help` - Help Hub (domain setup references, client APIs, and links)
 
 ## Python MCP Tools
 
-### `vircadia_domain_status`
-- **Purpose**: Query active player arrays, server settings, and uptime.
-- **Input**: `host` (str), `port` (int).
-- **Output**: JSON payload detailing server coordinates and active avatars list.
+### `overte_domain_status` -- real, unverified against a live server
+- **Purpose**: Query connected nodes and settings via `/nodes.json` + `/settings.json`.
+- **Input**: `host` (str), `port` (int), `username` (str, optional), `password` (str, optional).
+- **Output**: JSON payload with node list and settings tree, or a clearly-labeled `source: "simulated"` fallback if no domain-server is reachable.
 
-### `vircadia_entity_spawn`
+### `overte_entity_spawn` -- simulated only
 - **Purpose**: Spawn primitive shapes or 3D meshes (GLB/FBX) in-world.
 - **Input**: `name` (str), `type` (str), `position` (list[float]), `scale` (list[float]), `model_url` (str), `script_url` (str).
-- **Output**: Spawn confirmation showing created entity ID and timestamp.
+- **Output**: Simulated spawn confirmation (`source: "simulated"`). No real Overte bridge exists yet.
 
-### `vircadia_script_inject`
+### `overte_script_inject` -- simulated only
 - **Purpose**: Remotely attach JavaScript script URL and scope variables to entity.
 - **Input**: `entity_id` (str), `script_url` (str), `script_data` (dict).
-- **Output**: Script state update confirmation.
+- **Output**: Simulated script state update (`source: "simulated"`). No real Overte bridge exists yet.
 
 ## Environment & Scripts
 - **Dependencies**: `mcp`, `fastapi`, `uvicorn`, `httpx`, `pydantic`, `pytest`, `pytest-asyncio`, `ruff`.
 - **Pre-commit Hook**: Configured to run `ruff check` on Python and `npx biome check src` on JS/TS before commits.
 - **Launcher**: `start.bat` boots FastAPI backend and Vite frontend concurrently.
-- **Dev command**: `uv run python -m src.vircadia_mcp.http_server` (REST) and `uv run vircadia-mcp` (Stdio MCP).
+- **Dev command**: `uv run python -m src.overte_mcp.http_server` (REST) and `uv run overte-mcp` (Stdio MCP).

@@ -1,56 +1,50 @@
-# 🌐 Vircadia MCP Project Page
+# Overte MCP Project Page
 
-This document serves as the project dashboard, design specification, and task tracker for the **Vircadia MCP Server** integration in the multi-agent builder and inhabit fleet.
-
----
-
-## 🎯 High-Level Purpose & Mission
-Vircadia MCP provides a standardized Model Context Protocol (MCP) bridge into **Vircadia** (and the **Vircadia World** agent-based metaverse ecosystem). It enables AI agents to interact with decentralized virtual worlds, query domain status, spawn 3D assets, and hot-reload JavaScript scripting logic directly into in-world entities.
+This document serves as the project dashboard, design specification, and task tracker for the **Overte MCP Server** integration in the fleet.
 
 ---
 
-## 🏢 Platform Architecture & Deployment Options
+## High-Level Purpose & Mission
+Overte MCP provides a standardized Model Context Protocol (MCP) bridge into **Overte**, the actively-developed open-source fork of the original Vircadia/High Fidelity social-VR architecture. It enables AI agents to query domain-server telemetry now, with entity spawning and in-world scripting planned once a WebSocket bridge exists (see `ARCHITECTURE.md`).
 
-Vircadia runs a decentralized **Domain Server** model to coordinate physics, avatars, and audio spatialization. 
+**2026-07-20: repo renamed from `vircadia-mcp` to `overte-mcp`.** Current Vircadia has pivoted to an unrelated stack ("Vircadia World" — PostgreSQL/Bun/Docker, positioned as game backend infra, not social VR). Overte is the actual continuation of the classic avatar/entity/domain-server architecture this project targets. See `README.md` for the full explainer. All tool names, package paths, and docs have been updated accordingly; the domain-server client was also rewritten against Overte's real `/nodes.json`/`/settings.json` admin API instead of the previous invented `/status` endpoint.
+
+---
+
+## Platform Architecture & Deployment Options
+
+Overte runs a domain-server model to coordinate physics, avatars, and audio spatialization.
 
 ### 1. Primary Path: Local Sandbox (Recommended for Dev)
-* **What it is**: The native Vircadia Sandbox server launched directly alongside the client interface.
-* **Ports**: Admin dashboard runs at `http://localhost:40100`.
-* **Stability**: Highly stable, runs on the local PC thread, and avoids virtual network overhead.
-* **Current Status**: **Active**. This is the primary target for development and testing of the `vircadia-mcp` tools.
+* **What it is**: The native Overte domain-server launched directly alongside the Interface client.
+* **Ports**: Admin dashboard runs at `http://localhost:40100/settings`.
+* **Current Status**: **Not yet installed anywhere in the fleet.** This is the immediate next step before any "live" tool path can be verified.
 
 ### 2. Secondary Path: Remote Server Deployment (Goliath)
-* **What it is**: Hosting Vircadia Domain Server on the workstation `Goliath`.
-* **Current Status**: **On Hold**. Docker Desktop daemon on Goliath experiences recurring instability (daemon crashes). 
-* **Next Steps**: A migration plan to transition to a lightweight, stable container engine (such as Podman or native WSL2 Linux Docker daemon) will be designed in a separate phase. Do not attempt Dockerization on Goliath until this migration is resolved.
+* **What it is**: Hosting an Overte domain-server on the workstation `Goliath`.
+* **Current Status**: **On hold.** Docker Desktop on Goliath has recurring daemon instability; a migration to a lighter engine (Podman — see `podman-mcp`) is planned before attempting this.
 
 ---
 
-## 🛠️ Tool Integration Scope
+## Tool Integration Scope
 
-### 🛰️ Domain Management (`tools/domain.py`)
-* Query uptime, world coordinates, and configurations of local/remote domains.
-* Inspect active users and retrieve their avatar UUIDs and spatial positions.
+### Domain Management (`tools/domain.py`) — real, unverified
+* Query connected nodes (avatar-mixer, entity-server, audio-mixer, etc.) and settings from `/nodes.json` + `/settings.json`.
+* HTTP Basic Auth support (fleet default `admin`/`admin` for local dev).
 
-### 📦 Entity Spawning (`tools/entities.py`)
-* Inject 3D meshes (GLB/FBX format), primitive shapes, and spatial audio points.
-* Track entity bounding boxes and translation states.
+### Entity Spawning (`tools/entities.py`) — simulated only
+* No REST equivalent exists in Overte. Returns clearly-labeled fake data pending the WebSocket bridge.
 
-### 📜 JavaScript Injection (`tools/scripting.py`)
-* Remotely assign ES6 JavaScript behavior URLs to in-world objects.
-* Trigger hot-reloads of entity behavior to update logic dynamically without server restarts.
+### JavaScript Injection (`tools/scripting.py`) — simulated only
+* Same limitation as entity spawning.
 
 ---
 
-## 🗓️ Development Roadmap
+## Development Roadmap
 
-- `[x]` **Phase 1: Project Scaffolding**
-  - Scaffold project files (`pyproject.toml`, FastAPI server, models, main README stack).
-  - Initialize git repository and perform initial commit.
-- `[ ]` **Phase 2: Local Domain Client Integration**
-  - Implement actual HTTP queries using `httpx` to connect to local Sandbox API (`http://localhost:40100`).
-  - Write test suites asserting status queries against running Sandbox instances.
-- `[ ]` **Phase 3: Webapp Dashboard**
-  - Build a React-based web interface under `webapp/` featuring an Entity Tree Explorer and a JavaScript scripting editor.
-- `[ ]` **Phase 4: Lightweight Container Migration**
-  - Select and deploy a lightweight container runner (e.g. Podman) on Goliath and move the domain server there.
+- `[x]` **Phase 1: Project Scaffolding** — done under the old `vircadia-mcp` name.
+- `[x]` **Phase 2: Rename & re-scope to Overte** — package, tools, docs, tests updated 2026-07-20; domain-server client rewritten against real endpoints.
+- `[ ]` **Phase 3: Install Overte locally and verify `overte_domain_status` against a real domain** — the actual next step, blocking everything below.
+- `[ ]` **Phase 4: Build the Assignment Client WebSocket bridge** for real entity spawn/script inject (see `ARCHITECTURE.md`).
+- `[ ]` **Phase 5: Webapp Dashboard** — Entity Tree Explorer and JS scripting editor, once there's real data to show.
+- `[ ]` **Phase 6: Lightweight Container Migration** — deploy the domain-server on Goliath via Podman once `podman-mcp` migration lands.
