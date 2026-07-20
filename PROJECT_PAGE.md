@@ -44,7 +44,7 @@ Overte runs a domain-server model to coordinate physics, avatars, and audio spat
 
 - `[x]` **Phase 1: Project Scaffolding** — done under the old `vircadia-mcp` name.
 - `[x]` **Phase 2: Rename & re-scope to Overte** — package, tools, docs, tests updated 2026-07-20; domain-server client rewritten against real endpoints.
-- `[ ]` **Phase 3: Install Overte locally and verify `overte_domain_status` against a real domain** — the actual next step, blocking everything below.
+- `[x]` **Phase 3: Install Overte locally and verify `overte_domain_status` against a real domain** — Done 2026-07-21; verified live settings/nodes retrieval from localhost.
 - `[ ]` **Phase 4: Build the Assignment Client WebSocket bridge** for real entity spawn/script inject (see `ARCHITECTURE.md`).
 - `[ ]` **Phase 5: Webapp Dashboard** — Entity Tree Explorer and JS scripting editor, once there's real data to show.
 - `[ ]` **Phase 6: Lightweight Container Migration** — deploy the domain-server on Goliath via Podman once `podman-mcp` migration lands.
