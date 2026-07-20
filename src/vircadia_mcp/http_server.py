@@ -7,7 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from .models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
-from .server import vircadia_domain_status, vircadia_entity_spawn, vircadia_script_inject
+from .tools.domain import get_domain_status_impl
+from .tools.entities import spawn_entity_impl
+from .tools.scripting import inject_script_impl
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ app.add_middleware(
 async def get_domain_status(host: str = "localhost", port: int = 40100):
     """Query domain server status telemetry."""
     try:
-        result = await vircadia_domain_status(DomainStatusInput(host=host, port=port))
+        result = await get_domain_status_impl(DomainStatusInput(host=host, port=port))
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])
         return result
@@ -44,7 +46,7 @@ async def get_domain_status(host: str = "localhost", port: int = 40100):
 async def post_entity_spawn(request: EntitySpawnInput):
     """Spawn an in-world entity."""
     try:
-        result = await vircadia_entity_spawn(request)
+        result = await spawn_entity_impl(request)
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])
         return result
@@ -57,7 +59,7 @@ async def post_entity_spawn(request: EntitySpawnInput):
 async def post_script_inject(request: ScriptInjectInput):
     """Inject a JavaScript entity script."""
     try:
-        result = await vircadia_script_inject(request)
+        result = await inject_script_impl(request)
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])
         return result
