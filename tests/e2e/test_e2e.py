@@ -3,6 +3,7 @@
 import os
 import subprocess
 import time
+
 import httpx
 import pytest
 
@@ -54,7 +55,7 @@ def test_spawn_endpoint(api_server):
         "type": "Model",
         "position": [0.0, 1.0, 0.0],
         "scale": [1.0, 1.0, 1.0],
-        "model_url": "http://assets/model.glb"
+        "model_url": "http://assets/model.glb",
     }
     response = httpx.post(url, json=payload)
     assert response.status_code == 200
@@ -69,7 +70,7 @@ def test_inject_endpoint(api_server):
     payload = {
         "entity_id": "eeb24f2a-c602-4bf1-a8e9-42b78b09c12b",
         "script_url": "http://goliath/scripts/spin.js",
-        "script_data": {"speed": 60.0}
+        "script_data": {"speed": 60.0},
     }
     response = httpx.post(url, json=payload)
     assert response.status_code == 200

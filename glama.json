@@ -1,0 +1,98 @@
+{
+  "name": "vircadia-mcp",
+  "displayName": "Vircadia MCP Server",
+  "description": "Model Context Protocol (MCP) server for Vircadia domain server administration, in-world entity spawning, and JavaScript hot-reload scripting.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/sandraschi/vircadia-mcp",
+  "repository": "https://github.com/sandraschi/vircadia-mcp.git",
+  "license": "MIT",
+  "author": "sandraschi",
+  "categories": [
+    "virtual-reality",
+    "metaverse",
+    "scripting",
+    "automation"
+  ],
+  "tools": [
+    {
+      "name": "vircadia_domain_status",
+      "description": "Retrieve runtime telemetry, active avatars, and settings from a Vircadia Domain Server.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "default": "localhost",
+            "description": "Vircadia domain server host"
+          },
+          "port": {
+            "type": "integer",
+            "default": 40100,
+            "description": "Vircadia domain administration port"
+          }
+        }
+      }
+    },
+    {
+      "name": "vircadia_entity_spawn",
+      "description": "Spawn a virtual object or 3D GLB model in-world at specified coordinates.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the entity"
+          },
+          "type": {
+            "type": "string",
+            "default": "Box",
+            "description": "Entity type: Box, Sphere, Web, Model"
+          },
+          "position": {
+            "type": "array",
+            "items": { "type": "number" },
+            "default": [0, 0, 0],
+            "description": "X, Y, Z translation coordinates"
+          },
+          "scale": {
+            "type": "array",
+            "items": { "type": "number" },
+            "default": [1, 1, 1],
+            "description": "X, Y, Z dimensions"
+          },
+          "model_url": {
+            "type": "string",
+            "description": "GLB/FBX model resource URL if type is Model"
+          },
+          "script_url": {
+            "type": "string",
+            "description": "Optional JavaScript behavior script URL to attach"
+          }
+        },
+        "required": ["name"]
+      }
+    },
+    {
+      "name": "vircadia_script_inject",
+      "description": "Inject a JavaScript script to govern behavior of an in-world entity.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "description": "Vircadia target entity UUID"
+          },
+          "script_url": {
+            "type": "string",
+            "description": "JavaScript behavior script URL"
+          },
+          "script_data": {
+            "type": "object",
+            "description": "Metadata parameters to inject into the script scope"
+          }
+        },
+        "required": ["entity_id", "script_url"]
+      }
+    }
+  ]
+}

@@ -1,8 +1,9 @@
 """Unit tests for Vircadia MCP tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
 import httpx
+import pytest
 
 from vircadia_mcp.models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
 from vircadia_mcp.tools.domain import get_domain_status_impl
@@ -30,8 +31,8 @@ async def test_domain_status_live_success():
             "name": "Live Goliath Server",
             "uptime": 50000,
             "users": [{"name": "Miko-Agent-02", "uuid": "abc-123"}],
-            "settings": {"physics": "Bullet"}
-        }
+            "settings": {"physics": "Bullet"},
+        },
     )
 
     with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
@@ -47,12 +48,7 @@ async def test_domain_status_live_success():
 @pytest.mark.asyncio
 async def test_entity_spawn_fallback():
     """Test spawn_entity_impl falls back gracefully when the server is offline."""
-    input_data = EntitySpawnInput(
-        name="Test Box",
-        type="Box",
-        position=[0, 0, 0],
-        scale=[1, 1, 1]
-    )
+    input_data = EntitySpawnInput(name="Test Box", type="Box", position=[0, 0, 0], scale=[1, 1, 1])
     result = await spawn_entity_impl(input_data)
     assert result["status"] == "success"
     assert result["source"] == "fallback"
@@ -67,7 +63,7 @@ async def test_entity_spawn_live_success():
         type="Model",
         position=[1, 2, 3],
         scale=[2, 2, 2],
-        model_url="http://assets/test.glb"
+        model_url="http://assets/test.glb",
     )
 
     mock_response = httpx.Response(
@@ -78,8 +74,8 @@ async def test_entity_spawn_live_success():
             "type": "Model",
             "position": [1, 2, 3],
             "scale": [2, 2, 2],
-            "modelURL": "http://assets/test.glb"
-        }
+            "modelURL": "http://assets/test.glb",
+        },
     )
 
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
@@ -95,9 +91,7 @@ async def test_entity_spawn_live_success():
 async def test_script_inject_fallback():
     """Test inject_script_impl falls back gracefully when server is offline."""
     input_data = ScriptInjectInput(
-        entity_id="test-uuid",
-        script_url="http://scripts/spin.js",
-        script_data={"speed": 5.0}
+        entity_id="test-uuid", script_url="http://scripts/spin.js", script_data={"speed": 5.0}
     )
     result = await inject_script_impl(input_data)
     assert result["status"] == "success"

@@ -1,10 +1,10 @@
 """FastAPI REST HTTP server interface for Vircadia Webapp Dashboard."""
 
 import logging
-from typing import Any
+
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
 from .models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
 from .tools.domain import get_domain_status_impl
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Vircadia MCP REST Server",
     description="HTTP REST interface complementing standard Stdio MCP",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 # Enable CORS for frontend dashboard connection
@@ -71,6 +71,7 @@ async def post_script_inject(request: ScriptInjectInput):
 def start_server(port: int | None = None):
     """Start the uvicorn REST server."""
     import os
+
     if port is None:
         port = int(os.environ.get("PORT", 10989))
     uvicorn.run(app, host="0.0.0.0", port=port)

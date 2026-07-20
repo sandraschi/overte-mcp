@@ -2,6 +2,7 @@
 
 import logging
 from typing import Any
+
 import httpx
 
 from ..models import EntitySpawnInput
@@ -39,7 +40,9 @@ async def spawn_entity_impl(input_data: EntitySpawnInput) -> dict[str, Any]:
                     "entity": data,
                 }
             else:
-                logger.warning(f"Entity spawn returned code {response.status_code}, falling back to mock")
+                logger.warning(
+                    f"Entity spawn returned code {response.status_code}, falling back to mock"
+                )
 
     except (httpx.ConnectError, httpx.TimeoutException):
         logger.info("Could not connect to domain server. Serving local sandbox fallback.")

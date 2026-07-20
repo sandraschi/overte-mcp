@@ -2,6 +2,7 @@
 
 import logging
 from typing import Any
+
 from mcp.server.fastmcp import FastMCP
 
 from .models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput

@@ -2,6 +2,7 @@
 
 import logging
 from typing import Any
+
 import httpx
 
 from ..models import DomainStatusInput
@@ -38,7 +39,9 @@ async def get_domain_status_impl(input_data: DomainStatusInput) -> dict[str, Any
                     },
                 }
             else:
-                logger.warning(f"Domain status returned code {response.status_code}, falling back to mock")
+                logger.warning(
+                    f"Domain status returned code {response.status_code}, falling back to mock"
+                )
 
     except (httpx.ConnectError, httpx.TimeoutException):
         logger.info(f"Could not connect to domain server at {url}. Serving local sandbox fallback.")
