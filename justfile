@@ -20,3 +20,12 @@ test:
 # Unit tests only (no subprocess server)
 test-unit:
     Set-Location '{{justfile_directory()}}'; uv run pytest -q tests/unit
+
+# Ruff lint (Batman)
+lint:
+    Set-Location '{{justfile_directory()}}'; uv run ruff check .
+    Set-Location '{{justfile_directory()}}\webapp'; npx biome check .
+
+# Bundle for Claude Desktop (pack from mcpb/)
+mcpb-pack:
+    pwsh -NoProfile -File "{{justfile_directory()}}/scripts/build-mcpb-package.ps1" -OutputDir dist

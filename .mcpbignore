@@ -1,0 +1,44 @@
+# Logic/Dev Bloat
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.ruff_cache/
+.pytest_cache/
+.coverage
+tests/
+.windsurf/
+.cursor/
+.cursorrules
+
+# Discovery & Fleet Metadata
+glama.json
+llms.txt
+llms-full.txt
+.git/
+.github/
+.vscode/
+.mcpb/
+
+# Build Artifacts
+dist/
+build/
+*.mcpb
+uv.lock
+
+# Non-MCP components (pack from mcpb/ — keep root lean if someone packs here)
+webapp/
+native/
+scripts/
+.github/
+*.exe
+*.msi
+*.bak
+*.bak.*
+OverteInstaller.exe
+ARCHITECTURE.md
+INSTALL.md
+PROJECT_PAGE.md
+start.bat
+start.ps1
+justfile

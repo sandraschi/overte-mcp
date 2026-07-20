@@ -1,0 +1,40 @@
+{
+  "manifest_version": "0.2",
+  "name": "overte-mcp",
+  "version": "0.1.0",
+  "description": "Overte domain-server MCP — real admin API status via /nodes.json and /settings.json; entity spawn and script inject simulated pending WebSocket bridge. Targets Overte (classic Vircadia lineage), not current Vircadia World.",
+  "author": {
+    "name": "sandraschi"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sandraschi/overte-mcp"
+  },
+  "license": "MIT",
+  "server": {
+    "type": "python",
+    "entry_point": "run_server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${PWD}", "run_server.py"],
+      "env": {
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "overte_domain_status",
+      "description": "Live domain-server telemetry from /nodes.json and /settings.json; labeled simulated fallback if unreachable."
+    },
+    {
+      "name": "overte_entity_spawn",
+      "description": "SIMULATED: fake in-world entity spawn confirmation for tool/UI testing until a live bridge exists."
+    },
+    {
+      "name": "overte_script_inject",
+      "description": "SIMULATED: fake JavaScript behavior-script attach confirmation until a live bridge exists."
+    }
+  ]
+}

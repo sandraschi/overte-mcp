@@ -1,0 +1,36 @@
+# Logic/Dev Bloat
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.ruff_cache/
+.pytest_cache/
+.coverage
+tests/
+.windsurf/
+.cursor/
+.cursorrules
+
+# Discovery & Fleet Metadata
+glama.json
+llms.txt
+llms-full.txt
+.git/
+.github/
+.vscode/
+.mcpb/
+
+# Build Artifacts
+dist/
+build/
+*.mcpb
+uv.lock
+
+# Non-MCP components
+webapp/
+native/
+scripts/
+*.exe
+*.msi
+*.bak
+*.bak.*

@@ -89,3 +89,19 @@ def test_inject_endpoint(api_server):
     assert data["status"] == "success"
     assert data["source"] == "simulated"
     assert data["script"]["entity_id"] == "eeb24f2a-c602-4bf1-a8e9-42b78b09c12b"
+
+
+def test_health_endpoints(api_server):
+    """Verify health endpoints are up and return correct SOTA health metadata."""
+    for path in ["/health", "/api/health"]:
+        response = httpx.get(f"{api_server}{path}")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert data["server"] == "overte-mcp"
+        assert "version" in data
+        assert "git_sha" in data
+        assert "started_at" in data
+        assert "uptime_seconds" in data
+        assert data["shutting_down"] is False
+

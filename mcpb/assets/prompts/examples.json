@@ -1,0 +1,1778 @@
+{
+  "examples": [
+    {
+      "user": "Domain status check #1 for localhost:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "localhost",
+          "port": 40100,
+          "username": "admin",
+          "password": "secret"
+        }
+      }
+    },
+    {
+      "user": "Domain status check #2 for 127.0.0.1:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "127.0.0.1",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #3 for 192.168.1.50:40110",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "192.168.1.50",
+          "port": 40110
+        }
+      }
+    },
+    {
+      "user": "Domain status check #4 for domain.overte.local:40120",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "domain.overte.local",
+          "port": 40120
+        }
+      }
+    },
+    {
+      "user": "Domain status check #5 for metaverse.example.com:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "metaverse.example.com",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #6 for overte.home.arpa:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "overte.home.arpa",
+          "port": 40100,
+          "username": "admin",
+          "password": "secret"
+        }
+      }
+    },
+    {
+      "user": "Domain status check #7 for localhost:40110",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "localhost",
+          "port": 40110
+        }
+      }
+    },
+    {
+      "user": "Domain status check #8 for 127.0.0.1:40120",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "127.0.0.1",
+          "port": 40120
+        }
+      }
+    },
+    {
+      "user": "Domain status check #9 for 192.168.1.50:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "192.168.1.50",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #10 for domain.overte.local:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "domain.overte.local",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #11 for metaverse.example.com:40110",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "metaverse.example.com",
+          "port": 40110,
+          "username": "admin",
+          "password": "secret"
+        }
+      }
+    },
+    {
+      "user": "Domain status check #12 for overte.home.arpa:40120",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "overte.home.arpa",
+          "port": 40120
+        }
+      }
+    },
+    {
+      "user": "Domain status check #13 for localhost:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "localhost",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #14 for 127.0.0.1:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "127.0.0.1",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #15 for 192.168.1.50:40110",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "192.168.1.50",
+          "port": 40110
+        }
+      }
+    },
+    {
+      "user": "Domain status check #16 for domain.overte.local:40120",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "domain.overte.local",
+          "port": 40120,
+          "username": "admin",
+          "password": "secret"
+        }
+      }
+    },
+    {
+      "user": "Domain status check #17 for metaverse.example.com:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "metaverse.example.com",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #18 for overte.home.arpa:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "overte.home.arpa",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #19 for localhost:40110",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "localhost",
+          "port": 40110
+        }
+      }
+    },
+    {
+      "user": "Domain status check #20 for 127.0.0.1:40120",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "127.0.0.1",
+          "port": 40120
+        }
+      }
+    },
+    {
+      "user": "Domain status check #21 for 192.168.1.50:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "192.168.1.50",
+          "port": 40100,
+          "username": "admin",
+          "password": "secret"
+        }
+      }
+    },
+    {
+      "user": "Domain status check #22 for domain.overte.local:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "domain.overte.local",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #23 for metaverse.example.com:40110",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "metaverse.example.com",
+          "port": 40110
+        }
+      }
+    },
+    {
+      "user": "Domain status check #24 for overte.home.arpa:40120",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "overte.home.arpa",
+          "port": 40120
+        }
+      }
+    },
+    {
+      "user": "Domain status check #25 for localhost:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "localhost",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #26 for 127.0.0.1:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "127.0.0.1",
+          "port": 40100,
+          "username": "admin",
+          "password": "secret"
+        }
+      }
+    },
+    {
+      "user": "Domain status check #27 for 192.168.1.50:40110",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "192.168.1.50",
+          "port": 40110
+        }
+      }
+    },
+    {
+      "user": "Domain status check #28 for domain.overte.local:40120",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "domain.overte.local",
+          "port": 40120
+        }
+      }
+    },
+    {
+      "user": "Domain status check #29 for metaverse.example.com:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "metaverse.example.com",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #30 for overte.home.arpa:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "overte.home.arpa",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #31 for localhost:40110",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "localhost",
+          "port": 40110,
+          "username": "admin",
+          "password": "secret"
+        }
+      }
+    },
+    {
+      "user": "Domain status check #32 for 127.0.0.1:40120",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "127.0.0.1",
+          "port": 40120
+        }
+      }
+    },
+    {
+      "user": "Domain status check #33 for 192.168.1.50:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "192.168.1.50",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Domain status check #34 for domain.overte.local:40100",
+      "tool": "overte_domain_status",
+      "arguments": {
+        "input_data": {
+          "host": "domain.overte.local",
+          "port": 40100
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-0 at 0.0, 0.0, 0.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-0",
+          "type": "Box",
+          "position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://example.com/scripts/spin.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-1 at 1.0, 0.1, -1.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-1",
+          "type": "Sphere",
+          "position": [
+            1.0,
+            0.1,
+            -1.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-2 at 2.0, 0.2, -2.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-2",
+          "type": "Web",
+          "position": [
+            2.0,
+            0.2,
+            -2.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-3 at 3.0, 0.30000000000000004, -3.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-3",
+          "type": "Model",
+          "position": [
+            3.0,
+            0.30000000000000004,
+            -3.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-4 at 4.0, 0.4, -4.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-4",
+          "type": "Box",
+          "position": [
+            4.0,
+            0.4,
+            -4.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://example.com/scripts/noop.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-5 at 5.0, 0.5, -5.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-5",
+          "type": "Sphere",
+          "position": [
+            5.0,
+            0.5,
+            -5.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-6 at 6.0, 0.6000000000000001, -6.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-6",
+          "type": "Web",
+          "position": [
+            6.0,
+            0.6000000000000001,
+            -6.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-7 at 7.0, 0.7000000000000001, 0.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-7",
+          "type": "Model",
+          "position": [
+            7.0,
+            0.7000000000000001,
+            0.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-8 at 8.0, 0.8, -1.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-8",
+          "type": "Box",
+          "position": [
+            8.0,
+            0.8,
+            -1.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://cdn.example.com/overte/door.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-9 at 9.0, 0.9, -2.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-9",
+          "type": "Sphere",
+          "position": [
+            9.0,
+            0.9,
+            -2.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-10 at 0.0, 1.0, -3.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-10",
+          "type": "Web",
+          "position": [
+            0.0,
+            1.0,
+            -3.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-11 at 1.0, 1.1, -4.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-11",
+          "type": "Model",
+          "position": [
+            1.0,
+            1.1,
+            -4.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-12 at 2.0, 1.2000000000000002, -5.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-12",
+          "type": "Box",
+          "position": [
+            2.0,
+            1.2000000000000002,
+            -5.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://example.com/scripts/teleport.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-13 at 3.0, 1.3, -6.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-13",
+          "type": "Sphere",
+          "position": [
+            3.0,
+            1.3,
+            -6.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-14 at 4.0, 1.4000000000000001, 0.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-14",
+          "type": "Web",
+          "position": [
+            4.0,
+            1.4000000000000001,
+            0.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-15 at 5.0, 1.5, -1.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-15",
+          "type": "Model",
+          "position": [
+            5.0,
+            1.5,
+            -1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-16 at 6.0, 1.6, -2.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-16",
+          "type": "Box",
+          "position": [
+            6.0,
+            1.6,
+            -2.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://example.com/scripts/hover.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-17 at 7.0, 1.7000000000000002, -3.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-17",
+          "type": "Sphere",
+          "position": [
+            7.0,
+            1.7000000000000002,
+            -3.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-18 at 8.0, 1.8, -4.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-18",
+          "type": "Web",
+          "position": [
+            8.0,
+            1.8,
+            -4.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-19 at 9.0, 1.9000000000000001, -5.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-19",
+          "type": "Model",
+          "position": [
+            9.0,
+            1.9000000000000001,
+            -5.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-20 at 0.0, 2.0, -6.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-20",
+          "type": "Box",
+          "position": [
+            0.0,
+            2.0,
+            -6.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://example.com/scripts/spin.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-21 at 1.0, 2.1, 0.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-21",
+          "type": "Sphere",
+          "position": [
+            1.0,
+            2.1,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-22 at 2.0, 2.2, -1.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-22",
+          "type": "Web",
+          "position": [
+            2.0,
+            2.2,
+            -1.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-23 at 3.0, 2.3000000000000003, -2.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-23",
+          "type": "Model",
+          "position": [
+            3.0,
+            2.3000000000000003,
+            -2.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-24 at 4.0, 2.4000000000000004, -3.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-24",
+          "type": "Box",
+          "position": [
+            4.0,
+            2.4000000000000004,
+            -3.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://example.com/scripts/noop.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-25 at 5.0, 2.5, -4.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-25",
+          "type": "Sphere",
+          "position": [
+            5.0,
+            2.5,
+            -4.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-26 at 6.0, 2.6, -5.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-26",
+          "type": "Web",
+          "position": [
+            6.0,
+            2.6,
+            -5.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-27 at 7.0, 2.7, -6.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-27",
+          "type": "Model",
+          "position": [
+            7.0,
+            2.7,
+            -6.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-28 at 8.0, 2.8000000000000003, 0.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-28",
+          "type": "Box",
+          "position": [
+            8.0,
+            2.8000000000000003,
+            0.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://cdn.example.com/overte/door.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-29 at 9.0, 2.9000000000000004, -1.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-29",
+          "type": "Sphere",
+          "position": [
+            9.0,
+            2.9000000000000004,
+            -1.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-30 at 0.0, 0.0, -2.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-30",
+          "type": "Web",
+          "position": [
+            0.0,
+            0.0,
+            -2.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-31 at 1.0, 0.10000000000000009, -3.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-31",
+          "type": "Model",
+          "position": [
+            1.0,
+            0.10000000000000009,
+            -3.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-32 at 2.0, 0.20000000000000018, -4.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-32",
+          "type": "Box",
+          "position": [
+            2.0,
+            0.20000000000000018,
+            -4.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://example.com/scripts/teleport.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-33 at 3.0, 0.30000000000000027, -5.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-33",
+          "type": "Sphere",
+          "position": [
+            3.0,
+            0.30000000000000027,
+            -5.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-34 at 4.0, 0.40000000000000036, -6.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-34",
+          "type": "Web",
+          "position": [
+            4.0,
+            0.40000000000000036,
+            -6.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-35 at 5.0, 0.5, 0.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-35",
+          "type": "Model",
+          "position": [
+            5.0,
+            0.5,
+            0.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Spawn Box named entity-box-36 at 6.0, 0.6000000000000001, -1.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-box-36",
+          "type": "Box",
+          "position": [
+            6.0,
+            0.6000000000000001,
+            -1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "script_url": "https://example.com/scripts/hover.js"
+        }
+      }
+    },
+    {
+      "user": "Spawn Sphere named entity-sphere-37 at 7.0, 0.7000000000000002, -2.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-sphere-37",
+          "type": "Sphere",
+          "position": [
+            7.0,
+            0.7000000000000002,
+            -2.0
+          ],
+          "scale": [
+            1.5,
+            1.0,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Web named entity-web-38 at 8.0, 0.8000000000000003, -3.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-web-38",
+          "type": "Web",
+          "position": [
+            8.0,
+            0.8000000000000003,
+            -3.0
+          ],
+          "scale": [
+            2.0,
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "user": "Spawn Model named entity-model-39 at 9.0, 0.9000000000000004, -4.0",
+      "tool": "overte_entity_spawn",
+      "arguments": {
+        "input_data": {
+          "name": "entity-model-39",
+          "type": "Model",
+          "position": [
+            9.0,
+            0.9000000000000004,
+            -4.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.5
+          ],
+          "model_url": "https://cdn.example.com/overte/tree.glb"
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/spin.js onto entity 00000000-0001-0002-0003-000000000000",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000000-0001-0002-0003-000000000000",
+          "script_url": "https://example.com/scripts/spin.js",
+          "script_data": {
+            "rpm": 6,
+            "axis": "x",
+            "tag": "demo-0"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/hover.js onto entity 00000001-0002-0003-0004-000000000011",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000001-0002-0003-0004-000000000011",
+          "script_url": "https://example.com/scripts/hover.js",
+          "script_data": {
+            "rpm": 7,
+            "axis": "y",
+            "tag": "demo-1"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/teleport.js onto entity 00000002-0003-0004-0005-000000000022",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000002-0003-0004-0005-000000000022",
+          "script_url": "https://example.com/scripts/teleport.js",
+          "script_data": {
+            "rpm": 8,
+            "axis": "z",
+            "tag": "demo-2"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://cdn.example.com/overte/door.js onto entity 00000003-0004-0005-0006-000000000033",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000003-0004-0005-0006-000000000033",
+          "script_url": "https://cdn.example.com/overte/door.js",
+          "script_data": {
+            "rpm": 9,
+            "axis": "x",
+            "tag": "demo-3"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/noop.js onto entity 00000004-0005-0006-0007-000000000044",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000004-0005-0006-0007-000000000044",
+          "script_url": "https://example.com/scripts/noop.js",
+          "script_data": {
+            "rpm": 10,
+            "axis": "y",
+            "tag": "demo-4"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/spin.js onto entity 00000005-0006-0007-0008-000000000055",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000005-0006-0007-0008-000000000055",
+          "script_url": "https://example.com/scripts/spin.js",
+          "script_data": {
+            "rpm": 11,
+            "axis": "z",
+            "tag": "demo-5"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/hover.js onto entity 00000006-0007-0008-0009-000000000066",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000006-0007-0008-0009-000000000066",
+          "script_url": "https://example.com/scripts/hover.js",
+          "script_data": {
+            "rpm": 12,
+            "axis": "x",
+            "tag": "demo-6"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/teleport.js onto entity 00000007-0008-0009-000a-000000000077",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000007-0008-0009-000a-000000000077",
+          "script_url": "https://example.com/scripts/teleport.js",
+          "script_data": {
+            "rpm": 13,
+            "axis": "y",
+            "tag": "demo-7"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://cdn.example.com/overte/door.js onto entity 00000008-0009-000a-000b-000000000088",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000008-0009-000a-000b-000000000088",
+          "script_url": "https://cdn.example.com/overte/door.js",
+          "script_data": {
+            "rpm": 14,
+            "axis": "z",
+            "tag": "demo-8"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/noop.js onto entity 00000009-000a-000b-000c-000000000099",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000009-000a-000b-000c-000000000099",
+          "script_url": "https://example.com/scripts/noop.js",
+          "script_data": {
+            "rpm": 15,
+            "axis": "x",
+            "tag": "demo-9"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/spin.js onto entity 0000000a-000b-000c-000d-0000000000aa",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000000a-000b-000c-000d-0000000000aa",
+          "script_url": "https://example.com/scripts/spin.js",
+          "script_data": {
+            "rpm": 16,
+            "axis": "y",
+            "tag": "demo-10"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/hover.js onto entity 0000000b-000c-000d-000e-0000000000bb",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000000b-000c-000d-000e-0000000000bb",
+          "script_url": "https://example.com/scripts/hover.js",
+          "script_data": {
+            "rpm": 17,
+            "axis": "z",
+            "tag": "demo-11"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/teleport.js onto entity 0000000c-000d-000e-000f-0000000000cc",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000000c-000d-000e-000f-0000000000cc",
+          "script_url": "https://example.com/scripts/teleport.js",
+          "script_data": {
+            "rpm": 6,
+            "axis": "x",
+            "tag": "demo-12"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://cdn.example.com/overte/door.js onto entity 0000000d-000e-000f-0010-0000000000dd",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000000d-000e-000f-0010-0000000000dd",
+          "script_url": "https://cdn.example.com/overte/door.js",
+          "script_data": {
+            "rpm": 7,
+            "axis": "y",
+            "tag": "demo-13"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/noop.js onto entity 0000000e-000f-0010-0011-0000000000ee",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000000e-000f-0010-0011-0000000000ee",
+          "script_url": "https://example.com/scripts/noop.js",
+          "script_data": {
+            "rpm": 8,
+            "axis": "z",
+            "tag": "demo-14"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/spin.js onto entity 0000000f-0010-0011-0012-0000000000ff",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000000f-0010-0011-0012-0000000000ff",
+          "script_url": "https://example.com/scripts/spin.js",
+          "script_data": {
+            "rpm": 9,
+            "axis": "x",
+            "tag": "demo-15"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/hover.js onto entity 00000010-0011-0012-0013-000000000110",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000010-0011-0012-0013-000000000110",
+          "script_url": "https://example.com/scripts/hover.js",
+          "script_data": {
+            "rpm": 10,
+            "axis": "y",
+            "tag": "demo-16"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/teleport.js onto entity 00000011-0012-0013-0014-000000000121",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000011-0012-0013-0014-000000000121",
+          "script_url": "https://example.com/scripts/teleport.js",
+          "script_data": {
+            "rpm": 11,
+            "axis": "z",
+            "tag": "demo-17"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://cdn.example.com/overte/door.js onto entity 00000012-0013-0014-0015-000000000132",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000012-0013-0014-0015-000000000132",
+          "script_url": "https://cdn.example.com/overte/door.js",
+          "script_data": {
+            "rpm": 12,
+            "axis": "x",
+            "tag": "demo-18"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/noop.js onto entity 00000013-0014-0015-0016-000000000143",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000013-0014-0015-0016-000000000143",
+          "script_url": "https://example.com/scripts/noop.js",
+          "script_data": {
+            "rpm": 13,
+            "axis": "y",
+            "tag": "demo-19"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/spin.js onto entity 00000014-0015-0016-0017-000000000154",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000014-0015-0016-0017-000000000154",
+          "script_url": "https://example.com/scripts/spin.js",
+          "script_data": {
+            "rpm": 14,
+            "axis": "z",
+            "tag": "demo-20"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/hover.js onto entity 00000015-0016-0017-0018-000000000165",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000015-0016-0017-0018-000000000165",
+          "script_url": "https://example.com/scripts/hover.js",
+          "script_data": {
+            "rpm": 15,
+            "axis": "x",
+            "tag": "demo-21"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/teleport.js onto entity 00000016-0017-0018-0019-000000000176",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000016-0017-0018-0019-000000000176",
+          "script_url": "https://example.com/scripts/teleport.js",
+          "script_data": {
+            "rpm": 16,
+            "axis": "y",
+            "tag": "demo-22"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://cdn.example.com/overte/door.js onto entity 00000017-0018-0019-001a-000000000187",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000017-0018-0019-001a-000000000187",
+          "script_url": "https://cdn.example.com/overte/door.js",
+          "script_data": {
+            "rpm": 17,
+            "axis": "z",
+            "tag": "demo-23"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/noop.js onto entity 00000018-0019-001a-001b-000000000198",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000018-0019-001a-001b-000000000198",
+          "script_url": "https://example.com/scripts/noop.js",
+          "script_data": {
+            "rpm": 6,
+            "axis": "x",
+            "tag": "demo-24"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/spin.js onto entity 00000019-001a-001b-001c-0000000001a9",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000019-001a-001b-001c-0000000001a9",
+          "script_url": "https://example.com/scripts/spin.js",
+          "script_data": {
+            "rpm": 7,
+            "axis": "y",
+            "tag": "demo-25"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/hover.js onto entity 0000001a-001b-001c-001d-0000000001ba",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000001a-001b-001c-001d-0000000001ba",
+          "script_url": "https://example.com/scripts/hover.js",
+          "script_data": {
+            "rpm": 8,
+            "axis": "z",
+            "tag": "demo-26"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/teleport.js onto entity 0000001b-001c-001d-001e-0000000001cb",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000001b-001c-001d-001e-0000000001cb",
+          "script_url": "https://example.com/scripts/teleport.js",
+          "script_data": {
+            "rpm": 9,
+            "axis": "x",
+            "tag": "demo-27"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://cdn.example.com/overte/door.js onto entity 0000001c-001d-001e-001f-0000000001dc",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000001c-001d-001e-001f-0000000001dc",
+          "script_url": "https://cdn.example.com/overte/door.js",
+          "script_data": {
+            "rpm": 10,
+            "axis": "y",
+            "tag": "demo-28"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/noop.js onto entity 0000001d-001e-001f-0020-0000000001ed",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000001d-001e-001f-0020-0000000001ed",
+          "script_url": "https://example.com/scripts/noop.js",
+          "script_data": {
+            "rpm": 11,
+            "axis": "z",
+            "tag": "demo-29"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/spin.js onto entity 0000001e-001f-0020-0021-0000000001fe",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000001e-001f-0020-0021-0000000001fe",
+          "script_url": "https://example.com/scripts/spin.js",
+          "script_data": {
+            "rpm": 12,
+            "axis": "x",
+            "tag": "demo-30"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/hover.js onto entity 0000001f-0020-0021-0022-00000000020f",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "0000001f-0020-0021-0022-00000000020f",
+          "script_url": "https://example.com/scripts/hover.js",
+          "script_data": {
+            "rpm": 13,
+            "axis": "y",
+            "tag": "demo-31"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/teleport.js onto entity 00000020-0021-0022-0023-000000000220",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000020-0021-0022-0023-000000000220",
+          "script_url": "https://example.com/scripts/teleport.js",
+          "script_data": {
+            "rpm": 14,
+            "axis": "z",
+            "tag": "demo-32"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://cdn.example.com/overte/door.js onto entity 00000021-0022-0023-0024-000000000231",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000021-0022-0023-0024-000000000231",
+          "script_url": "https://cdn.example.com/overte/door.js",
+          "script_data": {
+            "rpm": 15,
+            "axis": "x",
+            "tag": "demo-33"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/noop.js onto entity 00000022-0023-0024-0025-000000000242",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000022-0023-0024-0025-000000000242",
+          "script_url": "https://example.com/scripts/noop.js",
+          "script_data": {
+            "rpm": 16,
+            "axis": "y",
+            "tag": "demo-34"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/spin.js onto entity 00000023-0024-0025-0026-000000000253",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000023-0024-0025-0026-000000000253",
+          "script_url": "https://example.com/scripts/spin.js",
+          "script_data": {
+            "rpm": 17,
+            "axis": "z",
+            "tag": "demo-35"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/hover.js onto entity 00000024-0025-0026-0027-000000000264",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000024-0025-0026-0027-000000000264",
+          "script_url": "https://example.com/scripts/hover.js",
+          "script_data": {
+            "rpm": 6,
+            "axis": "x",
+            "tag": "demo-36"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/teleport.js onto entity 00000025-0026-0027-0028-000000000275",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000025-0026-0027-0028-000000000275",
+          "script_url": "https://example.com/scripts/teleport.js",
+          "script_data": {
+            "rpm": 7,
+            "axis": "y",
+            "tag": "demo-37"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://cdn.example.com/overte/door.js onto entity 00000026-0027-0028-0029-000000000286",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000026-0027-0028-0029-000000000286",
+          "script_url": "https://cdn.example.com/overte/door.js",
+          "script_data": {
+            "rpm": 8,
+            "axis": "z",
+            "tag": "demo-38"
+          }
+        }
+      }
+    },
+    {
+      "user": "Inject https://example.com/scripts/noop.js onto entity 00000027-0028-0029-002a-000000000297",
+      "tool": "overte_script_inject",
+      "arguments": {
+        "input_data": {
+          "entity_id": "00000027-0028-0029-002a-000000000297",
+          "script_url": "https://example.com/scripts/noop.js",
+          "script_data": {
+            "rpm": 9,
+            "axis": "x",
+            "tag": "demo-39"
+          }
+        }
+      }
+    }
+  ]
+}
