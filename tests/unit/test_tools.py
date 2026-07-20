@@ -4,10 +4,10 @@ import pytest
 from unittest.mock import AsyncMock, patch
 import httpx
 
-from src.vircadia_mcp.models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
-from src.vircadia_mcp.tools.domain import get_domain_status_impl
-from src.vircadia_mcp.tools.entities import spawn_entity_impl
-from src.vircadia_mcp.tools.scripting import inject_script_impl
+from vircadia_mcp.models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
+from vircadia_mcp.tools.domain import get_domain_status_impl
+from vircadia_mcp.tools.entities import spawn_entity_impl
+from vircadia_mcp.tools.scripting import inject_script_impl
 
 
 @pytest.mark.asyncio
