@@ -17,43 +17,39 @@ Two different products wearing family-resembling names. This server talks to Ove
 
 ## Status
 
-**Alpha. Partly real, partly honestly-labeled simulation. Read this before trusting any tool output.**
+**Beta. Real-time integration active via WebSocket bridge.**
 
 | Tool | Real or simulated | Detail |
 |---|---|---|
-| `overte_domain_status` | **Real**, unverified against a live server | Calls the real domain-server `/nodes.json` + `/settings.json` HTTP admin API with optional Basic Auth. No Overte instance has been installed/run yet to confirm the response shapes match. |
-| `overte_entity_spawn` | **Simulated only** | Overte has no plain-REST "spawn an entity" endpoint. Real entity creation goes through the Interface client's JS API or a headless Assignment Client script over the entity-server's internal protocol. This tool returns clearly-labeled fake data (`source: "simulated"`) until a WebSocket bridge is built — see `ARCHITECTURE.md`. |
-| `overte_script_inject` | **Simulated only** | Same limitation and same plan as entity spawn. |
+| `overte_domain_status` | **Real & Verified** | Calls the real domain-server `/nodes.json` + `/settings.json` HTTP admin API (port `40100`). Fully verified against a live local Overte Domain Server. |
+| `overte_entity_spawn` | **Real (with active bridge)** | Spawns real in-world entities when the in-world script [overte-mcp-bridge.js](scripts/overte-mcp-bridge.js) is loaded inside Overte. Falls back to simulated when disconnected. |
+| `overte_script_inject` | **Real (with active bridge)** | Attaches real JavaScript behaviors to entities when the bridge is active. Falls back to simulated when disconnected. |
 
-Every simulated response includes `"source": "simulated"` and a `"warning"` field explaining what's missing. If you see either of those, nothing actually happened in a virtual world.
+Every response indicates its `"source"` (either `"live"` or `"simulated"`).
 
 ## Setup & Running
 
 ### Requirements
 - [uv](https://github.com/astral-sh/uv) (Python package manager)
 - [Bun](https://bun.sh) (JS package manager and runtime)
-- [Overte Client + Server](https://overte.org/downloads.html) installed locally to test against (not yet installed as of this writing)
+- [Overte Client + Server](https://overte.org/downloads.html) installed locally
 
 ### Quick Start
 1. Double-click `start.bat` or run the PowerShell script:
    ```powershell
    ./start.ps1
    ```
-2. The launcher will resolve port conflicts, sync python and node dependencies, launch the background Python backend, and run the Vite frontend dev server.
+2. The launcher will resolve port conflicts, sync python and node dependencies, launch the background Python backend (port `11110`), and run the Vite frontend dev server (port `11111`).
 3. Your default web browser will open the dashboard.
-
-After the rename, run once to fix the stale editable install:
-```powershell
-uv sync
-Set-Location webapp; npm install
-```
+4. Open the Overte Interface client, start your local domain server (`domain-server.exe`), and load the client script `scripts/overte-mcp-bridge.js` to enable real-time in-world integration.
 
 ## MCP Tools Reference
-- `overte_domain_status` — connected nodes + settings from a domain-server (real, once tested)
-- `overte_entity_spawn` — spawn a primitive or GLB/FBX model (simulated)
-- `overte_script_inject` — attach JS behavior to an entity (simulated)
+- `overte_domain_status` — connected nodes + settings from a domain-server (real, verified)
+- `overte_entity_spawn` — spawn a primitive or GLB/FBX model (real-time when bridge is connected, else simulated)
+- `overte_script_inject` — attach JS behavior to an entity (real-time when bridge is connected, else simulated)
 
 ## Documentation
-- [ARCHITECTURE.md](ARCHITECTURE.md) — data flow, ports, and the planned WebSocket bridge for real entity/script control
+- [ARCHITECTURE.md](ARCHITECTURE.md) — data flow, ports, and the implemented WebSocket bridge
 - [INSTALL.md](INSTALL.md) — environment variables, local setup, staging caches
 - [PROJECT_PAGE.md](PROJECT_PAGE.md) — roadmap and task tracker
+

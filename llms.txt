@@ -3,36 +3,37 @@
 Model Context Protocol (MCP) node integrating an Overte domain-server (open-source, Vircadia-lineage social VR) with LLM interfaces. Not compatible with current Vircadia World (unrelated pivoted stack) -- see README.md for the split explainer.
 
 ## System Overview
-- **Backend**: Python FastMCP stdio server and FastAPI REST server (default port `10989`).
-- **Frontend**: Vite React TS dashboard (default port `10988`) styled with Vanilla CSS and using TanStack React Query.
+- **Backend**: Python FastMCP stdio server and FastAPI REST server (default port `11110`).
+- **Frontend**: Vite React TS dashboard (default port `11111`) styled with Vanilla CSS and package managed via Bun.
 - **VR Node Target**: Self-hosted Overte Domain Server (admin API on `localhost:40100`, real endpoints `/nodes.json` + `/settings.json`).
 
 ## Navigation & Webapp Routes
 - `/` - Domain Server Control Panel (telemetry, node list, connection configs)
 - `/avatars` - Avatar Mixer Console (active player lists, X/Y/Z coordinates, spatial voice gain meters)
-- `/entities` - Entity Tree Explorer (traverse scene graph, modify properties, spawn model/box/sphere primitives) -- simulated only, no live bridge yet
-- `/scripting` - JavaScript Sandbox (draft ES6 entity behavior scripts and hot-inject URLs into target entity UUIDs) -- simulated only, no live bridge yet
+- `/entities` - Entity Tree Explorer (traverse scene graph, modify properties, spawn model/box/sphere primitives) -- supports live spawn via WebSocket bridge script `scripts/overte-mcp-bridge.js`
+- `/scripting` - JavaScript Sandbox (draft ES6 behavior scripts and hot-inject URLs into target entity UUIDs) -- supports live injection via WebSocket bridge script
 - `/help` - Help Hub (domain setup references, client APIs, and links)
 
 ## Python MCP Tools
 
-### `overte_domain_status` -- real, unverified against a live server
+### `overte_domain_status` -- real & verified
 - **Purpose**: Query connected nodes and settings via `/nodes.json` + `/settings.json`.
 - **Input**: `host` (str), `port` (int), `username` (str, optional), `password` (str, optional).
-- **Output**: JSON payload with node list and settings tree, or a clearly-labeled `source: "simulated"` fallback if no domain-server is reachable.
+- **Output**: JSON payload with node list and settings tree, or `source: "simulated"` fallback if no domain-server is reachable.
 
-### `overte_entity_spawn` -- simulated only
+### `overte_entity_spawn` -- real-time / simulated fallback
 - **Purpose**: Spawn primitive shapes or 3D meshes (GLB/FBX) in-world.
 - **Input**: `name` (str), `type` (str), `position` (list[float]), `scale` (list[float]), `model_url` (str), `script_url` (str).
-- **Output**: Simulated spawn confirmation (`source: "simulated"`). No real Overte bridge exists yet.
+- **Output**: Spawn confirmation showing created entity ID and timestamp. Returns `source: "live"` when WebSocket bridge is active, else falls back to simulated.
 
-### `overte_script_inject` -- simulated only
+### `overte_script_inject` -- real-time / simulated fallback
 - **Purpose**: Remotely attach JavaScript script URL and scope variables to entity.
 - **Input**: `entity_id` (str), `script_url` (str), `script_data` (dict).
-- **Output**: Simulated script state update (`source: "simulated"`). No real Overte bridge exists yet.
+- **Output**: Script state update confirmation. Returns `source: "live"` when WebSocket bridge is active, else falls back to simulated.
 
 ## Environment & Scripts
-- **Dependencies**: `mcp`, `fastapi`, `uvicorn`, `httpx`, `pydantic`, `pytest`, `pytest-asyncio`, `ruff`.
-- **Pre-commit Hook**: Configured to run `ruff check` on Python and `npx biome check src` on JS/TS before commits.
-- **Launcher**: `start.bat` boots FastAPI backend and Vite frontend concurrently.
-- **Dev command**: `uv run python -m src.overte_mcp.http_server` (REST) and `uv run overte-mcp` (Stdio MCP).
+- **Dependencies**: `fastmcp>=3.4.4,<4`, `prefab-ui>=0.14.0`, `fastapi`, `uvicorn`, `httpx`, `pydantic`, `pytest`, `pytest-asyncio`, `ruff`.
+- **Pre-commit Hook**: Configured to run `ruff check` on Python and `bun run lint` / `npx biome check` on JS/TS before commits.
+- **Launcher**: `start.bat` / `start.ps1` boots FastAPI backend and Vite frontend concurrently with zombie-process cleanup, prerequisite checking, and health-polling.
+- **Dev command**: `uv run python -m overte_mcp.http_server` (REST & WebSockets) and `uv run overte-mcp` (Stdio MCP).
+

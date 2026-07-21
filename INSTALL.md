@@ -7,18 +7,20 @@ Follow these steps to set up, install dependencies, and run the **Overte MCP Ser
 ## Prerequisites
 * **Python**: Python 3.12 or newer is required.
 * **uv**: Astral's package manager (`uv`) is recommended.
-* **Overte Client + Server (Local Domain Server)**: You need an Overte Domain Server running to get real (non-simulated) results from `overte_domain_status`, and Interface running for anything visual.
-
-> [!IMPORTANT]
-> **Deployment Node Status:** As of 2026-07-20, no Overte instance is installed anywhere in the fleet yet. Docker Desktop deployments on `Goliath` are on hold due to daemon instability; a migration to Podman is planned separately (see `podman-mcp`). Until Overte is installed, every tool call from this server will return `"source": "simulated"` labeled placeholder data — that's expected, not a bug.
+* **Overte Client + Server**: You need the Overte Domain Server running for live status updates, and the Interface client to run in-world operations.
 
 ---
 
-## Step 1: Install Overte
+## Step 1: Install & Set Up Overte
 1. Download and install Overte Client + Server for your system from [overte.org/downloads](https://overte.org/downloads.html).
-2. Run the Overte Interface, which launches a local domain-server sandbox alongside it.
-3. Open your browser to the admin console at `http://localhost:40100/settings`.
-4. Set an administrator username/password there (fleet convention: `admin`/`admin`, since this is a local-only relaxed setup). `overte-mcp` needs these credentials to call the domain-server's Basic-Auth-protected `/nodes.json` and `/settings.json` endpoints.
+2. Start the local domain server (`domain-server.exe`) from the installation folder (typically `C:\Program Files\Overte`).
+3. Set your admin credentials:
+   - Open your browser to the admin console at `http://localhost:40100/settings`.
+   - Setup an administrator account (recommended: `admin` / `admin` for local sandboxes).
+4. Load the script bridge:
+   - Open the **Overte Interface** client.
+   - Go to **Developer** -> **Script Manager** -> **Load Script** -> **From Disk**.
+   - Load [overte-mcp-bridge.js](scripts/overte-mcp-bridge.js) to connect Overte to the MCP WebSocket bridge.
 
 ---
 
@@ -46,17 +48,18 @@ pip install -e .
 
 ## Step 3: Run the Services
 
-### Start the REST HTTP API Server (Dashboard connection)
-```bash
-uv run python -m overte_mcp.http_server
+### Start the entire stack (Recommended)
+Double-click `start.bat` or run:
+```powershell
+./start.ps1
 ```
-*Hosts the backend REST API on port `11110` (dashboard on `11111`). Prefer `.\start.ps1` / `start.bat` for both.*
+*Starts the FastAPI backend (port `11110`), client dashboard (port `11111`), checks dependencies, and auto-opens the browser.*
 
 ### Start the Stdio MCP Server (IDE Agent connection)
 ```bash
 uv run overte-mcp
 ```
-*Handles stdio communication for connected AI assistants.*
+*Handles stdio communication for connected AI assistants (e.g. Cursor, Claude Desktop).*
 
 ### Add to Claude Desktop config
 ```json
@@ -67,3 +70,4 @@ uv run overte-mcp
   }
 }
 ```
+
