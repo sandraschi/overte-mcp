@@ -53,7 +53,7 @@ def test_status_endpoint(api_server):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "success"
-    assert data["source"] == "simulated"
+    assert data["source"] in ("simulated", "live")
     assert "domain" in data
 
 

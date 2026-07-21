@@ -1,13 +1,16 @@
 """FastAPI REST HTTP server interface for Overte MCP Webapp Dashboard."""
 
+import asyncio
 import datetime
+import json
 import logging
 import os
 import subprocess
+import uuid
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
@@ -16,6 +19,11 @@ from .tools.entities import spawn_entity_impl
 from .tools.scripting import inject_script_impl
 
 logger = logging.getLogger(__name__)
+
+# WebSocket bridge state
+_active_ws: WebSocket | None = None
+_pending_requests: dict[str, asyncio.Future] = {}
+
 
 # Port configuration
 BACKEND_PORT = 11110
@@ -102,14 +110,90 @@ async def get_domain_status(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+async def _send_ws_command(action: str, payload: dict) -> dict | None:
+    global _active_ws
+    if not _active_ws:
+        return None
+
+    req_id = str(uuid.uuid4())
+    future = asyncio.get_running_loop().create_future()
+    _pending_requests[req_id] = future
+
+    cmd = {
+        "action": action,
+        "request_id": req_id,
+        **payload
+    }
+
+    try:
+        await _active_ws.send_text(json.dumps(cmd))
+        result = await asyncio.wait_for(future, timeout=5.0)
+        return result
+    except Exception as e:
+        logger.error(f"WebSocket command {action} failed: {e}")
+        return None
+    finally:
+        _pending_requests.pop(req_id, None)
+
+
+@app.websocket("/api/overte/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    global _active_ws
+    await websocket.accept()
+    logger.info("Overte MCP WebSocket Bridge client connected")
+    _active_ws = websocket
+    try:
+        while True:
+            data_str = await websocket.receive_text()
+            try:
+                data = json.loads(data_str)
+                req_id = data.get("request_id")
+                if req_id and req_id in _pending_requests:
+                    future = _pending_requests[req_id]
+                    if not future.done():
+                        future.set_result(data)
+            except Exception as e:
+                logger.error(f"Error handling websocket message: {e}")
+    except WebSocketDisconnect:
+        logger.info("Overte MCP WebSocket Bridge client disconnected")
+    finally:
+        if _active_ws == websocket:
+            _active_ws = None
+
+
 @app.post("/api/overte/spawn")
 async def post_entity_spawn(request: EntitySpawnInput):
-    """Spawn an in-world entity (currently simulated only -- see tools/entities.py)."""
+    """Spawn an in-world entity (via WebSocket bridge if connected, else falls back to simulated)."""
     try:
+        if _active_ws:
+            payload = {
+                "properties": {
+                    "type": request.type,
+                    "name": request.name,
+                    "position": {"x": request.position[0], "y": request.position[1], "z": request.position[2]} if (request.position and len(request.position) == 3) else {"x": 0, "y": 0, "z": 0},
+                    "dimensions": {"x": request.scale[0], "y": request.scale[1], "z": request.scale[2]} if (request.scale and len(request.scale) == 3) else {"x": 1, "y": 1, "z": 1},
+                    "modelURL": request.model_url,
+                    "script": request.script_url
+                }
+            }
+            res = await _send_ws_command("spawn", payload)
+            if res and res.get("status") == "success":
+                return {
+                    "status": "success",
+                    "source": "live",
+                    "entity_id": res.get("entity_id"),
+                    "message": "Entity successfully spawned in-world via WebSocket bridge."
+                }
+            else:
+                msg = res.get("message", "WebSocket client failed to spawn entity.") if res else "WebSocket timeout/error."
+                raise HTTPException(status_code=400, detail=msg)
+
         result = await spawn_entity_impl(request)
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to spawn entity: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -117,15 +201,35 @@ async def post_entity_spawn(request: EntitySpawnInput):
 
 @app.post("/api/overte/inject")
 async def post_script_inject(request: ScriptInjectInput):
-    """Inject a JavaScript entity script (currently simulated only -- see tools/scripting.py)."""
+    """Inject a JavaScript entity script (via WebSocket bridge if connected, else falls back to simulated)."""
     try:
+        if _active_ws:
+            payload = {
+                "entity_id": request.entity_id,
+                "script_url": request.script_url,
+                "script_data": request.script_data
+            }
+            res = await _send_ws_command("inject", payload)
+            if res and res.get("status") == "success":
+                return {
+                    "status": "success",
+                    "source": "live",
+                    "message": f"Script successfully injected into entity {request.entity_id} via WebSocket bridge."
+                }
+            else:
+                msg = res.get("message", "WebSocket client failed to inject script.") if res else "WebSocket timeout/error."
+                raise HTTPException(status_code=400, detail=msg)
+
         result = await inject_script_impl(request)
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to inject script: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 
 def start_server(port: int | None = None):
