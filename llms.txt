@@ -1,39 +1,41 @@
 # Overte MCP Server & Webapp Dashboard
 
-Model Context Protocol (MCP) node integrating an Overte domain-server (open-source, Vircadia-lineage social VR) with LLM interfaces. Not compatible with current Vircadia World (unrelated pivoted stack) -- see README.md for the split explainer.
+> FastMCP 3.4+ server for [Overte](https://overte.org) domain administration and in-world entity/script ops (live via WebSocket bridge when connected; otherwise labeled simulated). Not compatible with current Vircadia World — see README.md.
 
-## System Overview
-- **Backend**: Python FastMCP stdio server and FastAPI REST server (default port `11110`).
-- **Frontend**: Vite React TS dashboard (default port `11111`) styled with Vanilla CSS and package managed via Bun.
-- **VR Node Target**: Self-hosted Overte Domain Server (admin API on `localhost:40100`, real endpoints `/nodes.json` + `/settings.json`).
+**Full detail:** [llms-full.txt](llms-full.txt)
 
-## Navigation & Webapp Routes
-- `/` - Domain Server Control Panel (telemetry, node list, connection configs)
-- `/avatars` - Avatar Mixer Console (active player lists, X/Y/Z coordinates, spatial voice gain meters)
-- `/entities` - Entity Tree Explorer (traverse scene graph, modify properties, spawn model/box/sphere primitives) -- supports live spawn via WebSocket bridge script `scripts/overte-mcp-bridge.js`
-- `/scripting` - JavaScript Sandbox (draft ES6 behavior scripts and hot-inject URLs into target entity UUIDs) -- supports live injection via WebSocket bridge script
-- `/help` - Help Hub (domain setup references, client APIs, and links)
+## Quick links
 
-## Python MCP Tools
+- [README.md](README.md) — status table, quick start
+- [INSTALL.md](INSTALL.md) — Overte setup, stdio, Claude Desktop, MCPB
+- [ARCHITECTURE.md](ARCHITECTURE.md) — ports, bridge, packaging layout
+- [mcpb/README.md](mcpb/README.md) — Claude Desktop bundle
+- [glama.json](glama.json) — Glama registry metadata (excluded from `.mcpb`)
+- [CHANGELOG.md](CHANGELOG.md)
 
-### `overte_domain_status` -- real & verified
-- **Purpose**: Query connected nodes and settings via `/nodes.json` + `/settings.json`.
-- **Input**: `host` (str), `port` (int), `username` (str, optional), `password` (str, optional).
-- **Output**: JSON payload with node list and settings tree, or `source: "simulated"` fallback if no domain-server is reachable.
+## System overview
 
-### `overte_entity_spawn` -- real-time / simulated fallback
-- **Purpose**: Spawn primitive shapes or 3D meshes (GLB/FBX) in-world.
-- **Input**: `name` (str), `type` (str), `position` (list[float]), `scale` (list[float]), `model_url` (str), `script_url` (str).
-- **Output**: Spawn confirmation showing created entity ID and timestamp. Returns `source: "live"` when WebSocket bridge is active, else falls back to simulated.
+- **Stdio MCP**: `uv run overte-mcp` (also packaged as `dist/overte-mcp.mcpb`)
+- **Backend**: FastAPI on `11110` (REST + `/api/overte/ws` bridge)
+- **Frontend**: Vite React dashboard on `11111` (Bun/Biome)
+- **Overte domain admin**: `40100` (`/nodes.json`, `/settings.json`)
 
-### `overte_script_inject` -- real-time / simulated fallback
-- **Purpose**: Remotely attach JavaScript script URL and scope variables to entity.
-- **Input**: `entity_id` (str), `script_url` (str), `script_data` (dict).
-- **Output**: Script state update confirmation. Returns `source: "live"` when WebSocket bridge is active, else falls back to simulated.
+## Tools (summary)
 
-## Environment & Scripts
-- **Dependencies**: `fastmcp>=3.4.4,<4`, `prefab-ui>=0.14.0`, `fastapi`, `uvicorn`, `httpx`, `pydantic`, `pytest`, `pytest-asyncio`, `ruff`.
-- **Pre-commit Hook**: Configured to run `ruff check` on Python and `bun run lint` / `npx biome check` on JS/TS before commits.
-- **Launcher**: `start.bat` / `start.ps1` boots FastAPI backend and Vite frontend concurrently with zombie-process cleanup, prerequisite checking, and health-polling.
-- **Dev command**: `uv run python -m overte_mcp.http_server` (REST & WebSockets) and `uv run overte-mcp` (Stdio MCP).
+- `overte_domain_status` — live domain nodes/settings; simulated fallback if unreachable
+- `overte_entity_spawn` — live when bridge connected; else simulated
+- `overte_script_inject` — live when bridge connected; else simulated
 
+## Ports
+
+| Service | Port |
+|---------|------|
+| FastAPI + bridge WS | 11110 |
+| Vite dashboard | 11111 |
+| Overte domain admin | 40100 |
+
+## Commands
+
+- `just serve` / `./start.ps1` — full stack
+- `just test` / `just lint` — quality
+- `just mcpb-pack` — build Claude Desktop `.mcpb` from `mcpb/`

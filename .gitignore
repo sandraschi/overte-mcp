@@ -35,3 +35,11 @@ OverteInstaller.exe
 .cache/
 *.lance
 .lancedb/
+
+# Tauri
+native/target/
+native/resources/*.exe
+native/binaries/*.exe
+native/gen/
+BUILD_LOG.md
+

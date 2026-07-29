@@ -1,0 +1,14 @@
+{
+    "product_name": "Overte MCP",
+    "install_dir": "%LOCALAPPDATA%\\Overte MCP",
+    "operator_exe": "overte-mcp-native.exe",
+    "backend_process_names": ["overte-mcp-native", "overte-mcp-backend"],
+    "backend_port": 11110,
+    "health_path": "/health",
+    "diagnostics_path": "/api/v1/diagnostics",
+    "feature_smoke_path": "/api/v1/system/info",
+    "window_title_re": "Overte MCP",
+    "nsis_glob": "native/target/release/bundle/nsis/Overte MCP_*_x64-setup.exe",
+    "bridge_ok_text": "REST bridge reachable",
+    "uninstall_registry_filter": "*Overte MCP*"
+}

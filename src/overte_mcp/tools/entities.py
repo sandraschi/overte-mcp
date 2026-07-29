@@ -1,18 +1,11 @@
 """Overte Entity spawning tools.
 
-HONESTY NOTE: unlike domain.py's nodes.json/settings.json (which are real,
-documented domain-server HTTP endpoints), there is NO equivalent plain-REST
-"spawn an entity" endpoint in Overte. Entity creation normally happens
-through the Interface client's JavaScript API or a headless Assignment
-Client script talking the entity-server's internal octree protocol -- not
-an HTTP POST a Python backend can call directly.
+Entity creation normally happens through the Interface client's JavaScript
+API or a headless Assignment Client — not a plain domain-admin HTTP POST.
 
-This function currently returns SIMULATED results only. It does not talk
-to a real domain-server. Making this real requires building a small
-headless Overte Assignment Client JS script that opens a WebSocket back to
-this MCP server, so that Python-side spawn requests get relayed over that
-bridge instead of a fictional REST route. That bridge does not exist yet --
-see ARCHITECTURE.md roadmap.
+Live path: FastAPI `/api/overte/ws` + `scripts/overte-mcp-bridge.js`.
+When no bridge client is connected, this module returns labeled simulated
+results. See ARCHITECTURE.md.
 """
 
 import logging
@@ -44,7 +37,7 @@ async def spawn_entity_impl(input_data: EntitySpawnInput) -> dict[str, Any]:
                 "position": input_data.position,
                 "scale": input_data.scale,
                 "model_url": input_data.model_url,
-                "script_url": input_data.script_url
+                "script_url": input_data.script_url,
             }
             # Try to delegate to local running uvicorn REST server
             r = await client.post("http://127.0.0.1:11110/api/overte/spawn", json=payload)
@@ -55,14 +48,14 @@ async def spawn_entity_impl(input_data: EntitySpawnInput) -> dict[str, Any]:
                 logger.error(f"Failed to spawn entity via REST API: {r.text}")
                 return {
                     "status": "error",
-                    "message": r.json().get("detail", "Failed to spawn entity.")
+                    "message": r.json().get("detail", "Failed to spawn entity."),
                 }
     except Exception as e:
-        logger.debug(f"HTTP request to local spawn REST server failed: {e}. Falling back to simulation.")
+        logger.debug(
+            f"HTTP request to local spawn REST server failed: {e}. Falling back to simulation."
+        )
 
-    logger.info(
-        "vircadia/overte-mcp: entity spawn falling back to simulated result"
-    )
+    logger.info("vircadia/overte-mcp: entity spawn falling back to simulated result")
     return {
         "status": "success",
         "source": "simulated",
@@ -82,4 +75,3 @@ async def spawn_entity_impl(input_data: EntitySpawnInput) -> dict[str, Any]:
             "created_at": datetime.now(timezone.utc).isoformat(),
         },
     }
-

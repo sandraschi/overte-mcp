@@ -1,0 +1,116 @@
+# Overte MCP — full LLM corpus
+
+Companion to [llms.txt](llms.txt). Curated tool, env, run, architecture, and troubleshooting detail for agents.
+
+## Product boundary
+
+- **Target:** Overte (classic domain-server / Interface / entity-script lineage).
+- **Not target:** Vircadia World (PostgreSQL/Bun stack). Tools here do not control it.
+
+## Tools
+
+### overte_domain_status
+
+- **Purpose:** Query connected nodes and settings via domain admin HTTP.
+- **Endpoints:** `GET /nodes.json`, `GET /settings.json`
+- **Input (`input_data`):** `host` (default `localhost`), `port` (default `40100`), optional `username` / `password` (Basic Auth)
+- **Output:** JSON with nodes/settings; `source: "live"` or `source: "simulated"` if unreachable
+- **Status:** Verified against live local domain-server
+
+### overte_entity_spawn
+
+- **Purpose:** Spawn Box / Sphere / Web / Model entities in-world
+- **Input:** `name` (required), `type`, `position`, `scale`, optional `model_url`, `script_url`
+- **Path:** Prefer local FastAPI/bridge; if no WS client → labeled simulated
+- **Bridge:** Load `scripts/overte-mcp-bridge.js` in Overte Interface while backend listens on `11110`
+
+### overte_script_inject
+
+- **Purpose:** Attach a JavaScript behavior URL (+ optional `script_data`) to an entity UUID
+- **Input:** `entity_id`, `script_url`, optional `script_data`
+- **Path:** Same live-or-simulated contract as spawn
+
+## Environment
+
+| Variable / need | Notes |
+|-----------------|--------|
+| `PYTHONPATH` | MCPB sets `${PWD}/src` |
+| `PYTHONUNBUFFERED` | `1` in MCPB manifest |
+| Python | 3.12+ |
+| `uv` | Required for stdio / MCPB `uv run` |
+| Overte domain-server | For live status |
+| Bridge script + backend | For live spawn/inject |
+
+No API keys required for local Overte admin (Basic Auth optional).
+
+## Run
+
+```powershell
+uv sync
+./start.ps1                          # FastAPI 11110 + Vite 11111
+uv run overte-mcp                    # stdio MCP
+just mcpb-pack                       # dist/overte-mcp.mcpb
+```
+
+Claude Desktop (repo):
+
+```json
+{
+  "mcpServers": {
+    "overte-mcp": {
+      "command": "uv",
+      "args": ["--directory", "D:/Dev/repos/overte-mcp", "run", "overte-mcp"],
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/overte-mcp/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+Or install `dist/overte-mcp.mcpb` (pack from `mcpb/`; see INSTALL.md).
+
+## Architecture
+
+```
+AI client (stdio/MCPB) ──► FastMCP server.py
+Dashboard / tools ───────► FastAPI http_server.py :11110
+                              ├─► Overte admin :40100 (status)
+                              └─► WS /api/overte/ws ◄── overte-mcp-bridge.js (Interface)
+```
+
+Canonical code: `src/overte_mcp/`. Pack sync copies into `mcpb/src/overte_mcp`.
+
+## MCPB packaging
+
+| Artifact | Path |
+|----------|------|
+| Manifest | `mcpb/manifest.json` (v0.2) |
+| Entry | `mcpb/run_server.py` |
+| Ignore | `mcpb/.mcpbignore` (and root `.mcpbignore`) |
+| Prompts | `mcpb/assets/prompts/{system,user}.md`, `examples.json` |
+| Icon | `mcpb/assets/icon.png` |
+| Builder | `scripts/build-mcpb-package.ps1` / `just mcpb-pack` |
+| Output | `dist/overte-mcp.mcpb` |
+
+Fleet names: **`.mcpbignore`** (not `.mcpignore`), **`examples.json`** (not `usage.json`). Exclude `glama.json` and `llms*.txt` from the bundle.
+
+## Fleet / related MCPs
+
+Complements `resonite-mcp`, `vrchat-mcp`, `godot-mcp`, `unity3d-mcp`, `gazebo-mcp` in the sandraschi fleet.
+
+## Troubleshooting
+
+1. **Status simulated / connection refused** — start `domain-server.exe`; confirm admin port `40100`; firewall; Basic Auth.
+2. **Spawn/inject simulated** — backend up on `11110`; load `scripts/overte-mcp-bridge.js` in Interface; check WS connect.
+3. **MCPB / stdio won't start** — install `uv` and Python 3.12+; run from correct `--directory`.
+4. **Wrong product** — user asked for Vircadia World; these tools are Overte-only.
+5. **Port conflict** — backend `11110`, frontend `11111` (not legacy `10988`/`10989`).
+6. **Dashboard only** — MCPB does not include the Vite app; use `start.ps1`.
+
+## Quality
+
+- `just lint` — Ruff + Biome
+- `just test` / `just test-unit`
+- Pre-commit: Ruff + Biome when installed

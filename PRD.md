@@ -48,8 +48,13 @@ The core goal is to enable bidirectional telemetry and action between AI agents 
 * **Default Placement**: If position is not specified, place the object 2 meters in front of the user's avatar (`MyAvatar`).
 
 ### FR-4: Script Injection (`overte_script_inject`)
-* **Attachment**: Attach a behavior script URL to an entity.
-* **Metadata Scope**: Inject arbitrary parameter structures into the entity's `userData` field as JSON.
+* **Attachment:** Attach a behavior script URL to an entity.
+* **Metadata Scope:** Inject arbitrary parameter structures into the entity's `userData` field as JSON.
+
+### FR-5: Claude Desktop MCPB Bundle
+* Pack from `mcpb/` (not repo root) via `just mcpb-pack` / `scripts/build-mcpb-package.ps1`.
+* Ship `manifest.json` v0.2, `.mcpbignore`, icon, and 3-4-100 prompts (`system.md`, `user.md`, `examples.json`).
+* Sync canonical `src/overte_mcp` into `mcpb/src/overte_mcp` before pack; output `dist/overte-mcp.mcpb`.
 
 ---
 
@@ -71,3 +76,6 @@ The core goal is to enable bidirectional telemetry and action between AI agents 
   - Verifies presence of `uv`, `bun`, and python tools.
   - Clears zombie processes bound to ports `11110`/`11111`.
   - Starts the backend, polls `/api/health`, starts the Vite dev server, and opens the default browser.
+
+### NFR-4: Fleet documentation corpus
+* Maintain `llms.txt` (index) + `llms-full.txt` (full corpus), `glama.json`, and keep INSTALL / ARCHITECTURE / PROJECT_PAGE aligned with live-vs-simulated tool behavior.

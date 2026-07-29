@@ -8,12 +8,13 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 - Stateful **WebSocket Bridge** server at `/api/overte/ws` to connect FastAPI backend with in-world Overte environments.
-- head-less/client script [overte-mcp-bridge.js](scripts/overte-mcp-bridge.js) to run inside Overte Interface or Server console, enabling live, real-time in-world entity spawning and JS behavior injection.
-- Automatic reconnection logic with exponential backoff for the in-world JS script bridge.
-- Local Domain Server installation and live status query verification against a real `domain-server.exe` running on default port `40100`.
+- In-world script [overte-mcp-bridge.js](scripts/overte-mcp-bridge.js) for live entity spawn and JS behavior injection (reconnect with exponential backoff).
+- Local domain-server verification for live `/nodes.json` + `/settings.json` on port `40100`.
+- **MCPB (Claude Desktop) packaging**: `mcpb/` pack root, `scripts/build-mcpb-package.ps1`, `just mcpb-pack`, `.mcpbignore`, 3-4-100 prompts (`system.md` / `user.md` / `examples.json`), output `dist/overte-mcp.mcpb`.
+- Fleet docs refresh: `INSTALL.md`, `ARCHITECTURE.md`, `PROJECT_PAGE.md`, `llms.txt`, new required `llms-full.txt`.
 
 ### Changed
-- Refactored `overte_entity_spawn` and `overte_script_inject` tools to attempt local REST API communication first (forwarding to FastAPI backend), falling back to simulated placeholder data when the bridge client is disconnected.
+- Refactored `overte_entity_spawn` and `overte_script_inject` to prefer local bridge/REST when connected, falling back to labeled simulated data when the bridge client is disconnected.
 
 ---
 

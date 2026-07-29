@@ -1,13 +1,13 @@
-set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 set allow-duplicate-recipes := true
 
 default:
     @just --list
 
-# Bootstrap python and webapp node dependencies
+# Bootstrap python and webapp dependencies
 bootstrap:
     uv sync
-    Set-Location '{{justfile_directory()}}\webapp'; npm install
+    Set-Location '{{justfile_directory()}}\webapp'; if (Get-Command bun -ErrorAction SilentlyContinue) { bun install } else { npm install }
 
 # Start both FastAPI backend and Vite frontend dashboard
 serve:
@@ -28,4 +28,14 @@ lint:
 
 # Bundle for Claude Desktop (pack from mcpb/)
 mcpb-pack:
-    pwsh -NoProfile -File "{{justfile_directory()}}/scripts/build-mcpb-package.ps1" -OutputDir dist
+    powershell.exe -NoProfile -File "{{justfile_directory()}}/scripts/build-mcpb-package.ps1" -OutputDir dist
+
+# -- Tauri Native ---
+build-native:
+    Set-Location '{{justfile_directory()}}\native'
+    $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+    npx @tauri-apps/cli build
+
+cua-nsis-test:
+    uv run python scripts/cua-smoke.py
+

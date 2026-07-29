@@ -37,8 +37,8 @@ async def overte_domain_status(input_data: DomainStatusInput) -> dict[str, Any]:
 async def overte_entity_spawn(input_data: EntitySpawnInput) -> dict[str, Any]:
     """Spawn a virtual object or 3D GLB model in-world at the specified coordinates.
 
-    SIMULATED ONLY at present -- see tools/entities.py docstring. No live
-    domain bridge exists yet.
+    Live when scripts/overte-mcp-bridge.js is connected to the FastAPI WS hub;
+    otherwise returns a clearly labeled simulated confirmation.
 
     Args:
         input_data: Entity spawn details (name, type, position, scale, URLs)
@@ -50,8 +50,8 @@ async def overte_entity_spawn(input_data: EntitySpawnInput) -> dict[str, Any]:
 async def overte_script_inject(input_data: ScriptInjectInput) -> dict[str, Any]:
     """Inject a JavaScript script to govern behavior of an in-world entity.
 
-    SIMULATED ONLY at present -- see tools/scripting.py docstring. No live
-    domain bridge exists yet.
+    Live when the Overte bridge WebSocket client is connected; otherwise
+    returns a clearly labeled simulated confirmation.
 
     Args:
         input_data: Target UUID, script URL, and scope variables

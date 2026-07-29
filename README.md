@@ -31,25 +31,41 @@ Every response indicates its `"source"` (either `"live"` or `"simulated"`).
 
 ### Requirements
 - [uv](https://github.com/astral-sh/uv) (Python package manager)
-- [Bun](https://bun.sh) (JS package manager and runtime)
-- [Overte Client + Server](https://overte.org/downloads.html) installed locally
+- [Bun](https://bun.sh) (JS package manager and runtime) — webapp / Biome
+- [Overte Client + Server](https://overte.org/downloads.html) installed locally (for live domain + bridge)
 
-### Quick Start
-1. Double-click `start.bat` or run the PowerShell script:
+### Quick Start (full stack)
+1. Double-click `start.bat` or run:
    ```powershell
    ./start.ps1
    ```
-2. The launcher will resolve port conflicts, sync python and node dependencies, launch the background Python backend (port `11110`), and run the Vite frontend dev server (port `11111`).
-3. Your default web browser will open the dashboard.
-4. Open the Overte Interface client, start your local domain server (`domain-server.exe`), and load the client script `scripts/overte-mcp-bridge.js` to enable real-time in-world integration.
+2. Launcher syncs deps, starts FastAPI backend (`11110`) and Vite dashboard (`11111`), opens the browser.
+3. Start Overte `domain-server.exe`, open Interface, load `scripts/overte-mcp-bridge.js` for live spawn/inject.
+
+### Claude Desktop (`.mcpb`)
+1. Build: `just mcpb-pack` → `dist/overte-mcp.mcpb`
+2. Drag the `.mcpb` into Claude Desktop (needs Python 3.12+ and `uv` on PATH).
+3. Pack root is `mcpb/` (synced from `src/overte_mcp`); see [mcpb/README.md](mcpb/README.md).
+
+Stdio without MCPB: `uv run overte-mcp`
+
+### Lint / test
+```powershell
+just lint      # Ruff + Biome
+just test      # unit + e2e
+just mcpb-pack # validate + pack Claude Desktop bundle
+```
 
 ## MCP Tools Reference
 - `overte_domain_status` — connected nodes + settings from a domain-server (real, verified)
-- `overte_entity_spawn` — spawn a primitive or GLB/FBX model (real-time when bridge is connected, else simulated)
-- `overte_script_inject` — attach JS behavior to an entity (real-time when bridge is connected, else simulated)
+- `overte_entity_spawn` — spawn a primitive or GLB/FBX model (live when bridge connected, else simulated)
+- `overte_script_inject` — attach JS behavior to an entity (live when bridge connected, else simulated)
 
 ## Documentation
-- [ARCHITECTURE.md](ARCHITECTURE.md) — data flow, ports, and the implemented WebSocket bridge
-- [INSTALL.md](INSTALL.md) — environment variables, local setup, staging caches
+- [ARCHITECTURE.md](ARCHITECTURE.md) — data flow, ports, WebSocket bridge
+- [INSTALL.md](INSTALL.md) — Overte setup, MCPB, Claude Desktop config
 - [PROJECT_PAGE.md](PROJECT_PAGE.md) — roadmap and task tracker
+- [CHANGELOG.md](CHANGELOG.md) — release notes
+- [llms.txt](llms.txt) / [llms-full.txt](llms-full.txt) — LLM index + full corpus
+- [mcpb/README.md](mcpb/README.md) — Claude Desktop bundle layout
 

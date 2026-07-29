@@ -1,0 +1,21 @@
+{
+  "repo": "overte-mcp",
+  "files": [
+    "native\\.gitignore",
+    "native\\binaries",
+    "native\\build.ps1",
+    "native\\build.rs",
+    "native\\capabilities",
+    "native\\capabilities\\default.json",
+    "native\\Cargo.toml",
+    "native\\icons",
+    "native\\resources",
+    "native\\src",
+    "native\\src\\backend.rs",
+    "native\\src\\main.rs",
+    "native\\tauri.conf.json",
+    "native\\windows",
+    "native\\windows\\hooks.nsh"
+  ],
+  "created_at": "2026-07-21T03:03:10.6005068+02:00"
+}

@@ -1,0 +1,1 @@
+('D:\\Dev\\repos\\overte-mcp\\build\\overte-mcp-backend\\PYZ-00.pyz', [])

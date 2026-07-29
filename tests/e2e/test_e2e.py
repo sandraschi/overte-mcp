@@ -104,4 +104,3 @@ def test_health_endpoints(api_server):
         assert "started_at" in data
         assert "uptime_seconds" in data
         assert data["shutting_down"] is False
-

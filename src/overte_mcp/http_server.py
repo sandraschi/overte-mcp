@@ -36,10 +36,15 @@ _STARTED = datetime.datetime.now(datetime.timezone.utc)
 def _git_sha() -> str:
     try:
         repo = Path(__file__).resolve().parents[2]
-        return subprocess.run(
-            ["git", "-C", str(repo), "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=2,
-        ).stdout.strip() or "unknown"
+        return (
+            subprocess.run(
+                ["git", "-C", str(repo), "rev-parse", "--short", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            ).stdout.strip()
+            or "unknown"
+        )
     except Exception:
         return "unknown"
 
@@ -95,7 +100,10 @@ async def health_check():
 
 @app.get("/api/overte/status")
 async def get_domain_status(
-    host: str = "localhost", port: int = 40100, username: str | None = None, password: str | None = None
+    host: str = "localhost",
+    port: int = 40100,
+    username: str | None = None,
+    password: str | None = None,
 ):
     """Query domain-server status telemetry."""
     try:
@@ -119,11 +127,7 @@ async def _send_ws_command(action: str, payload: dict) -> dict | None:
     future = asyncio.get_running_loop().create_future()
     _pending_requests[req_id] = future
 
-    cmd = {
-        "action": action,
-        "request_id": req_id,
-        **payload
-    }
+    cmd = {"action": action, "request_id": req_id, **payload}
 
     try:
         await _active_ws.send_text(json.dumps(cmd))
@@ -170,10 +174,22 @@ async def post_entity_spawn(request: EntitySpawnInput):
                 "properties": {
                     "type": request.type,
                     "name": request.name,
-                    "position": {"x": request.position[0], "y": request.position[1], "z": request.position[2]} if (request.position and len(request.position) == 3) else {"x": 0, "y": 0, "z": 0},
-                    "dimensions": {"x": request.scale[0], "y": request.scale[1], "z": request.scale[2]} if (request.scale and len(request.scale) == 3) else {"x": 1, "y": 1, "z": 1},
+                    "position": {
+                        "x": request.position[0],
+                        "y": request.position[1],
+                        "z": request.position[2],
+                    }
+                    if (request.position and len(request.position) == 3)
+                    else {"x": 0, "y": 0, "z": 0},
+                    "dimensions": {
+                        "x": request.scale[0],
+                        "y": request.scale[1],
+                        "z": request.scale[2],
+                    }
+                    if (request.scale and len(request.scale) == 3)
+                    else {"x": 1, "y": 1, "z": 1},
                     "modelURL": request.model_url,
-                    "script": request.script_url
+                    "script": request.script_url,
                 }
             }
             res = await _send_ws_command("spawn", payload)
@@ -182,10 +198,14 @@ async def post_entity_spawn(request: EntitySpawnInput):
                     "status": "success",
                     "source": "live",
                     "entity_id": res.get("entity_id"),
-                    "message": "Entity successfully spawned in-world via WebSocket bridge."
+                    "message": "Entity successfully spawned in-world via WebSocket bridge.",
                 }
             else:
-                msg = res.get("message", "WebSocket client failed to spawn entity.") if res else "WebSocket timeout/error."
+                msg = (
+                    res.get("message", "WebSocket client failed to spawn entity.")
+                    if res
+                    else "WebSocket timeout/error."
+                )
                 raise HTTPException(status_code=400, detail=msg)
 
         result = await spawn_entity_impl(request)
@@ -207,17 +227,21 @@ async def post_script_inject(request: ScriptInjectInput):
             payload = {
                 "entity_id": request.entity_id,
                 "script_url": request.script_url,
-                "script_data": request.script_data
+                "script_data": request.script_data,
             }
             res = await _send_ws_command("inject", payload)
             if res and res.get("status") == "success":
                 return {
                     "status": "success",
                     "source": "live",
-                    "message": f"Script successfully injected into entity {request.entity_id} via WebSocket bridge."
+                    "message": f"Script successfully injected into entity {request.entity_id} via WebSocket bridge.",
                 }
             else:
-                msg = res.get("message", "WebSocket client failed to inject script.") if res else "WebSocket timeout/error."
+                msg = (
+                    res.get("message", "WebSocket client failed to inject script.")
+                    if res
+                    else "WebSocket timeout/error."
+                )
                 raise HTTPException(status_code=400, detail=msg)
 
         result = await inject_script_impl(request)
@@ -229,7 +253,6 @@ async def post_script_inject(request: ScriptInjectInput):
     except Exception as e:
         logger.error(f"Failed to inject script: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
-
 
 
 def start_server(port: int | None = None):
