@@ -24,11 +24,11 @@ interface LLMState {
 
 export const useLLMStore = create<LLMState>((set) => ({
   detectedProviders: [],
-  providerStatus: { ollama: "probing", "lm-studio": "probing" },
+  providerStatus: { ollama: "not_found", "lm-studio": "not_found" },
   selectedProvider: localStorage.getItem("overte-mcp-llm-provider") || "",
   selectedModel: localStorage.getItem("overte-mcp-llm-model") || "",
   availableModels: [],
-  probing: true,
+  probing: false,
 
   setDetectedProviders: (p) => set({ detectedProviders: p }),
   setProviderStatus: (k, s) => set((st) => ({ providerStatus: { ...st.providerStatus, [k]: s } })),

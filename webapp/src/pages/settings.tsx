@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Activity, Cpu, Globe, Laptop, Server } from "lucide-react";
 import { useEffect } from "react";
 import { apiUrl } from "../lib/api-base";
-import { fetchModels, useLLMStore } from "../store/llm";
+import { fetchModels, probeProviders, useLLMStore } from "../store/llm";
 
 export function SettingsPage() {
   const store = useLLMStore();
@@ -101,6 +101,18 @@ export function SettingsPage() {
                   Install Ollama or LM Studio to enable AI features.
                 </div>
               )}
+            <button
+              onClick={() => probeProviders(store)}
+              style={{
+                background: "rgba(245,158,11,0.1)",
+                border: "1px solid rgba(245,158,11,0.3)",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+              className="w-full text-xs text-amber-400 px-3 py-2 hover:bg-amber-500/20 transition-all"
+            >
+              Detect LLM
+            </button>
           </div>
           <div className="space-y-4">
             <div>
