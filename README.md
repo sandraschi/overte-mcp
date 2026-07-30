@@ -19,11 +19,11 @@ Two different products wearing family-resembling names. This server talks to Ove
 
 **Beta. Real-time integration active via WebSocket bridge.**
 
-| Tool | Real or simulated | Detail |
-|---|---|---|
-| `overte_domain_status` | **Real & Verified** | Calls the real domain-server `/nodes.json` + `/settings.json` HTTP admin API (port `40100`). Fully verified against a live local Overte Domain Server. |
-| `overte_entity_spawn` | **Real (with active bridge)** | Spawns real in-world entities when the in-world script [overte-mcp-bridge.js](scripts/overte-mcp-bridge.js) is loaded inside Overte. Falls back to simulated when disconnected. |
-| `overte_script_inject` | **Real (with active bridge)** | Attaches real JavaScript behaviors to entities when the bridge is active. Falls back to simulated when disconnected. |
+| Tool | Status |
+|------|--------|
+| `overte_domain_status` | **Verified live** — real domain-server `/nodes.json` + `/settings.json` admin API on port `40100`. |
+| `overte_entity_spawn` | **Verified live** — in-world entity spawning via WebSocket bridge when [overte-mcp-bridge.js](scripts/overte-mcp-bridge.js) is loaded in Interface. Falls back to simulated. |
+| `overte_script_inject` | **Implemented** — bridge inject coded, untested live. Falls back to simulated. |
 
 Every response indicates its `"source"` (either `"live"` or `"simulated"`).
 
@@ -57,9 +57,12 @@ just mcpb-pack # validate + pack Claude Desktop bundle
 ```
 
 ## MCP Tools Reference
-- `overte_domain_status` — connected nodes + settings from a domain-server (real, verified)
-- `overte_entity_spawn` — spawn a primitive or GLB/FBX model (live when bridge connected, else simulated)
-- `overte_script_inject` — attach JS behavior to an entity (live when bridge connected, else simulated)
+| Tool | Status |
+|------|--------|
+| `overte_domain_status` | **Verified live** (2026-07-30) — queries real domain-server `/nodes.json` and `/settings.json`. |
+| `overte_entity_spawn` | **Verified live** (2026-07-30) — spawns entities via WebSocket bridge into Overte Interface. |
+| `overte_script_inject` | Implemented — bridge inject action coded, untested live. |
+| `overte_sampling_assist` | Multi-step planning via `ctx.sample()` when host supports it. |
 
 ## Documentation
 - [ARCHITECTURE.md](ARCHITECTURE.md) — data flow, ports, WebSocket bridge

@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+## [0.2.0] - 2026-07-30
+
+### Added
+- Tailwind CSS v4 wired (was missing — app rendered unstyled)
+- SOTA webapp pages: Chat (skill-first, personalities, localStorage), Settings (LLM provider detection), Tools, Skills, Logs, Apps Hub
+- Zustand LLM store with manual "Detect LLM" button (auto-probe removed — was causing connection pool exhaustion)
+- Topbar with backend health dot (green/red)
+- Sidebar collapse toggle at top (per SOTA standard)
+- `overte_sampling_assist` tool with `ctx.sample()` fallback
+- `GET /api/tools`, `/api/skills`, `/api/v1/diagnostics`, `/api/logs` endpoints
+- Ring-buffer logger in backend
+- BUG-007 documented in fleet pitfalls (Tailwind not wired)
+
+### Fixed
+- Bridge WebSocket `readyState` check: Overte QtScript engine doesn't have `WebSocket.OPEN` — hardcoded `1`
+- Socket race condition: capture socket in `onmessage` closure for response
+- `start.ps1`: removed `-NoNewWindow` parameter (PowerShell 5.1 incompatible)
+- `start.ps1`: backend entry point uses `run_server.py` (not `-m` module)
+- Zombie kill: retry loop for TIME_WAIT ports
+- `api-base.ts`: use `127.0.0.1` not `localhost` (IPv6 resolution mismatch)
+- Removed oxlint, keep Biome only
+
+### Verified
+- `overte_domain_status` — live against `domain-server.exe` on port 40100
+- `overte_entity_spawn` — live via WebSocket bridge, entity `{42501700-...}` spawned in-world
+- Overte 2026.04.1 installed on Goliath (Client + Server)
+
 ## [0.2.0-beta] - 2026-07-21
 
 ### Added
