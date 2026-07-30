@@ -14,42 +14,42 @@ const FLEET_APPS: FleetApp[] = [
     name: "overte-mcp",
     port: 11110,
     label: "Overte MCP",
-    description: "Overte VR domain administration",
+    description: "VR domain administration",
     reachable: true,
   },
   {
     name: "resonite-mcp",
     port: 10978,
     label: "Resonite MCP",
-    description: "Resonite VR world browser",
+    description: "VR world browser",
     reachable: false,
   },
   {
     name: "vrchat-mcp",
     port: 10712,
     label: "VRChat MCP",
-    description: "VRChat world dashboard",
+    description: "World dashboard",
     reachable: false,
   },
   {
     name: "godot-mcp",
     port: 10992,
     label: "Godot MCP",
-    description: "Godot engine dashboard",
+    description: "Engine dashboard",
     reachable: false,
   },
   {
     name: "avatar-mcp",
     port: 10792,
     label: "Avatar MCP",
-    description: "VRM avatar management",
+    description: "VRM management",
     reachable: false,
   },
   {
     name: "gazebo-mcp",
     port: 10990,
     label: "Gazebo MCP",
-    description: "Gazebo simulation dashboard",
+    description: "Simulation dashboard",
     reachable: false,
   },
 ];
@@ -80,13 +80,9 @@ async function probePort(port: number, label: string): Promise<FleetApp> {
 export function AppsHubPage() {
   const { data: probeResults } = useQuery({
     queryKey: ["fleet-probe"],
-    queryFn: async () => {
-      const results = await Promise.all(FLEET_APPS.map((a) => probePort(a.port, a.label)));
-      return results;
-    },
+    queryFn: async () => Promise.all(FLEET_APPS.map((a) => probePort(a.port, a.label))),
     refetchInterval: 30000,
   });
-
   const apps = probeResults || FLEET_APPS;
 
   return (
@@ -107,10 +103,10 @@ export function AppsHubPage() {
         {apps.map((app) => (
           <div
             key={app.name}
-            className={`glass-panel transition-all ${app.reachable ? "" : "opacity-50"}`}
+            className={`glass-card transition-all ${app.reachable ? "" : "opacity-50"}`}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {app.reachable ? (
                   <Globe className="w-5 h-5 text-green-400" />
                 ) : (
@@ -118,7 +114,7 @@ export function AppsHubPage() {
                 )}
                 <div>
                   <h4 className="text-sm font-bold text-white">{app.label}</h4>
-                  <p className="text-[10px] text-slate-400">:{app.port}</p>
+                  <p className="text-[10px] text-slate-400 font-mono">:{app.port}</p>
                 </div>
               </div>
               {app.reachable && (

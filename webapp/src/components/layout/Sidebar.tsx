@@ -61,6 +61,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       main: true,
       space: true,
       systems: true,
+      intelligence: true,
       meta: true,
     };
     for (const item of navItems) {
@@ -89,20 +90,33 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       }}
       className="flex flex-col h-screen flex-shrink-0 relative"
     >
-      {/* Brand Header */}
+      {/* Brand Header + Collapse Toggle */}
       <div
         style={{ height: "64px", borderBottom: "1px solid var(--border-color)" }}
         className="flex items-center px-4 gap-3 flex-shrink-0 overflow-hidden"
       >
         <Globe className="h-6 w-6 text-amber-500 flex-shrink-0" />
         {!collapsed && (
-          <div className="flex flex-col animate-in fade-in duration-300">
+          <div className="flex flex-col flex-1 animate-in fade-in duration-300">
             <span className="font-extrabold text-sm tracking-wider text-white">Overte</span>
             <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">
               MCP
             </span>
           </div>
         )}
+        <button
+          onClick={onToggle}
+          style={{
+            border: "1px solid transparent",
+            background: "none",
+            outline: "none",
+            borderRadius: "8px",
+          }}
+          className="p-1.5 text-slate-500 hover:bg-white/5 hover:text-white cursor-pointer hover:border-white/10 transition-all"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
       </div>
 
       {/* Navigation list */}
@@ -183,29 +197,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           );
         })}
       </nav>
-
-      {/* Collapse Toggle Footer */}
-      <div style={{ borderTop: "1px solid var(--border-color)" }} className="p-3">
-        <button
-          onClick={onToggle}
-          style={{
-            border: "1px solid transparent",
-            background: "none",
-            outline: "none",
-            borderRadius: "8px",
-          }}
-          className="flex w-full items-center justify-center p-2 text-slate-500 hover:bg-white/5 hover:text-white cursor-pointer hover:border-white/10 transition-all"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <div className="flex items-center gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Collapse</span>
-            </div>
-          )}
-        </button>
-      </div>
     </aside>
   );
 }

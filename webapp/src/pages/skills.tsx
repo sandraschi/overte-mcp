@@ -12,27 +12,24 @@ interface SkillInfo {
 
 export function SkillsPage() {
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
-
   const { data: skillsData } = useQuery<{ skills: SkillInfo[] }>({
     queryKey: ["skills"],
     queryFn: async () => {
       const r = await fetch(apiUrl("/api/skills"));
-      if (!r.ok) throw new Error("Failed to fetch skills");
+      if (!r.ok) throw new Error("Failed");
       return r.json();
     },
   });
-
   const { data: skillContent } = useQuery<{ content: string }>({
     queryKey: ["skill", selectedSkill],
     queryFn: async () => {
       if (!selectedSkill) return { content: "" };
       const r = await fetch(apiUrl(`/api/skill/${selectedSkill}`));
-      if (!r.ok) throw new Error("Failed to fetch skill");
+      if (!r.ok) throw new Error("Failed");
       return r.json();
     },
     enabled: !!selectedSkill,
   });
-
   const skills = skillsData?.skills || [];
 
   return (
@@ -55,7 +52,7 @@ export function SkillsPage() {
             <button
               key={s.name}
               onClick={() => setSelectedSkill(s.name)}
-              className={`w-full text-left glass-card text-xs transition-all ${selectedSkill === s.name ? "border-amber-500/30 bg-amber-500/5" : ""}`}
+              className={`glass-card w-full text-left text-xs transition-all ${selectedSkill === s.name ? "border-amber-500/30" : ""}`}
             >
               <h4 className="font-bold text-white">{s.title}</h4>
               <p className="text-slate-400 text-[10px] mt-1">{s.description}</p>
@@ -63,10 +60,9 @@ export function SkillsPage() {
           ))}
           {skills.length === 0 && <p className="text-xs text-slate-500">No skills available.</p>}
         </div>
-
         <div className="md:col-span-3">
           {selectedSkill && skillContent ? (
-            <div className="glass-panel prose prose-invert max-w-none text-sm leading-relaxed">
+            <div className="glass-panel text-sm leading-relaxed">
               <ReactMarkdown
                 components={{
                   h1: ({ children }) => (

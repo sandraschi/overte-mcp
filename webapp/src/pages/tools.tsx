@@ -12,16 +12,14 @@ interface ToolInfo {
 export function ToolsPage() {
   const [search, setSearch] = useState("");
   const [expandedTool, setExpandedTool] = useState<string | null>(null);
-
   const { data, isLoading } = useQuery<{ tools: ToolInfo[] }>({
     queryKey: ["tools"],
     queryFn: async () => {
       const r = await fetch(apiUrl("/api/tools"));
-      if (!r.ok) throw new Error("Failed to fetch tools");
+      if (!r.ok) throw new Error("Failed");
       return r.json();
     },
   });
-
   const tools = (data?.tools || []).filter(
     (t) =>
       !search ||
@@ -43,15 +41,21 @@ export function ToolsPage() {
         </div>
       </div>
 
-      {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tools..."
-          className="w-full bg-zinc-800 text-zinc-100 border border-zinc-600 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-amber-500/50"
+          style={{
+            background: "rgba(0,0,0,0.3)",
+            border: "1px solid var(--border-color)",
+            borderRadius: "12px",
+            color: "white",
+            paddingLeft: "36px",
+          }}
+          className="w-full px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500/50"
         />
       </div>
 
@@ -62,8 +66,8 @@ export function ToolsPage() {
           {tools.map((tool) => (
             <button
               key={tool.name}
-              className="glass-panel cursor-pointer w-full text-left"
               onClick={() => setExpandedTool(expandedTool === tool.name ? null : tool.name)}
+              className="glass-panel cursor-pointer w-full text-left"
             >
               <div className="flex items-center gap-3">
                 <Code className="w-5 h-5 text-amber-500 shrink-0" />
