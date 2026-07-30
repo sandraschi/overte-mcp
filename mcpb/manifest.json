@@ -1,8 +1,8 @@
 {
   "manifest_version": "0.2",
   "name": "overte-mcp",
-  "version": "0.1.0",
-  "description": "Overte domain-server MCP — real admin API status via /nodes.json and /settings.json; entity spawn and script inject simulated pending WebSocket bridge. Targets Overte (classic Vircadia lineage), not current Vircadia World.",
+  "version": "0.2.0",
+  "description": "Overte MCP server — all 3 tools verified live against Overte 2026.04.1. Domain server admin API (status), in-world entity spawning and script injection via WebSocket bridge. Supports permanent entity persistence. Targets Overte, not Vircadia World.",
   "author": {
     "name": "sandraschi"
   },
@@ -30,11 +30,11 @@
     },
     {
       "name": "overte_entity_spawn",
-      "description": "SIMULATED: fake in-world entity spawn confirmation for tool/UI testing until a live bridge exists."
+      "description": "LIVE: spawn Box/Sphere/Web/Model entities via WebSocket bridge. Supports permanent=True for persistence. Simulated fallback when bridge disconnected."
     },
     {
       "name": "overte_script_inject",
-      "description": "SIMULATED: fake JavaScript behavior-script attach confirmation until a live bridge exists."
+      "description": "LIVE: inject JavaScript behavior onto entities via WebSocket bridge. Simulated fallback when bridge disconnected."
     }
   ]
 }

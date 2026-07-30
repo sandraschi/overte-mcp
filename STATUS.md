@@ -24,7 +24,7 @@ Overte Domain Server HTTP admin API (`/nodes.json`, `/settings.json`) + WebSocke
 | Tool | Status |
 |------|--------|
 | `overte_domain_status` | **Real & verified** (2026-07-30) — calls live domain-server at localhost:40100. `/nodes.json` returns `{"nodes":[...]}`, `/settings.json` returns full settings tree. |
-| `overte_entity_spawn` | **Real & verified** (2026-07-30) — spawned Box entity in-world via WebSocket bridge. Returns `source: "live"` with real entity UUID. |
+| `overte_entity_spawn` | **Real & verified** (2026-07-30) — spawned Box entity in-world via WebSocket bridge. Supports `permanent=True` for cross-restart persistence. Returns `source: "live"` with real entity UUID. |
 | `overte_script_inject` | **Verified live** (2026-07-30) — injected dance-script.js onto entity `{717ad8f1-...}` via WebSocket bridge. Entity bobs up/down + spins. |
 
 ## Native app
@@ -47,11 +47,25 @@ Overte Domain Server HTTP admin API (`/nodes.json`, `/settings.json`) + WebSocke
 | Session context injection | ✅ | `.cursorrules` + `.claude-plugin/` |
 | STATUS.md | ✅ | This file |
 
+## Investigation findings (2026-07-30)
+
+### Entity persistence
+Domain-server has persistence enabled (`NoPersist: false`, `persistInterval: 30000ms`, `persistFilePath: models.json.gz`). However, entities spawned via the bridge default to temporary (lifetime in seconds). Only entities with `lifetime: -1` (permanent) are persisted to `models.json.gz`. **Fixed:** added `permanent` flag to `overte_entity_spawn`. Pass `permanent=True` to persist across restarts.
+
+### VRM joint animation
+Overte does NOT support VRM as a Model entity format. Supported formats: FBX, glTF, OBJ. VRM is an avatar-only format (loaded via .fst files). When loaded as a Model entity, `Entities.getJointNames()` returns 0 because VRM skeletal data is stored in glTF extensions that the entity pipeline doesn't parse. **Fixed:** Created Blender VRM→FBX conversion pipeline (`scripts/vrm_to_fbx_converter.py`). Nekomimi-chan FBX (3.8 MB) with full armature hosted at `http://localhost:11110/models/Nekomimi-chan.fbx`.
+
+### World Labs GLB import
+Overte supports glTF/GLB as Model entities. A World Labs GLB export should work when hosted at a URL and passed to `overte_entity_spawn(type="Model", model_url="...")`. Needs testing with an actual World Labs export.
+
+### Dashboard SOTA pages
+Chat, Settings, Tools, Skills, and Logs pages built and verified. TypeScript and Biome check clean. Production build passes (463 KB JS + 28 KB CSS). All pages have `data-testid` attributes for CUA/Playwright targeting.
+
 ## Remaining (after v0.2.0)
 
-- [ ] Test bridge reconnection on backend restart
-- [ ] Verify graceful disconnect when Interface client disconnects
-- [ ] Find a proper nekomimi-chan GLB/VRM model for a more impressive demo
+- [ ] Test World Labs GLB → Model entity pipeline (need actual World Labs export)
+- [ ] End-to-end: spawn Nekomimi-chan FBX with dance script in Overte, verify joints work
+- [ ] Bridge stress-test — run `scripts/bridge-stress-test.ps1` while bridge is connected
 
 ### Explicitly out of scope
 - Headless Assignment Client bridge

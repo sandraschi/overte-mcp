@@ -13,6 +13,7 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
 from .tools.domain import get_domain_status_impl
@@ -26,12 +27,14 @@ _LOG_RING = collections.deque(maxlen=500)
 
 
 def _log(source: str, level: str, message: str):
-    _LOG_RING.append({
-        "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "source": source,
-        "level": level,
-        "message": message,
-    })
+    _LOG_RING.append(
+        {
+            "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "source": source,
+            "level": level,
+            "message": message,
+        }
+    )
 
 
 # WebSocket bridge state
@@ -298,6 +301,7 @@ async def post_entity_spawn(request: EntitySpawnInput):
                     else {"x": 1, "y": 1, "z": 1},
                     "modelURL": request.model_url,
                     "script": request.script_url,
+                    "lifetime": -1 if request.permanent else None,
                 }
             }
             res = await _send_ws_command("spawn", payload)
@@ -362,6 +366,14 @@ async def post_script_inject(request: ScriptInjectInput):
         logger.error(f"Failed to inject script: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
+# Serve model files (FBX/GLB) for Overte entity loading
+_models_dir = Path(__file__).resolve().parent.parent.parent / "models"
+if _models_dir.exists():
+    app.mount("/models", StaticFiles(directory=str(_models_dir)), name="models")
+    _log("http_server", "INFO", f"Model files served from {_models_dir}")
+else:
+    _log("http_server", "WARNING", f"Models directory not found: {_models_dir}")
 
 # Mount MCP streamable HTTP protocol at /mcp for stdio proxy pattern
 try:

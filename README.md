@@ -17,15 +17,31 @@ Two different products wearing family-resembling names. This server talks to Ove
 
 ## Status
 
-**Beta. Real-time integration active via WebSocket bridge.**
+**Beta. All 3 tools verified live against Overte 2026.04.1.**
 
 | Tool | Status |
 |------|--------|
 | `overte_domain_status` | **Verified live** — real domain-server `/nodes.json` + `/settings.json` admin API on port `40100`. |
-| `overte_entity_spawn` | **Verified live** — in-world entity spawning via WebSocket bridge when [overte-mcp-bridge.js](scripts/overte-mcp-bridge.js) is loaded in Interface. Falls back to simulated. |
-| `overte_script_inject` | **Implemented** — bridge inject coded, untested live. Falls back to simulated. |
+| `overte_entity_spawn` | **Verified live** — in-world entity spawning via WebSocket bridge. Supports `permanent=True` for cross-restart persistence. |
+| `overte_script_inject` | **Verified live** — in-world JS behavior injection via WebSocket bridge. |
+| `overte_sampling_assist` | Multi-step planning via `ctx.sample()` when host supports it. |
 
 Every response indicates its `"source"` (either `"live"` or `"simulated"`).
+
+### SOTA Dashboard Pages
+
+| Page | Route | Features |
+|------|-------|----------|
+| **Dashboard** | `/` | Domain status, node list, settings viewer |
+| **Avatars** | `/avatars` | Connected avatar-mixer/agent nodes |
+| **Entities** | `/entities` | Spawn form + entity explorer |
+| **Scripting** | `/scripting` | JS code editor + script injection |
+| **Chat** | `/chat` | Skill-first LLM chat with 4 personalities |
+| **Settings** | `/settings` | Backend health + LLM provider detection |
+| **Tools** | `/tools` | Dynamic tool discovery + search |
+| **Skills** | `/skills` | Skill content viewer (markdown) |
+| **Logs** | `/logs` | Ring-buffer log viewer with level filter |
+| **Help** | `/help` | Domain setup + JS API reference |
 
 ## Setup & Running
 
@@ -60,8 +76,8 @@ just mcpb-pack # validate + pack Claude Desktop bundle
 | Tool | Status |
 |------|--------|
 | `overte_domain_status` | **Verified live** (2026-07-30) — queries real domain-server `/nodes.json` and `/settings.json`. |
-| `overte_entity_spawn` | **Verified live** (2026-07-30) — spawns entities via WebSocket bridge into Overte Interface. |
-| `overte_script_inject` | Implemented — bridge inject action coded, untested live. |
+| `overte_entity_spawn` | **Verified live** (2026-07-30) — spawns entities via WebSocket bridge into Overte Interface. Supports `permanent=True` for persistence. |
+| `overte_script_inject` | **Verified live** (2026-07-30) — injects JS behavior onto entities via WebSocket bridge. |
 | `overte_sampling_assist` | Multi-step planning via `ctx.sample()` when host supports it. |
 
 ## Documentation

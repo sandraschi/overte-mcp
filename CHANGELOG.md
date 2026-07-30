@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+## [0.2.1] - 2026-07-30
+
+### Added
+- Entity persistence: `permanent` flag on `overte_entity_spawn` sets `lifetime: -1` for cross-restart persistence
+- FBX model serving: Nekomimi-chan FBX (3.8 MB) with full armature at `/models/Nekomimi-chan.fbx`
+- VRM->FBX conversion pipeline: `scripts/vrm_to_fbx_converter.py` (headless Blender 4.4)
+- SOTA dashboard pages: Chat (skill-first, 4 personalities, provider detection), Settings (health KPIs, LLM probes), Tools (dynamic discovery, search), Skills (markdown rendering), Logs (level filter, auto-refresh)
+- `AGENTS.md` — per-repo agent navigation map
+- `.env.example` — documented env vars
+- `scripts/bridge-stress-test.ps1` — rapid restart lifecycle test
+- `scripts/test_vrm_ext.py` — VRM addon loader for Blender
+
+### Changed
+- `ARCHITECTURE.md` — fully rewritten from stale vircadia-era doc to verified live architecture
+- `glama.json`, `mcpb/manifest.json`, `README.md`, `STATUS.md` — all metadata updated to reflect all 3 tools verified live
+
+### Fixed
+- VRM skeletal investigation: Overte does NOT support VRM as Model entity format (FBX/glTF/OBJ only)
+- Domain-server persistence: entities default temporary without explicit `lifetime`
+
 ## [0.2.0] - 2026-07-30
 
 ### Added

@@ -23,8 +23,13 @@
 ## Tools (summary)
 
 - `overte_domain_status` — live domain nodes/settings; simulated fallback if unreachable
-- `overte_entity_spawn` — live when bridge connected; else simulated
+- `overte_entity_spawn` — live when bridge connected; supports `permanent=True` for persistence
 - `overte_script_inject` — live when bridge connected; else simulated
+- `overte_sampling_assist` — multi-step planning via `ctx.sample()`
+
+## Webapp
+
+10-page React SPA (Vite + Tailwind + Zustand + React Query). Chat, Settings, Tools, Skills, Logs all built. Model FBX served at `/models/Nekomimi-chan.fbx`.
 
 ## Ports
 

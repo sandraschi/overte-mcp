@@ -38,6 +38,7 @@ async def spawn_entity_impl(input_data: EntitySpawnInput) -> dict[str, Any]:
                 "scale": input_data.scale,
                 "model_url": input_data.model_url,
                 "script_url": input_data.script_url,
+                "permanent": input_data.permanent,
             }
             # Try to delegate to local running uvicorn REST server
             r = await client.post("http://127.0.0.1:11110/api/overte/spawn", json=payload)

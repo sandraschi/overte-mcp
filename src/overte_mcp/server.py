@@ -52,7 +52,9 @@ def get_server_info() -> dict:
         "name": "overte-mcp",
         "version": "0.2.0",
         "started_at": _STARTED.isoformat(),
-        "uptime_seconds": int((datetime.datetime.now(datetime.timezone.utc) - _STARTED).total_seconds()),
+        "uptime_seconds": int(
+            (datetime.datetime.now(datetime.timezone.utc) - _STARTED).total_seconds()
+        ),
     }
 
 
@@ -93,9 +95,15 @@ def domain_help(topic: str = "overview") -> str:
 @mcp.tool(annotations=_READ_ONLY)
 async def overte_domain_status(
     host: Annotated[str, Field(description="Overte domain server host.")] = "localhost",
-    port: Annotated[int, Field(description="Overte domain administration port.", ge=1, le=65535)] = 40100,
-    username: Annotated[str | None, Field(description="HTTP Basic Auth username for the domain-server admin API.")] = None,
-    password: Annotated[str | None, Field(description="HTTP Basic Auth password for the domain-server admin API.")] = None,
+    port: Annotated[
+        int, Field(description="Overte domain administration port.", ge=1, le=65535)
+    ] = 40100,
+    username: Annotated[
+        str | None, Field(description="HTTP Basic Auth username for the domain-server admin API.")
+    ] = None,
+    password: Annotated[
+        str | None, Field(description="HTTP Basic Auth password for the domain-server admin API.")
+    ] = None,
     ctx: Any = None,
 ) -> dict:
     """Retrieve connected-node telemetry and settings from an Overte Domain Server.
@@ -116,7 +124,8 @@ async def overte_domain_status(
     success = result.get("status") == "success"
     return {
         "success": success,
-        "message": result.get("message") or ("Domain status retrieved." if success else "Failed to query domain-server."),
+        "message": result.get("message")
+        or ("Domain status retrieved." if success else "Failed to query domain-server."),
         "data": {
             "source": result.get("source"),
             "domain": result.get("domain"),
@@ -127,11 +136,25 @@ async def overte_domain_status(
 @mcp.tool(annotations=_MUTATING)
 async def overte_entity_spawn(
     name: Annotated[str, Field(description="Name of the entity to spawn.")],
-    entity_type: Annotated[str, Field(description="Entity type: Box, Sphere, Web, or Model.", alias="type")] = "Box",
-    position: Annotated[list[float], Field(description="X, Y, Z translation coordinates.")] = [0.0, 0.0, 0.0],
+    entity_type: Annotated[
+        str, Field(description="Entity type: Box, Sphere, Web, or Model.", alias="type")
+    ] = "Box",
+    position: Annotated[list[float], Field(description="X, Y, Z translation coordinates.")] = [
+        0.0,
+        0.0,
+        0.0,
+    ],
     scale: Annotated[list[float], Field(description="X, Y, Z dimensions.")] = [1.0, 1.0, 1.0],
-    model_url: Annotated[str | None, Field(description="GLB/FBX model resource URL if type is Model.")] = None,
-    script_url: Annotated[str | None, Field(description="Optional JavaScript behavior script URL to attach.")] = None,
+    model_url: Annotated[
+        str | None, Field(description="GLB/FBX model resource URL if type is Model.")
+    ] = None,
+    script_url: Annotated[
+        str | None, Field(description="Optional JavaScript behavior script URL to attach.")
+    ] = None,
+    permanent: Annotated[
+        bool,
+        Field(description="If True, entity persists across domain-server restarts (lifetime=-1)."),
+    ] = False,
     ctx: Any = None,
 ) -> dict:
     """Spawn a virtual object or 3D GLB model in-world at the specified coordinates.
@@ -154,12 +177,14 @@ async def overte_entity_spawn(
             scale=scale,
             model_url=model_url,
             script_url=script_url,
+            permanent=permanent,
         )
     )
     success = result.get("status") == "success"
     return {
         "success": success,
-        "message": result.get("message") or ("Entity spawned." if success else "Failed to spawn entity."),
+        "message": result.get("message")
+        or ("Entity spawned." if success else "Failed to spawn entity."),
         "data": {
             "source": result.get("source"),
             "entity": result.get("entity"),
@@ -172,7 +197,10 @@ async def overte_entity_spawn(
 async def overte_script_inject(
     entity_id: Annotated[str, Field(description="Overte target entity UUID.")],
     script_url: Annotated[str, Field(description="JavaScript behavior script URL.")],
-    script_data: Annotated[dict[str, Any] | None, Field(description="Metadata parameters to inject into the script scope.")] = None,
+    script_data: Annotated[
+        dict[str, Any] | None,
+        Field(description="Metadata parameters to inject into the script scope."),
+    ] = None,
     ctx: Any = None,
 ) -> dict:
     """Inject a JavaScript script to govern behavior of an in-world entity.
@@ -197,7 +225,8 @@ async def overte_script_inject(
     success = result.get("status") == "success"
     return {
         "success": success,
-        "message": result.get("message") or ("Script injected." if success else "Failed to inject script."),
+        "message": result.get("message")
+        or ("Script injected." if success else "Failed to inject script."),
         "data": {
             "source": result.get("source"),
             "script": result.get("script"),
@@ -236,11 +265,19 @@ async def overte_sampling_assist(
             sampling_result = await ctx.sample(f"Create a step-by-step plan for: {goal}")
             if sampling_result:
                 plan = str(sampling_result)
-                return {"success": True, "message": "Sampling-assisted plan generated.", "data": {"plan": plan, "sampling_used": True}}
+                return {
+                    "success": True,
+                    "message": "Sampling-assisted plan generated.",
+                    "data": {"plan": plan, "sampling_used": True},
+                }
         except Exception as e:
             logger.debug(f"Sampling failed, using static plan: {e}")
 
-    return {"success": True, "message": "Static plan (sampling not available on this host).", "data": {"plan": plan, "sampling_used": False}}
+    return {
+        "success": True,
+        "message": "Static plan (sampling not available on this host).",
+        "data": {"plan": plan, "sampling_used": False},
+    }
 
 
 def main():

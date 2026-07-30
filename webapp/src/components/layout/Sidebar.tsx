@@ -1,13 +1,18 @@
 import {
+  BookOpen,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Globe,
   HelpCircle,
   LayoutDashboard,
+  MessageSquare,
+  ScrollText,
+  Settings,
   Terminal,
   TreePine,
   Users,
+  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -20,9 +25,14 @@ interface SidebarProps {
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "main" },
+  { href: "/tools", label: "Tools", icon: Wrench, section: "main" },
+  { href: "/skills", label: "Skills", icon: BookOpen, section: "main" },
   { href: "/avatars", label: "Avatars", icon: Users, section: "space" },
   { href: "/entities", label: "Entities Explorer", icon: TreePine, section: "space" },
   { href: "/scripting", label: "JS Scripting", icon: Terminal, section: "systems" },
+  { href: "/chat", label: "AI Chat", icon: MessageSquare, section: "systems" },
+  { href: "/logs", label: "Logs", icon: ScrollText, section: "meta" },
+  { href: "/settings", label: "Settings", icon: Settings, section: "meta" },
   { href: "/help", label: "Help Hub", icon: HelpCircle, section: "meta" },
 ];
 

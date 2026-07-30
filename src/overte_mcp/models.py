@@ -37,6 +37,10 @@ class EntitySpawnInput(BaseModel):
     script_url: str | None = Field(
         default=None, description="Optional JavaScript behavior script URL to attach"
     )
+    permanent: bool = Field(
+        default=False,
+        description="If True, sets lifetime=-1 so the entity persists across domain-server restarts.",
+    )
 
 
 class ScriptInjectInput(BaseModel):

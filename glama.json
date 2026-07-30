@@ -1,11 +1,11 @@
 {
   "name": "overte-mcp",
   "displayName": "Overte MCP Server",
-  "description": "Model Context Protocol (MCP) server for Overte domain-server administration (real), with in-world entity spawning and JavaScript hot-reload scripting currently simulated pending a WebSocket bridge. Targets Overte, not current Vircadia (unrelated pivoted stack) -- see README.",
+  "description": "Model Context Protocol (MCP) server for the Overte open-source VR/metaverse platform. Domain-server administration (verified live), in-world entity spawning and JavaScript script injection via WebSocket bridge (verified live). Supports permanent entities with cross-restart persistence.",
   "version": "0.2.0",
   "badges": {
     "status": "beta",
-    "verified": "domain_status + entity_spawn live against Overte 2026.04.1"
+    "verified": "All 3 tools verified live against Overte 2026.04.1"
   },
   "homepage": "https://github.com/sandraschi/overte-mcp",
   "repository": "https://github.com/sandraschi/overte-mcp.git",
@@ -20,7 +20,7 @@
   "tools": [
     {
       "name": "overte_domain_status",
-      "description": "Retrieve connected-node telemetry and settings from an Overte Domain Server via /nodes.json and /settings.json. Real, unverified against a live server; falls back to labeled simulated data if unreachable.",
+      "description": "Retrieve connected-node telemetry and settings from an Overte Domain Server via /nodes.json and /settings.json. Verified live against Overte 2026.04.1 (:40100). Falls back to labeled simulated data if unreachable.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -47,7 +47,7 @@
     },
     {
       "name": "overte_entity_spawn",
-      "description": "Spawn an entity (Box, Sphere, Web, Model) in the Overte world. Verified live via WebSocket bridge (2026-07-30). Falls back to simulated when bridge disconnected.",
+      "description": "Spawn an entity (Box, Sphere, Web, Model) in the Overte world. Verified live via WebSocket bridge (2026-07-30). Supports permanent=True for cross-restart persistence (lifetime=-1). Falls back to simulated when bridge disconnected.",
       "inputSchema": {
         "type": "object",
         "properties": {
