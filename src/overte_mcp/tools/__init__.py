@@ -1,1 +1,1 @@
-"""Vircadia MCP tools packages."""
+"""Overte MCP tools packages."""

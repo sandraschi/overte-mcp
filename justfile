@@ -21,10 +21,10 @@ test:
 test-unit:
     Set-Location '{{justfile_directory()}}'; uv run pytest -q tests/unit
 
-# Ruff lint (Batman)
+# Ruff + Biome lint
 lint:
     Set-Location '{{justfile_directory()}}'; uv run ruff check .
-    Set-Location '{{justfile_directory()}}\webapp'; npx biome check .
+    Set-Location '{{justfile_directory()}}\webapp'; bunx biome check src
 
 # Bundle for Claude Desktop (pack from mcpb/)
 mcpb-pack:
@@ -39,3 +39,10 @@ build-native:
 cua-nsis-test:
     uv run python scripts/cua-smoke.py
 
+
+# Pre-commit hook (ruff + biome)
+precommit:
+    uv run ruff check src/
+    Set-Location '{{justfile_directory()}}\webapp'; bunx biome check src
+
+# Bootstrap: install dev deps + pre-commit hook

@@ -2,7 +2,7 @@
   "name": "overte-mcp",
   "displayName": "Overte MCP Server",
   "description": "Model Context Protocol (MCP) server for Overte domain-server administration (real), with in-world entity spawning and JavaScript hot-reload scripting currently simulated pending a WebSocket bridge. Targets Overte, not current Vircadia (unrelated pivoted stack) -- see README.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "homepage": "https://github.com/sandraschi/overte-mcp",
   "repository": "https://github.com/sandraschi/overte-mcp.git",
   "license": "MIT",
@@ -43,7 +43,7 @@
     },
     {
       "name": "overte_entity_spawn",
-      "description": "SIMULATED ONLY: no live Overte bridge exists yet. Returns fake spawn confirmation shaped like a real one, for tool/UI testing.",
+      "description": "Spawn an entity (Box, Sphere, Web, Model) in the Overte world. Live when WebSocket bridge is connected; simulated fallback when disconnected. Every response indicates its data source.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -82,7 +82,7 @@
     },
     {
       "name": "overte_script_inject",
-      "description": "SIMULATED ONLY: no live Overte bridge exists yet. Returns fake script-update confirmation shaped like a real one, for tool/UI testing.",
+      "description": "Inject JavaScript behavior onto an Overte entity. Live when WebSocket bridge is connected; simulated fallback when disconnected. Every response indicates its data source.",
       "inputSchema": {
         "type": "object",
         "properties": {

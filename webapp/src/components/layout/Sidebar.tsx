@@ -1,11 +1,16 @@
 import {
+  AppWindow,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Globe,
   HelpCircle,
   LayoutDashboard,
+  MessageSquare,
+  ScrollText,
+  Settings,
   Terminal,
+  Tool,
   TreePine,
   Users,
 } from "lucide-react";
@@ -23,6 +28,12 @@ const navItems = [
   { href: "/avatars", label: "Avatars", icon: Users, section: "space" },
   { href: "/entities", label: "Entities Explorer", icon: TreePine, section: "space" },
   { href: "/scripting", label: "JS Scripting", icon: Terminal, section: "systems" },
+  { href: "/chat", label: "Chat", icon: MessageSquare, section: "intelligence" },
+  { href: "/tools", label: "Tools", icon: Tool, section: "intelligence" },
+  { href: "/skills", label: "Skills", icon: ScrollText, section: "intelligence" },
+  { href: "/logs", label: "Logs", icon: ScrollText, section: "meta" },
+  { href: "/settings", label: "Settings", icon: Settings, section: "meta" },
+  { href: "/apps-hub", label: "Apps Hub", icon: AppWindow, section: "meta" },
   { href: "/help", label: "Help Hub", icon: HelpCircle, section: "meta" },
 ];
 
@@ -30,6 +41,7 @@ const sections: Record<string, string> = {
   main: "Overview",
   space: "Space",
   systems: "Systems",
+  intelligence: "Intelligence",
   meta: "Meta",
 };
 

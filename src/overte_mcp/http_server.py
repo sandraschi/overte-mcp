@@ -1,6 +1,7 @@
 """FastAPI REST HTTP server interface for Overte MCP Webapp Dashboard."""
 
 import asyncio
+import collections
 import datetime
 import json
 import logging
@@ -19,6 +20,19 @@ from .tools.entities import spawn_entity_impl
 from .tools.scripting import inject_script_impl
 
 logger = logging.getLogger(__name__)
+
+# Ring-buffer log
+_LOG_RING = collections.deque(maxlen=500)
+
+
+def _log(source: str, level: str, message: str):
+    _LOG_RING.append({
+        "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "source": source,
+        "level": level,
+        "message": message,
+    })
+
 
 # WebSocket bridge state
 _active_ws: WebSocket | None = None
@@ -54,7 +68,7 @@ GIT_SHA = _git_sha()
 app = FastAPI(
     title="Overte MCP REST Server",
     description="HTTP REST interface complementing standard Stdio MCP",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 # Enable CORS for frontend dashboard connection per CORS_STANDARD.md
@@ -88,14 +102,108 @@ async def health_check():
     return {
         "status": "ok",
         "server": "overte-mcp",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "git_sha": GIT_SHA,
         "started_at": _STARTED.isoformat(),
         "uptime_seconds": int(uptime),
+        "tool_count": 4,
         "shutting_down": False,
         "transport": "streamable-http",
         "port": BACKEND_PORT,
     }
+
+
+@app.get("/api/tools")
+async def list_tools():
+    """List MCP tools with descriptions and input schemas."""
+    return {
+        "tools": [
+            {
+                "name": "overte_domain_status",
+                "description": "Retrieve connected-node telemetry and settings from an Overte Domain Server.",
+                "inputSchema": {
+                    "host": {"type": "string", "default": "localhost"},
+                    "port": {"type": "integer", "default": 40100},
+                    "username": {"type": "string"},
+                    "password": {"type": "string"},
+                },
+            },
+            {
+                "name": "overte_entity_spawn",
+                "description": "Spawn a virtual object or 3D model in-world.",
+                "inputSchema": {
+                    "name": {"type": "string", "required": True},
+                    "type": {"type": "string", "default": "Box"},
+                    "position": {"type": "array", "items": {"type": "number"}},
+                    "scale": {"type": "array", "items": {"type": "number"}},
+                    "model_url": {"type": "string"},
+                    "script_url": {"type": "string"},
+                },
+            },
+            {
+                "name": "overte_script_inject",
+                "description": "Inject a JavaScript script onto an in-world entity.",
+                "inputSchema": {
+                    "entity_id": {"type": "string", "required": True},
+                    "script_url": {"type": "string", "required": True},
+                    "script_data": {"type": "object"},
+                },
+            },
+        ]
+    }
+
+
+@app.get("/api/skills")
+async def list_skills():
+    """List available Overte skills."""
+    return {
+        "skills": [
+            {
+                "name": "overte-admin",
+                "title": "Overte Domain Administration",
+                "description": "Core skill for domain-server node monitoring and configuration.",
+            }
+        ]
+    }
+
+
+@app.get("/api/skill/overte-admin")
+async def get_overte_skill():
+    """Return the overte-admin skill content."""
+    return {
+        "name": "overte-admin",
+        "content": "# Overte Domain Administration\n\nManage Overte domain-servers: query connected nodes, monitor settings, spawn entities, inject scripts.\n\n## Tools\n- `overte_domain_status` — query /nodes.json and /settings.json\n- `overte_entity_spawn` — spawn Box, Sphere, Web, or Model entities\n- `overte_script_inject` — attach JS behaviors to entities\n\n## Architecture\nOverte Domain Server (port 40100) + WebSocket bridge (port 11110) + FastAPI gateway + React dashboard.",
+    }
+
+
+@app.get("/api/v1/diagnostics")
+async def diagnostics():
+    """CUA smoke-test required endpoint: tool list + system info."""
+    uptime = (datetime.datetime.now(datetime.timezone.utc) - _STARTED).total_seconds()
+    return {
+        "status": "ok",
+        "server": "overte-mcp",
+        "version": "0.2.0",
+        "uptime_seconds": int(uptime),
+        "tool_count": 4,
+        "tools": [
+            {"name": "overte_domain_status"},
+            {"name": "overte_entity_spawn"},
+            {"name": "overte_script_inject"},
+            {"name": "overte_sampling_assist"},
+        ],
+        "system": {"windows": True},
+        "errors": [],
+    }
+
+
+@app.get("/api/logs")
+async def get_logs(limit: int = 50, level: str | None = None):
+    """Query the ring-buffer log."""
+    entries = list(_LOG_RING)
+    if level:
+        entries = [e for e in entries if e["level"].upper() == level.upper()]
+    return {"logs": entries[-limit:], "total": len(entries)}
 
 
 @app.get("/api/overte/status")
@@ -253,6 +361,17 @@ async def post_script_inject(request: ScriptInjectInput):
     except Exception as e:
         logger.error(f"Failed to inject script: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# Mount MCP streamable HTTP protocol at /mcp for stdio proxy pattern
+try:
+    from .server import mcp
+
+    mcp_asgi = mcp.http_app()
+    app.mount("/mcp", mcp_asgi)
+    _log("http_server", "INFO", "MCP protocol mounted at /mcp")
+except Exception as e:
+    _log("http_server", "WARNING", f"Could not mount MCP app at /mcp: {e}")
 
 
 def start_server(port: int | None = None):

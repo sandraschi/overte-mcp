@@ -36,6 +36,10 @@ OverteInstaller.exe
 *.lance
 .lancedb/
 
+# Reports (assess-fix, quality, drift)
+reports/
+*.bak-*
+
 # Tauri
 native/target/
 native/resources/*.exe

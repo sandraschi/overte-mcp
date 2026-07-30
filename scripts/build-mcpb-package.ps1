@@ -129,7 +129,7 @@ if (-not (Test-Path $packagePath)) {
 $sizeMB = [math]::Round((Get-Item $packagePath).Length / 1MB, 3)
 Write-Ok "Built $packagePath ($sizeMB MB)"
 if ($sizeMB -gt 5) {
-    Write-Host "[WARN] Bundle larger than 5 MB — check .mcpbignore exclusions" -ForegroundColor Yellow
+    Write-Host "[WARN] Bundle larger than 5 MB - check .mcpbignore exclusions" -ForegroundColor Yellow
 }
 
 Write-Host "`nDone. Bundle: $packagePath" -ForegroundColor Green

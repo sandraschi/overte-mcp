@@ -1,0 +1,6 @@
+{
+  "name": "overte-mcp",
+  "version": "0.2.0",
+  "description": "Overte VR/metaverse MCP server for domain administration, entity spawning, and scripting",
+  "hooks": "../hooks/hooks.json"
+}

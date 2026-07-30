@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "",
+      "hooks": [{
+        "type": "text",
+        "text": "## Session Context (Overte MCP)\n\nYou have access to an Overte VR/metaverse MCP server (3 tools: overte_domain_status, overte_entity_spawn, overte_script_inject) plus a React dashboard.\n\n**Before starting work:**\n1. Check domain-server status: overte_domain_status(host=\"localhost\", port=40100)\n2. Load the WebSocket bridge in Overte Interface for live spawn/inject tools\n\n**At end of work:**\n- Verify entity spawns and script injections against the live domain"
+      }]
+    }]
+  }
+}
