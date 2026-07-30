@@ -25,6 +25,10 @@ Overte MCP server: domain-server admin + in-world entity/script ops via WebSocke
 | `src/overte_mcp/tools/scripting.py` | Script inject (bridge or simulated) |
 | `scripts/overte-mcp-bridge.js` | In-World WS client for Interface |
 | `scripts/vrm_to_glb_converter.py` | Blender VRM->GLB pipeline (preserves textures) |
+| `scripts/ply_to_glb.py` | Blender headless PLY->GLB (3DGS addon) |
+| `scripts/parse_ngsp.py` | NGSP v2 binary format parser (Marble SPZ) |
+| `scripts/splat_to_glb_converter.py` | Python SPZ/PLY->mesh converter + `load_ply_to_splats()` |
+| `models/README.md` | Model depot documentation |
 | `webapp/src/pages/` | 10 pages: Dashboard, Avatars, Entities, Scripting, Help, Chat, Settings, Tools, Skills, Logs |
 
 ## Tool Patterns

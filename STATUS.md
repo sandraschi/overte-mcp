@@ -57,10 +57,22 @@ Domain-server has persistence enabled (`NoPersist: false`, `persistInterval: 300
 ### VRM joint animation
 Overte does NOT support VRM as a Model entity format. Supported formats: FBX, glTF, OBJ. VRM is an avatar-only format (loaded via .fst files). When loaded as a Model entity, `Entities.getJointNames()` returns 0 because VRM skeletal data is stored in glTF extensions that the entity pipeline doesn't parse. **Fixed:** Created Blender VRM→GLB conversion pipeline (`scripts/vrm_to_glb_converter.py`). Nekomimi-chan GLB (11.6 MB) with full armature + embedded textures hosted at `http://localhost:11110/models/Nekomimi-chan.glb`. Uses GLB instead of FBX because VRM is built on glTF — FBX loses MToon shader textures.
 
-### World Labs GLB import
-**Verified** — World Labs Marble GLB collider mesh (4.3 MB) downloaded from CDN and served at `/models/contemporary-living-room.glb`. Overte supports glTF/GLB natively as Model entities. Use: `overte_entity_spawn(name="Living Room", type="Model", model_url="http://localhost:11110/models/contemporary-living-room.glb")`.
+### World Labs scene
+Three assets downloaded from Marble CDN and served at `/models/`:
 
-Note: World Labs GLBs are collision meshes, not fully textured scene renders. The full scene with splats/textures is viewable via the Marble player URL.
+| File | Size | Use in Overte |
+|------|------|---------------|
+| `contemporary-living-room.glb` | 4.3 MB | Collider mesh — spawn as Model entity for room geometry |
+| `contemporary-living-room_pano.png` | 10.5 MB | 360 panorama — spawn as skybox sphere entity with texture |
+| `contemporary-living-room_full.spz` | 66.8 MB | Full-res gaussian splat (NGSP v2). Needs SPZ→PLY→GLB conversion |
+
+**SPZ→mesh blocked** — NGSP v2 is gsplat's internal compressed format, undocumented binary. No Python-level reader exists. Workaround: load SPZ in SuperSplat editor (https://superspl.at/editor), export as PLY, then run `scripts/ply_to_glb.py` through Blender.
+
+### 3DGS pipeline
+- ReshotAI `gaussian-splatting-blender-addon` installed at `extensions/user_default/gaussian_splatting_addon/`
+- `scripts/ply_to_glb.py` — headless Blender PLY→GLB converter (uses the addon)
+- `splat_to_glb_converter.py` — has `load_ply_to_splats()` for reading standard 3DGS PLY
+- Dependencies: gsplat, scipy, trimesh, plyfile installed
 
 ### Dashboard SOTA pages
 Chat, Settings, Tools, Skills, and Logs pages built and verified. TypeScript and Biome check clean. Production build passes (463 KB JS + 28 KB CSS). All pages have `data-testid` attributes for CUA/Playwright targeting.
@@ -68,7 +80,9 @@ Chat, Settings, Tools, Skills, and Logs pages built and verified. TypeScript and
 ## Remaining
 
 - [ ] End-to-end: spawn Nekomimi-chan GLB with dance script in Overte, verify joints and textures work
-- [ ] End-to-end: spawn contemporary-living-room GLB in Overte, verify scene renders correctly
+- [ ] End-to-end: spawn contemporary-living-room panorama skybox + collider mesh in Overte
+- [ ] SPZ→PLY: test pipeline via SuperSplat editor → `scripts/ply_to_glb.py` → Overte GLB
+- [ ] NGSP parser: complete Python parser for the NGSP v2 binary format (needs gsplat C++ source or format docs)
 - [ ] Bridge stress-test — run `scripts/bridge-stress-test.ps1` while bridge is connected
 
 ### Explicitly out of scope

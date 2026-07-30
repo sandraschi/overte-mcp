@@ -15,15 +15,23 @@ All notable changes to this project will be documented in this file. The format 
 - `.env.example` — documented env vars
 - `scripts/bridge-stress-test.ps1` — rapid restart lifecycle test
 - `scripts/test_vrm_ext.py` — VRM addon loader for Blender
+- World Labs Marble living room scene: collider GLB (4.3 MB), full SPZ splat (66.8 MB), panorama skybox (10.5 MB) at `/models/contemporary-living-room_*`
+- `scripts/parse_ngsp.py` — NGSP v2 binary format parser for Marble SPZ files
+- `scripts/ply_to_glb.py` — Blender headless PLY→GLB converter (uses ReshotAI 3DGS addon)
+- `load_ply_to_splats()` in `splat_to_glb_converter.py` — reads standard 3DGS PLY files
+- `models/README.md` — model depot documentation
+- `scripts/inspect_spz.py` — SPZ binary format inspector
 
 ### Changed
 - `ARCHITECTURE.md` — fully rewritten from stale vircadia-era doc to verified live architecture
 - `glama.json`, `mcpb/manifest.json`, `README.md`, `STATUS.md` — all metadata updated to reflect all 3 tools verified live
+- Dependencies: gsplat, scipy, trimesh, plyfile added for splat→mesh pipeline
 
 ### Fixed
 - **VRM conversion: switched from FBX to GLB** — initial FBX export caused missing textures (MToon shader lost in FBX) and geometry clipped by stray Cube/Light/Camera objects (scene clear missed collections). GLB preserves MToon textures via glTF PBR material pipeline. Aggressive collection-level scene clear prevents object bleed.
 - VRM skeletal investigation: Overte does NOT support VRM as Model entity format (FBX/glTF/OBJ only)
 - Domain-server persistence: entities default temporary without explicit `lifetime`
+- **SPZ splat→mesh blocked** — NGSP v2 is an undocumented binary format readable only by gsplat C++/CUDA. Workaround: use SuperSplat editor (https://superspl.at/editor) to convert SPZ→PLY, then `scripts/ply_to_glb.py` for GLB.
 
 ## [0.2.0] - 2026-07-30
 
