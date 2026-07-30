@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { probeProviders, useLLMStore } from "../../store/llm";
+import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -9,12 +8,6 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const store = useLLMStore();
-
-  useEffect(() => {
-    const t = setTimeout(() => probeProviders(store), 2000);
-    return () => clearTimeout(t);
-  }, [store]); // empty deps = fire once, no loop
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950">
