@@ -9,7 +9,7 @@ Overte MCP server: domain-server admin + in-world entity/script ops via WebSocke
 | Backend port | 11110 |
 | Frontend port | 11111 |
 | Domain admin | 40100 (admin/admin) |
-| GLB model URL | `http://localhost:11110/models/Nekomimi-chan.glb` |
+| GLB model URLs | `http://localhost:11110/models/Nekomimi-chan.glb` (character) / `.../contemporary-living-room.glb` (scene) |
 | just serve | `./start.ps1` |
 | just lint | `ruff + biome` |
 | just test | `pytest -q` |

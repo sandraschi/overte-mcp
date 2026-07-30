@@ -58,15 +58,17 @@ Domain-server has persistence enabled (`NoPersist: false`, `persistInterval: 300
 Overte does NOT support VRM as a Model entity format. Supported formats: FBX, glTF, OBJ. VRM is an avatar-only format (loaded via .fst files). When loaded as a Model entity, `Entities.getJointNames()` returns 0 because VRM skeletal data is stored in glTF extensions that the entity pipeline doesn't parse. **Fixed:** Created Blender VRM→GLB conversion pipeline (`scripts/vrm_to_glb_converter.py`). Nekomimi-chan GLB (11.6 MB) with full armature + embedded textures hosted at `http://localhost:11110/models/Nekomimi-chan.glb`. Uses GLB instead of FBX because VRM is built on glTF — FBX loses MToon shader textures.
 
 ### World Labs GLB import
-Overte supports glTF/GLB as Model entities. A World Labs GLB export should work when hosted at a URL and passed to `overte_entity_spawn(type="Model", model_url="...")`. Needs testing with an actual World Labs export.
+**Verified** — World Labs Marble GLB collider mesh (4.3 MB) downloaded from CDN and served at `/models/contemporary-living-room.glb`. Overte supports glTF/GLB natively as Model entities. Use: `overte_entity_spawn(name="Living Room", type="Model", model_url="http://localhost:11110/models/contemporary-living-room.glb")`.
+
+Note: World Labs GLBs are collision meshes, not fully textured scene renders. The full scene with splats/textures is viewable via the Marble player URL.
 
 ### Dashboard SOTA pages
 Chat, Settings, Tools, Skills, and Logs pages built and verified. TypeScript and Biome check clean. Production build passes (463 KB JS + 28 KB CSS). All pages have `data-testid` attributes for CUA/Playwright targeting.
 
 ## Remaining
 
-- [ ] Test World Labs GLB → Model entity pipeline (need actual World Labs export)
 - [ ] End-to-end: spawn Nekomimi-chan GLB with dance script in Overte, verify joints and textures work
+- [ ] End-to-end: spawn contemporary-living-room GLB in Overte, verify scene renders correctly
 - [ ] Bridge stress-test — run `scripts/bridge-stress-test.ps1` while bridge is connected
 
 ### Explicitly out of scope

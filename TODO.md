@@ -12,13 +12,13 @@
 - [x] **ARCHITECTURE.md rewritten** — stale vircadia doc replaced with verified live architecture
 - [x] **World persistence investigated** — domain-server configured with persistInterval=30s, but entities need `lifetime: -1` to be permanent. Added `permanent` flag to `overte_entity_spawn`.
 - [x] **VRM joint animation investigated** — Overte does NOT support VRM as Model entity format. Supported formats: FBX, glTF, OBJ. VRM is avatar-only (FST pipeline). `getJointNames()` returns 0 because VRM glTF extensions are not parsed by entity pipeline.
-- [x] **World Labs GLB feasibility confirmed** — glTF/GLB is supported as Model entity. Needs testing with actual export.
+- [x] **World Labs GLB feasibility confirmed** — glTF/GLB is supported as Model entity. Contemporary living room scene (4.3 MB) downloaded from Marble CDN and served at `/models/contemporary-living-room.glb`.
 - [x] **Nekomimi-chan VRM→GLB conversion** — Blender VRM→GLB pipeline with embedded textures and full armature. GLB (11.6 MB) served at `/models/Nekomimi-chan.glb`. Uses GLB not FBX because VRM is built on glTF — FBX drops MToon textures and leaks scene objects.
 - [x] **Dashboard SOTA pages** — Chat, Settings, Tools, Skills, Logs built and verified (TypeScript, Biome, Vite build all pass)
 
 ## High priority
-- [ ] **Test World Labs GLB import** — export a scene from World Labs, host the GLB, spawn with `type="Model"`, verify rendering in Overte Interface.
 - [ ] **End-to-end: spawn Nekomimi-chan GLB with dance script** — test joint animation on the GLB model, verify textures render correctly.
+- [ ] **End-to-end: spawn contemporary-living-room GLB** — test the Marble scene collider mesh renders in Overte Interface.
 
 ## Medium priority
 - [ ] **Bridge stress-test** — run `scripts/bridge-stress-test.ps1` while bridge is connected, verify exponential backoff under rapid restarts.
