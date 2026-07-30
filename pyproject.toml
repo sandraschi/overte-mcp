@@ -15,6 +15,9 @@ dependencies = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.16.0,<0.17",
+    "gsplat>=1.0",
+    "scipy>=1.18.0",
+    "trimesh>=4.12.2",
 ]
 
 [project.scripts]
