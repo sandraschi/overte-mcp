@@ -1,0 +1,17 @@
+[
+  {
+    "name": "overte-mcp-bridge.js",
+    "description": "WebSocket bridge client. Connects to the MCP backend for live entity spawn/inject. Required for live operations.",
+    "category": "infrastructure"
+  },
+  {
+    "name": "dance-script.js",
+    "description": "Skeletal dance animation for model entities with armatures. Bobs, spins, swings arms, tilts head, and sways hips using joint rotations.",
+    "category": "animation"
+  },
+  {
+    "name": "spin.js",
+    "description": "Simple continuous spin animation. Attaches to any entity and rotates it along the Y axis at configurable speed (default 45 deg/s).",
+    "category": "animation"
+  }
+]

@@ -278,35 +278,121 @@ async def websocket_endpoint(websocket: WebSocket):
             _active_ws = None
 
 
-_SCRIPT_MANIFEST = [
-    {
-        "name": "overte-mcp-bridge.js",
-        "description": "WebSocket bridge client. Connects to the MCP backend for live entity spawn/inject. Required for live operations.",
-        "category": "infrastructure",
-    },
-    {
-        "name": "dance-script.js",
-        "description": "Skeletal dance animation for VRM/avatar entities. Bobs, spins, swings arms, tilts head, and sways hips.",
-        "category": "animation",
-    },
-    {
-        "name": "spin.js",
-        "description": "Simple continuous spin animation. Attaches to any entity and rotates it along the Y axis at configurable speed.",
-        "category": "animation",
-    },
-]
+# Scripts depot root — entity scripts stored under data/scripts/
+_SCRIPTS_DEPOT = Path(__file__).resolve().parent.parent.parent / "data" / "scripts"
+_SCRIPTS_MANIFEST_PATH = _SCRIPTS_DEPOT / "manifest.json"
+
+
+def _load_script_manifest() -> list[dict]:
+    if _SCRIPTS_MANIFEST_PATH.exists():
+        try:
+            with open(_SCRIPTS_MANIFEST_PATH) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+
+def _save_script_manifest(manifest: list[dict]):
+    _SCRIPTS_DEPOT.mkdir(parents=True, exist_ok=True)
+    with open(_SCRIPTS_MANIFEST_PATH, "w") as f:
+        json.dump(manifest, f, indent=2)
 
 
 @app.get("/api/overte/scripts")
 async def list_scripts():
-    """List available script files with descriptions."""
-    manifest = list(_SCRIPT_MANIFEST)
-    # Check which files actually exist
+    """List all entity scripts with descriptions and metadata."""
+    manifest = _load_script_manifest()
+    result = []
     for s in manifest:
-        sp = _scripts_dir / s["name"]
-        s["exists"] = sp.exists()
-        s["url"] = f"http://localhost:{BACKEND_PORT}/scripts/{s['name']}"
-    return {"scripts": manifest, "count": len(manifest)}
+        sp = _SCRIPTS_DEPOT / s["name"]
+        entry = dict(s)
+        entry["exists"] = sp.exists()
+        entry["url"] = f"http://localhost:{BACKEND_PORT}/scripts/{s['name']}"
+        if sp.exists():
+            entry["size"] = sp.stat().st_size
+        result.append(entry)
+    return {"scripts": result, "count": len(result)}
+
+
+@app.get("/api/overte/scripts/{name}")
+async def get_script(name: str):
+    """Get a script's content by name."""
+    sp = _SCRIPTS_DEPOT / name
+    if not sp.exists() or not sp.name.endswith(".js"):
+        raise HTTPException(status_code=404, detail="Script not found")
+    manifest = _load_script_manifest()
+    meta = next((s for s in manifest if s["name"] == name), {})
+    return {
+        "name": name,
+        "content": sp.read_text(encoding="utf-8"),
+        "description": meta.get("description", ""),
+        "category": meta.get("category", "uncategorized"),
+    }
+
+
+@app.post("/api/overte/scripts")
+async def create_script(data: dict):
+    """Create a new entity script."""
+    name = data.get("name", "").strip()
+    content = data.get("content", "").strip()
+    if not name.endswith(".js"):
+        name += ".js"
+    if not name or not content:
+        raise HTTPException(status_code=400, detail="name and content required")
+    sp = _SCRIPTS_DEPOT / name
+    if sp.exists():
+        raise HTTPException(status_code=409, detail="Script already exists")
+    _SCRIPTS_DEPOT.mkdir(parents=True, exist_ok=True)
+    sp.write_text(content, encoding="utf-8")
+    manifest = _load_script_manifest()
+    manifest.append(
+        {
+            "name": name,
+            "description": data.get("description", ""),
+            "category": data.get("category", "uncategorized"),
+        }
+    )
+    _save_script_manifest(manifest)
+    _log("scripts", "INFO", f"Created script: {name}")
+    return {"status": "success", "name": name}
+
+
+@app.put("/api/overte/scripts")
+async def update_script(data: dict):
+    """Update a script's content and/or metadata."""
+    name = data.get("name", "").strip()
+    if not name.endswith(".js"):
+        name += ".js"
+    sp = _SCRIPTS_DEPOT / name
+    if not sp.exists():
+        raise HTTPException(status_code=404, detail="Script not found")
+    if "content" in data:
+        sp.write_text(data["content"], encoding="utf-8")
+    manifest = _load_script_manifest()
+    for s in manifest:
+        if s["name"] == name:
+            if "description" in data:
+                s["description"] = data["description"]
+            if "category" in data:
+                s["category"] = data["category"]
+            break
+    _save_script_manifest(manifest)
+    _log("scripts", "INFO", f"Updated script: {name}")
+    return {"status": "success", "name": name}
+
+
+@app.delete("/api/overte/scripts/{name}")
+async def delete_script(name: str):
+    """Delete a script and remove it from the manifest."""
+    sp = _SCRIPTS_DEPOT / name
+    if sp.exists():
+        sp.unlink()
+    manifest = _load_script_manifest()
+    manifest = [s for s in manifest if s["name"] != name]
+    _save_script_manifest(manifest)
+    _log("scripts", "INFO", f"Deleted script: {name}")
+    return {"status": "success", "name": name}
 
 
 @app.get("/api/overte/entities")
@@ -438,11 +524,10 @@ if _models_dir.exists():
 else:
     _log("http_server", "WARNING", f"Models directory not found: {_models_dir}")
 
-# Serve scripts for Overte entity script URLs
-_scripts_dir = Path(__file__).resolve().parent.parent.parent / "scripts"
-if _scripts_dir.exists():
-    app.mount("/scripts", StaticFiles(directory=str(_scripts_dir)), name="scripts")
-    _log("http_server", "INFO", f"Scripts served from {_scripts_dir}")
+# Serve entity scripts from the depot
+_SCRIPTS_DEPOT.mkdir(parents=True, exist_ok=True)
+app.mount("/scripts", StaticFiles(directory=str(_SCRIPTS_DEPOT)), name="scripts")
+_log("http_server", "INFO", f"Scripts served from {_SCRIPTS_DEPOT}")
 
 # Mount MCP streamable HTTP protocol at /mcp for stdio proxy pattern
 try:

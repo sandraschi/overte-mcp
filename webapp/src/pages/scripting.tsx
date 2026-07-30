@@ -108,13 +108,13 @@ export function ScriptingPage() {
 
   const loadScript = async (script: Script) => {
     try {
-      const res = await fetch(script.url);
+      const res = await fetch(apiUrl(`/api/overte/scripts/${encodeURIComponent(script.name)}`));
       if (!res.ok) throw new Error("Failed to fetch script content");
-      const content = await res.text();
-      setScriptCode(content);
-      setOriginalCode(content);
+      const data = await res.json();
+      setScriptCode(data.content);
+      setOriginalCode(data.content);
       setCurrentFilename(script.name);
-      setScriptUrl(script.url);
+      setScriptUrl(`http://localhost:11110/scripts/${script.name}`);
       setLoadedScript(script.name);
     } catch (e) {
       console.error("Failed to load script:", e);
