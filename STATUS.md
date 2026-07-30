@@ -25,7 +25,7 @@ Overte Domain Server HTTP admin API (`/nodes.json`, `/settings.json`) + WebSocke
 |------|--------|
 | `overte_domain_status` | **Real & verified** (2026-07-30) — calls live domain-server at localhost:40100. `/nodes.json` returns `{"nodes":[...]}`, `/settings.json` returns full settings tree. |
 | `overte_entity_spawn` | **Real & verified** (2026-07-30) — spawned Box entity in-world via WebSocket bridge. Returns `source: "live"` with real entity UUID. |
-| `overte_script_inject` | Implemented, **not yet tested live** — bridge inject action coded but untested. |
+| `overte_script_inject` | **Verified live** (2026-07-30) — injected dance-script.js onto entity `{717ad8f1-...}` via WebSocket bridge. Entity bobs up/down + spins. |
 
 ## Native app
 
@@ -47,29 +47,11 @@ Overte Domain Server HTTP admin API (`/nodes.json`, `/settings.json`) + WebSocke
 | Session context injection | ✅ | `.cursorrules` + `.claude-plugin/` |
 | STATUS.md | ✅ | This file |
 
-## TODO — Overte install & bridge verification
+## Remaining (after v0.2.0)
 
-### Phase 1 — Install Overte on Goliath (✅ 2026-07-30)
-- [x] Download Client + Server from overte.org
-- [x] Start `domain-server.exe`, admin panel at http://localhost:40100
-- [ ] Start Interface, log into local domain, confirm avatar loads
-
-### Phase 2 — Verify `overte_domain_status` (✅ 2026-07-30)
-- [x] `/nodes.json` returns `{"nodes":[]}`, `/settings.json` returns full settings tree
-- [x] `/api/overte/status` returns `source: "live"` with real data
-- [x] `domain.py` parsing correct — no fix needed
-
-### Phase 3 — Wire up the WebSocket bridge (✅ 2026-07-30, partial)
-- [x] Load script: Edit > Running Scripts > "+" > Open Script from Disk > `scripts/overte-mcp-bridge.js`
-- [x] Backend WebSocket receives connection at `/api/overte/ws`
-- [x] `overte_entity_spawn` returns `source: "live"` with real entity UUID `{42501700-f1e3-4e11-b0d5-7b1cb72c9237}`
-- [ ] `overte_script_inject` — untested
-- [x] Fixed bridge bug: socket readyState check needed `1` not `WebSocket.OPEN` (QtScript compat)
-- [ ] Kill/restart backend while Interface runs, confirm bridge reconnects
-
-### Phase 4 — Documentation
-- [ ] Update MCP tools table and ARCHITECTURE.md with test results
-- [ ] Note any fixes in CHANGELOG.md
+- [ ] Test bridge reconnection on backend restart
+- [ ] Verify graceful disconnect when Interface client disconnects
+- [ ] Find a proper nekomimi-chan GLB/VRM model for a more impressive demo
 
 ### Explicitly out of scope
 - Headless Assignment Client bridge
