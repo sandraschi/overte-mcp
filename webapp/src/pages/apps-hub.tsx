@@ -78,16 +78,17 @@ async function probePort(port: number, label: string): Promise<FleetApp> {
 }
 
 export function AppsHubPage() {
-  const { data: probeResults } = useQuery({
+  const { data: apps } = useQuery({
     queryKey: ["fleet-probe"],
     queryFn: async () => Promise.all(FLEET_APPS.map((a) => probePort(a.port, a.label))),
     refetchInterval: 30000,
   });
-  const apps = probeResults || FLEET_APPS;
+
+  const items = apps || FLEET_APPS;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div style={{ borderBottom: "1px solid var(--border-color)" }} className="pb-4">
+    <div>
+      <div style={{ borderBottom: "1px solid var(--border-color)" }} className="pb-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="glass-panel" style={{ padding: "12px", borderRadius: "12px" }}>
             <AppWindow className="w-6 h-6 text-amber-500" />
@@ -100,7 +101,7 @@ export function AppsHubPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {apps.map((app) => (
+        {items.map((app) => (
           <div
             key={app.name}
             className={`glass-card transition-all ${app.reachable ? "" : "opacity-50"}`}

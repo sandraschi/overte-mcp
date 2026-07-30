@@ -11,7 +11,7 @@ interface SkillInfo {
 }
 
 export function SkillsPage() {
-  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const { data: skillsData } = useQuery<{ skills: SkillInfo[] }>({
     queryKey: ["skills"],
     queryFn: async () => {
@@ -20,21 +20,21 @@ export function SkillsPage() {
       return r.json();
     },
   });
-  const { data: skillContent } = useQuery<{ content: string }>({
-    queryKey: ["skill", selectedSkill],
+  const { data: content } = useQuery<{ content: string }>({
+    queryKey: ["skill", selected],
     queryFn: async () => {
-      if (!selectedSkill) return { content: "" };
-      const r = await fetch(apiUrl(`/api/skill/${selectedSkill}`));
+      if (!selected) return { content: "" };
+      const r = await fetch(apiUrl(`/api/skill/${selected}`));
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
-    enabled: !!selectedSkill,
+    enabled: !!selected,
   });
   const skills = skillsData?.skills || [];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div style={{ borderBottom: "1px solid var(--border-color)" }} className="pb-4">
+    <div>
+      <div style={{ borderBottom: "1px solid var(--border-color)" }} className="pb-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="glass-panel" style={{ padding: "12px", borderRadius: "12px" }}>
             <BookOpen className="w-6 h-6 text-amber-500" />
@@ -51,8 +51,8 @@ export function SkillsPage() {
           {skills.map((s) => (
             <button
               key={s.name}
-              onClick={() => setSelectedSkill(s.name)}
-              className={`glass-card w-full text-left text-xs transition-all ${selectedSkill === s.name ? "border-amber-500/30" : ""}`}
+              onClick={() => setSelected(s.name)}
+              className={`glass-card w-full text-left text-xs transition-all ${selected === s.name ? "border-amber-500/30" : ""}`}
             >
               <h4 className="font-bold text-white">{s.title}</h4>
               <p className="text-slate-400 text-[10px] mt-1">{s.description}</p>
@@ -61,7 +61,7 @@ export function SkillsPage() {
           {skills.length === 0 && <p className="text-xs text-slate-500">No skills available.</p>}
         </div>
         <div className="md:col-span-3">
-          {selectedSkill && skillContent ? (
+          {selected && content ? (
             <div className="glass-panel text-sm leading-relaxed">
               <ReactMarkdown
                 components={{
@@ -89,7 +89,7 @@ export function SkillsPage() {
                   ),
                 }}
               >
-                {skillContent.content}
+                {content.content}
               </ReactMarkdown>
             </div>
           ) : (

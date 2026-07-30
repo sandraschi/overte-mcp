@@ -1,22 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Cpu, Globe, Laptop, Server } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { apiUrl } from "../lib/api-base";
+import { fetchModels, useLLMStore } from "../store/llm";
 
 export function SettingsPage() {
-  const [providerStatus, setProviderStatus] = useState<
-    Record<string, "probing" | "detected" | "not_found">
-  >({ ollama: "probing", "lm-studio": "probing" });
-  const [detectedProviders, setDetectedProviders] = useState<
-    Array<{ name: string; port: number; base: string }>
-  >([]);
-  const [selectedProvider, setSelectedProvider] = useState(
-    () => localStorage.getItem("overte-mcp-llm-provider") || "",
-  );
-  const [selectedModel, setSelectedModel] = useState(
-    () => localStorage.getItem("overte-mcp-llm-model") || "",
-  );
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const store = useLLMStore();
+  const { detectedProviders, providerStatus, selectedProvider, selectedModel, availableModels } =
+    store;
+
+  useEffect(() => {
+    if (selectedProvider) {
+      const prov = detectedProviders.find((p) => p.name === selectedProvider);
+      if (prov) fetchModels(prov, store);
+    }
+  }, [selectedProvider, store, detectedProviders.find]);
 
   const { data: health } = useQuery({
     queryKey: ["health"],
@@ -28,64 +26,9 @@ export function SettingsPage() {
     refetchInterval: 15000,
   });
 
-  useEffect(() => {
-    (async () => {
-      const results: Array<{ name: string; port: number; base: string }> = [];
-      try {
-        const r = await fetch("http://127.0.0.1:11434/api/tags", {
-          signal: AbortSignal.timeout(3000),
-        });
-        if (r.ok) results.push({ name: "Ollama", port: 11434, base: "http://127.0.0.1:11434" });
-        setProviderStatus((p) => ({ ...p, ollama: r.ok ? "detected" : "not_found" }));
-      } catch {
-        setProviderStatus((p) => ({ ...p, ollama: "not_found" }));
-      }
-      try {
-        const r = await fetch("http://127.0.0.1:1234/v1/models", {
-          signal: AbortSignal.timeout(3000),
-        });
-        if (r.ok) results.push({ name: "LM Studio", port: 1234, base: "http://127.0.0.1:1234" });
-        setProviderStatus((p) => ({ ...p, "lm-studio": r.ok ? "detected" : "not_found" }));
-      } catch {
-        setProviderStatus((p) => ({ ...p, "lm-studio": "not_found" }));
-      }
-      setDetectedProviders(results);
-      if (!selectedProvider && results.length > 0) setSelectedProvider(results[0].name);
-    })();
-  }, [selectedProvider]);
-
-  useEffect(() => {
-    if (!selectedProvider) return;
-    const prov = detectedProviders.find((p) => p.name === selectedProvider);
-    if (!prov) return;
-    (async () => {
-      try {
-        const url = prov.port === 11434 ? `${prov.base}/api/tags` : `${prov.base}/v1/models`;
-        const r = await fetch(url, { signal: AbortSignal.timeout(3000) });
-        if (!r.ok) return;
-        const data = await r.json();
-        const models =
-          prov.port === 11434
-            ? (data.models || []).map((m: any) => m.name)
-            : (data.data || []).map((m: any) => m.id);
-        setAvailableModels(models);
-        if (!selectedModel && models.length > 0) setSelectedModel(models[0]);
-      } catch {
-        /* probe failed */
-      }
-    })();
-  }, [selectedProvider, selectedModel, detectedProviders.find]);
-
-  useEffect(() => {
-    if (selectedProvider) localStorage.setItem("overte-mcp-llm-provider", selectedProvider);
-  }, [selectedProvider]);
-  useEffect(() => {
-    if (selectedModel) localStorage.setItem("overte-mcp-llm-model", selectedModel);
-  }, [selectedModel]);
-
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div style={{ borderBottom: "1px solid var(--border-color)" }} className="pb-4">
+    <div>
+      <div style={{ borderBottom: "1px solid var(--border-color)" }} className="pb-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="glass-panel" style={{ padding: "12px", borderRadius: "12px" }}>
             <Server className="w-6 h-6 text-amber-500" />
@@ -97,8 +40,8 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="glass-panel space-y-4">
-        <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
+      <div className="glass-panel mb-6">
+        <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3 mb-4">
           <Activity className="w-5 h-5 text-amber-500" />
           <h3 className="text-sm font-bold uppercase tracking-wider text-white">Backend Health</h3>
         </div>
@@ -111,10 +54,10 @@ export function SettingsPage() {
               { label: "Port", value: String(health.port) },
             ].map((item) => (
               <div key={item.label}>
-                <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider">
+                <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider mb-0.5">
                   {item.label}
                 </span>
-                <span className="text-white font-bold">{item.value}</span>
+                <span className="text-white font-bold font-mono">{item.value}</span>
               </div>
             ))}
           </div>
@@ -123,8 +66,8 @@ export function SettingsPage() {
         )}
       </div>
 
-      <div className="glass-panel space-y-4">
-        <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
+      <div className="glass-panel mb-6">
+        <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3 mb-4">
           <Cpu className="w-5 h-5 text-amber-500" />
           <h3 className="text-sm font-bold uppercase tracking-wider text-white">
             Local Intelligence
@@ -167,10 +110,7 @@ export function SettingsPage() {
               <select
                 data-testid="llm-provider-select"
                 value={selectedProvider}
-                onChange={(e) => {
-                  setSelectedProvider(e.target.value);
-                  setSelectedModel("");
-                }}
+                onChange={(e) => store.setSelectedProvider(e.target.value)}
                 disabled={detectedProviders.length === 0}
                 style={{
                   background: "rgba(0,0,0,0.3)",
@@ -197,7 +137,7 @@ export function SettingsPage() {
                 <select
                   data-testid="llm-model-select"
                   value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
+                  onChange={(e) => store.setSelectedModel(e.target.value)}
                   style={{
                     background: "rgba(0,0,0,0.3)",
                     border: "1px solid var(--border-color)",
@@ -219,8 +159,8 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="glass-panel space-y-4">
-        <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
+      <div className="glass-panel">
+        <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3 mb-4">
           <Laptop className="w-5 h-5 text-indigo-400" />
           <h3 className="text-sm font-bold uppercase tracking-wider text-white">System</h3>
         </div>

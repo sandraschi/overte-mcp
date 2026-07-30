@@ -1,5 +1,6 @@
 import { Download, Eraser, MessageSquare, Send, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchModels, useLLMStore } from "../store/llm";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -9,64 +10,33 @@ interface ChatMessage {
 
 const STORAGE_KEY = "overte-mcp-chat-history";
 const PERSONALITY_KEY = "overte-mcp-chat-personality";
+const MAX_HISTORY = 100;
 
 const PERSONALITIES: Record<string, string> = {
   "research-assistant":
     "You are a thorough research assistant. Provide detailed, well-structured answers with citations where possible.",
   "expert-reviewer":
     "You are a critical expert reviewer. Analyze problems rigorously, point out flaws, and suggest improvements.",
-  "quick-summarizer": "You are a concise summarizer. Keep answers brief and to the point.",
-  custom: "",
+  "quick-summarizer":
+    "You are a concise summarizer. Keep answers brief and to the point \u2014 3 bullet points max.",
 };
 
 const EXAMPLE_PROMPTS = [
   { label: "Check domain", text: "What nodes are connected to the Overte domain server?" },
   { label: "Spawn entity", text: "How do I spawn a Box at position (0, 2, -5)?" },
-  { label: "Script injection", text: "Show me how to inject a click-handler script." },
-  { label: "Bridge setup", text: "How do I connect the WebSocket bridge to Overte?" },
-  { label: "Auth config", text: "How do I set up admin credentials?" },
-  { label: "Troubleshoot", text: "Domain-server returns simulated data. What do I check?" },
+  { label: "Inject script", text: "Show me how to inject a click-handler script onto an entity." },
+  { label: "Bridge setup", text: "How do I connect the WebSocket bridge?" },
+  { label: "Auth config", text: "How do I set up admin credentials for the domain-server?" },
+  { label: "Troubleshoot", text: "Domain-server returns simulated data. What should I check?" },
 ];
 
+const SKILL_CONTENT =
+  "You are an Overte VR/metaverse assistant. You help users manage Overte domain-servers, spawn entities, and inject scripts. Available tools: overte_domain_status (query nodes/settings), overte_entity_spawn (create in-world objects), overte_script_inject (attach JS behaviors).\n\nUse the dashboard at http://127.0.0.1:11111 for visual management. The backend runs on port 11110. The WebSocket bridge script is at scripts/overte-mcp-bridge.js.";
+
 function buildSystemPrompt(personalityId: string, customPrompt: string): string {
-  const base = "You are an Overte VR/metaverse assistant.";
-  if (personalityId === "custom") return customPrompt || base;
-  const role = PERSONALITIES[personalityId] || PERSONALITIES["research-assistant"];
-  return `${base}\n\n---\n\n## Role\n${role}`;
-}
-
-async function probeOllama(): Promise<{ available: boolean; models: string[]; base: string }> {
-  try {
-    const r = await fetch("http://127.0.0.1:11434/api/tags", { signal: AbortSignal.timeout(3000) });
-    if (r.ok) {
-      const data = await r.json();
-      return {
-        available: true,
-        models: (data.models || []).map((m: any) => m.name),
-        base: "http://127.0.0.1:11434",
-      };
-    }
-  } catch {
-    /* not found */
-  }
-  return { available: false, models: [], base: "" };
-}
-
-async function probeLMStudio(): Promise<{ available: boolean; models: string[]; base: string }> {
-  try {
-    const r = await fetch("http://127.0.0.1:1234/v1/models", { signal: AbortSignal.timeout(3000) });
-    if (r.ok) {
-      const data = await r.json();
-      return {
-        available: true,
-        models: (data.data || []).map((m: any) => m.id),
-        base: "http://127.0.0.1:1234",
-      };
-    }
-  } catch {
-    /* not found */
-  }
-  return { available: false, models: [], base: "" };
+  if (personalityId === "custom") return customPrompt || SKILL_CONTENT;
+  const role = PERSONALITIES[personalityId];
+  return `${SKILL_CONTENT}\n\n---\n\n## Role\n${role}`;
 }
 
 export function ChatPage() {
@@ -83,52 +53,32 @@ export function ChatPage() {
     () => localStorage.getItem(PERSONALITY_KEY) || "research-assistant",
   );
   const [customPrompt, setCustomPrompt] = useState("");
-  const [ollamaStatus, setOllamaStatus] = useState<"probing" | "detected" | "not_found">("probing");
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState(
-    () => localStorage.getItem("overte-mcp-chat-model") || "",
-  );
-  const [ollamaBase, setOllamaBase] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const store = useLLMStore();
+  const { detectedProviders, selectedProvider, selectedModel, availableModels, probing } = store;
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-100)));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_HISTORY)));
   }, [messages]);
   useEffect(() => {
     localStorage.setItem(PERSONALITY_KEY, personalityId);
   }, [personalityId]);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  });
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      const o = await probeOllama();
-      if (o.available) {
-        setOllamaStatus("detected");
-        setOllamaModels(o.models);
-        setOllamaBase(o.base);
-        if (!selectedModel && o.models.length > 0) setSelectedModel(o.models[0]);
-        return;
-      }
-      const l = await probeLMStudio();
-      if (l.available) {
-        setOllamaStatus("detected");
-        setOllamaModels(l.models);
-        setOllamaBase(l.base);
-        if (!selectedModel && l.models.length > 0) setSelectedModel(l.models[0]);
-        return;
-      }
-      setOllamaStatus("not_found");
-    })();
-  }, [selectedModel]);
+    if (selectedProvider) {
+      const prov = detectedProviders.find((p) => p.name === selectedProvider);
+      if (prov) fetchModels(prov, store);
+    }
+  }, [selectedProvider, detectedProviders, store]);
 
-  useEffect(() => {
-    if (selectedModel) localStorage.setItem("overte-mcp-chat-model", selectedModel);
-  }, [selectedModel]);
+  const providerBase = detectedProviders.find((p) => p.name === selectedProvider)?.base || "";
 
   const sendMessage = useCallback(async () => {
-    if (!input.trim() || loading || ollamaStatus !== "detected") return;
+    if (!input.trim() || loading || !providerBase) return;
     const userMsg: ChatMessage = {
       role: "user",
       content: input.trim(),
@@ -137,18 +87,19 @@ export function ChatPage() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
+
     const systemContent = buildSystemPrompt(personalityId, customPrompt);
     const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
-    const body = {
-      model: selectedModel,
-      messages: [{ role: "system", content: systemContent }, ...history],
-      stream: false,
-    };
+
     try {
-      const r = await fetch(`${ollamaBase}/v1/chat/completions`, {
+      const r = await fetch(`${providerBase}/v1/chat/completions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          model: selectedModel,
+          messages: [{ role: "system", content: systemContent }, ...history],
+          stream: false,
+        }),
         signal: AbortSignal.timeout(60000),
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -172,26 +123,18 @@ export function ChatPage() {
       ]);
     }
     setLoading(false);
-  }, [
-    input,
-    loading,
-    messages,
-    ollamaStatus,
-    selectedModel,
-    ollamaBase,
-    personalityId,
-    customPrompt,
-  ]);
+  }, [input, loading, messages, personalityId, customPrompt, providerBase, selectedModel]);
 
   const clearChat = () => {
     setMessages([]);
     localStorage.removeItem(STORAGE_KEY);
   };
+
   const exportChat = () => {
     if (messages.length === 0) return;
     const text = messages
       .map((m) => `[${m.ts}] ${m.role.toUpperCase()}: ${m.content}`)
-      .join("\n\n");
+      .join("\n\n---\n\n");
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -201,11 +144,10 @@ export function ChatPage() {
     URL.revokeObjectURL(url);
   };
 
+  const hasLLM = detectedProviders.length > 0;
+
   return (
-    <div
-      data-testid="chat-page"
-      className="space-y-6 animate-fade-in flex flex-col h-[calc(100vh-10rem)]"
-    >
+    <div data-testid="chat-page" className="flex flex-col h-[calc(100vh-10rem)]">
       <div
         style={{ borderBottom: "1px solid var(--border-color)" }}
         className="pb-4 flex items-center justify-between"
@@ -270,29 +212,25 @@ export function ChatPage() {
             borderRadius: "8px",
             color: "white",
           }}
-          className="w-full px-3 py-2 text-xs h-20 resize-none focus:outline-none focus:border-amber-500/50"
+          className="w-full px-3 py-2 text-xs h-20 resize-none focus:outline-none focus:border-amber-500/50 mb-2"
         />
       )}
 
       <div className="flex items-center gap-3 text-xs mb-2">
         <div className="flex items-center gap-1.5">
           <span
-            className={`w-2 h-2 rounded-full ${ollamaStatus === "probing" ? "bg-amber-500 animate-pulse" : ollamaStatus === "detected" ? "bg-green-500" : "bg-slate-500"}`}
+            className={`w-2 h-2 rounded-full ${probing ? "bg-amber-500 animate-pulse" : hasLLM ? "bg-green-500" : "bg-slate-500"}`}
           />
           <span className="text-slate-400">
-            {ollamaStatus === "probing"
-              ? "Probing LLM..."
-              : ollamaStatus === "detected"
-                ? "LLM detected"
-                : "No local LLM"}
+            {probing ? "Probing LLM..." : hasLLM ? `${selectedProvider} detected` : "No local LLM"}
           </span>
         </div>
-        {ollamaStatus === "detected" && (
+        {hasLLM && (
           <>
             <span className="text-slate-500">|</span>
             <select
               value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+              onChange={(e) => store.setSelectedModel(e.target.value)}
               style={{
                 background: "rgba(0,0,0,0.3)",
                 border: "1px solid var(--border-color)",
@@ -302,7 +240,7 @@ export function ChatPage() {
               }}
               className="px-2 py-1 focus:outline-none focus:border-amber-500/50"
             >
-              {ollamaModels.map((m) => (
+              {availableModels.map((m) => (
                 <option key={m} value={m}>
                   {m}
                 </option>
@@ -316,7 +254,7 @@ export function ChatPage() {
       </div>
 
       <div data-testid="chat-messages" className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-        {messages.length === 0 && ollamaStatus === "detected" && (
+        {messages.length === 0 && hasLLM && (
           <div data-testid="example-prompts" className="flex flex-wrap gap-2">
             {EXAMPLE_PROMPTS.map((p) => (
               <button
@@ -336,7 +274,7 @@ export function ChatPage() {
             ))}
           </div>
         )}
-        {messages.length === 0 && ollamaStatus !== "detected" && (
+        {messages.length === 0 && !hasLLM && (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-3">
             <Sparkles className="w-8 h-8" />
             <p className="text-sm">No local LLM detected.</p>
@@ -373,10 +311,8 @@ export function ChatPage() {
               sendMessage();
             }
           }}
-          placeholder={
-            ollamaStatus === "detected" ? "Ask about Overte..." : "Start Ollama to enable chat..."
-          }
-          disabled={ollamaStatus !== "detected"}
+          placeholder={hasLLM ? "Ask about Overte..." : "Start Ollama to enable chat..."}
+          disabled={!hasLLM}
           style={{
             background: "rgba(0,0,0,0.3)",
             border: "1px solid var(--border-color)",
@@ -388,7 +324,7 @@ export function ChatPage() {
         <button
           data-testid="chat-send"
           onClick={sendMessage}
-          disabled={!input.trim() || loading || ollamaStatus !== "detected"}
+          disabled={!input.trim() || loading || !hasLLM}
           style={{
             background: "rgba(245,158,11,0.1)",
             border: "1px solid rgba(245,158,11,0.3)",

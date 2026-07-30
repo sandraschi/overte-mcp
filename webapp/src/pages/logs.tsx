@@ -11,19 +11,20 @@ interface LogEntry {
 }
 
 export function LogsPage() {
-  const [levelFilter, setLevelFilter] = useState<string>("");
+  const [levelFilter, setLevelFilter] = useState("");
   const { data, isLoading, refetch } = useQuery<{ logs: LogEntry[]; total: number }>({
     queryKey: ["logs", levelFilter],
     queryFn: async () => {
-      const params = new URLSearchParams({ limit: "100" });
-      if (levelFilter) params.set("level", levelFilter);
-      const r = await fetch(apiUrl(`/api/logs?${params}`));
+      const p = new URLSearchParams({ limit: "100" });
+      if (levelFilter) p.set("level", levelFilter);
+      const r = await fetch(apiUrl(`/api/logs?${p}`));
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
     refetchInterval: 5000,
   });
   const logs = data?.logs || [];
+
   const exportLogs = () => {
     if (logs.length === 0) return;
     const text = logs.map((l) => `[${l.ts}] [${l.level}] [${l.source}] ${l.message}`).join("\n");
@@ -37,10 +38,10 @@ export function LogsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div>
       <div
         style={{ borderBottom: "1px solid var(--border-color)" }}
-        className="pb-4 flex items-center justify-between"
+        className="pb-4 mb-6 flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
           <div className="glass-panel" style={{ padding: "12px", borderRadius: "12px" }}>
@@ -95,19 +96,27 @@ export function LogsPage() {
         ) : logs.length === 0 ? (
           <p className="text-xs text-slate-500 p-4 text-center">No log entries.</p>
         ) : (
-          <div className="space-y-0">
+          <div className="divide-y divide-white/[0.02]">
             {logs.map((entry, i) => (
               <div
                 key={i}
-                className="flex gap-3 text-[11px] px-4 py-1.5 border-b border-white/[0.02] last:border-0 text-slate-300"
+                className="flex gap-3 text-[11px] px-4 py-1.5 text-slate-300 hover:bg-white/[0.02]"
               >
                 <span className="text-slate-600 shrink-0 w-20">{entry.ts.slice(11, 19)}</span>
                 <span
-                  className={`shrink-0 w-16 font-bold ${entry.level === "ERROR" ? "text-rose-400" : entry.level === "WARNING" ? "text-amber-400" : "text-emerald-400"}`}
+                  className={`shrink-0 w-16 font-bold ${
+                    entry.level === "ERROR"
+                      ? "text-rose-400"
+                      : entry.level === "WARNING"
+                        ? "text-amber-400"
+                        : "text-emerald-400"
+                  }`}
                 >
                   {entry.level}
                 </span>
-                <span className="text-slate-600 shrink-0 w-24">{entry.source}</span>
+                <span className="text-slate-600 shrink-0 w-24 truncate" title={entry.source}>
+                  {entry.source}
+                </span>
                 <span className="break-all">{entry.message}</span>
               </div>
             ))}

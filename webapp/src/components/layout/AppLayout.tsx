@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { probeProviders, useLLMStore } from "../../store/llm";
 import { Sidebar } from "./Sidebar";
+import { Topbar } from "./Topbar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -7,14 +9,21 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const store = useLLMStore();
+
+  useEffect(() => {
+    probeProviders(store);
+  }, [store]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-
-      <main className="flex-1 overflow-y-auto h-screen p-6 md:p-8 space-y-6">
-        <div className="max-w-7xl mx-auto w-full">{children}</div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+          <div className="max-w-7xl mx-auto w-full space-y-6 animate-fade-in">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }
