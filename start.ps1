@@ -57,7 +57,7 @@ if (-not $FrontendOnly) {
 # --- Start frontend ---
 if (-not $BackendOnly) {
     Write-Host "Starting frontend on :$FrontendPort ..." -ForegroundColor Cyan
-    Start-Process -NoNewWindow -FilePath "bun" -ArgumentList "run dev" -WorkingDirectory $WebRoot
+    Start-Process -NoNewWindow -FilePath "powershell" -ArgumentList "-NoProfile", "-Command", "bun run dev" -WorkingDirectory $WebRoot
 }
 
 # --- Open browser ---
