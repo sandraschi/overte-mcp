@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --font-sans: "Outfit", "Inter", system-ui, -apple-system, sans-serif;
   --bg-dark: #020617;
