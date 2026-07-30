@@ -22,6 +22,7 @@ def load_vrm_extension():
 
     # Use addon_utils to properly register the addon with preferences
     import addon_utils
+
     try:
         # First ensure the module is accessible
         # Enable via addon_utils which handles preferences
@@ -31,6 +32,7 @@ def load_vrm_extension():
     except Exception as e:
         print(f"Failed to enable VRM addon: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

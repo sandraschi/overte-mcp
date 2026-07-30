@@ -19,6 +19,7 @@ def load_vrm_extension():
     ext_root = bpy.utils.user_resource("EXTENSIONS", path="user_default")
     sys.path.insert(0, ext_root)
     import addon_utils
+
     try:
         addon_utils.enable("vrm", default_set=True, persistent=True)
         print("VRM addon enabled with preferences")
@@ -26,6 +27,7 @@ def load_vrm_extension():
     except Exception as e:
         print(f"Failed to enable VRM addon: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

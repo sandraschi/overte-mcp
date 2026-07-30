@@ -40,6 +40,8 @@ def _log(source: str, level: str, message: str):
 # WebSocket bridge state
 _active_ws: WebSocket | None = None
 _pending_requests: dict[str, asyncio.Future] = {}
+# Tracked entities (spawned via bridge, survives server restarts via log)
+_tracked_entities: dict[str, dict] = {}
 
 
 # Port configuration
@@ -276,6 +278,24 @@ async def websocket_endpoint(websocket: WebSocket):
             _active_ws = None
 
 
+@app.get("/api/overte/entities")
+async def list_tracked_entities():
+    """Return all entities tracked by this server (spawned via bridge)."""
+    return {
+        "status": "success",
+        "source": "live" if _active_ws else "simulated",
+        "items": list(_tracked_entities.values()),
+        "count": len(_tracked_entities),
+    }
+
+
+@app.delete("/api/overte/entities")
+async def clear_tracked_entities():
+    """Clear the tracked entity list."""
+    _tracked_entities.clear()
+    return {"status": "success", "message": "Entity list cleared."}
+
+
 @app.post("/api/overte/spawn")
 async def post_entity_spawn(request: EntitySpawnInput):
     """Spawn an in-world entity (via WebSocket bridge if connected, else falls back to simulated)."""
@@ -306,10 +326,22 @@ async def post_entity_spawn(request: EntitySpawnInput):
             }
             res = await _send_ws_command("spawn", payload)
             if res and res.get("status") == "success":
+                entity_id = res.get("entity_id", "")
+                _tracked_entities[entity_id] = {
+                    "id": entity_id,
+                    "name": request.name,
+                    "type": request.type,
+                    "position": list(request.position),
+                    "scale": list(request.scale),
+                    "model_url": request.model_url,
+                    "script_url": request.script_url,
+                    "permanent": request.permanent,
+                    "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                }
                 return {
                     "status": "success",
                     "source": "live",
-                    "entity_id": res.get("entity_id"),
+                    "entity_id": entity_id,
                     "message": "Entity successfully spawned in-world via WebSocket bridge.",
                 }
             else:

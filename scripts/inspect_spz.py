@@ -1,16 +1,19 @@
 """Inspect Marble SPZ file - it's gzip compressed."""
+
 import gzip
 import io
 import os
 import struct
 
-spz_path = os.path.join(os.path.dirname(__file__) or ".", "..", "models", "contemporary-living-room_full.spz")
+spz_path = os.path.join(
+    os.path.dirname(__file__) or ".", "..", "models", "contemporary-living-room_full.spz"
+)
 spz_path = os.path.normpath(spz_path)
 
 with gzip.open(spz_path, "rb") as f:
     data = f.read()
 
-print(f"Decompressed size: {len(data)} bytes ({len(data)/(1024*1024):.1f} MB)")
+print(f"Decompressed size: {len(data)} bytes ({len(data) / (1024 * 1024):.1f} MB)")
 print(f"First 16 bytes: {data[:16].hex()}")
 print(f"First 32 chars: {data[:32]}")
 
@@ -29,6 +32,7 @@ elif data[:4] == b"\x00\x00\x00\x00":
 elif data[:6] == b"NUMPY\x01":
     print("Numpy format")
     import numpy as np
+
     buf = io.BytesIO(data)
     arr = np.load(buf)
     print(f"  Shape: {arr.shape}, dtype: {arr.dtype}")
@@ -37,6 +41,7 @@ else:
     if data[:2] == b"\x80\x04":
         print("Python pickle format")
         import pickle
+
         obj = pickle.loads(data)
         print(f"  Type: {type(obj)}")
         if hasattr(obj, "keys"):

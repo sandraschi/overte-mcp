@@ -1,8 +1,8 @@
 # Overte MCP — System Architecture & Protocols
 
 Maps architecture, ports, data flow, and the live-vs-simulated contract for the
-overte-mcp server. See [STATUS.md](STATUS.md) for current verification status and
-[TODO.md](TODO.md) for remaining work.
+overte-mcp server. See [STATUS.md](../STATUS.md) for current verification status and
+remaining work.
 
 ---
 
@@ -256,6 +256,9 @@ overte-mcp/
 ├── mcpb/                      # Claude Desktop pack root
 ├── native/                    # Tauri 2.0 NSIS build
 ├── webapp/                    # Vite React SPA dashboard
+├── docs/                      # ONBOARDING, CONFIGURATION, DEVELOPMENT,
+│                               # ARCHITECTURE (this file), TOOLS, WRAPPEE,
+│                               # TROUBLESHOOTING
 ├── tests/
 │   ├── unit/test_tools.py     # 6 unit tests
 │   └── e2e/test_e2e.py        # 4 e2e tests
@@ -267,12 +270,15 @@ overte-mcp/
 
 ## Known Issues
 
-See [TODO.md](TODO.md) for the full list. Key architectural items:
+See [STATUS.md](../STATUS.md) for the full list. Key architectural items:
 
 1. **VRM joint animation** — `getJointNames()` returns 0 for VRM entities (not a
-   supported format). Convert to FBX or use avatar pipeline instead.
-2. **Entity persistence** — bridge doesn't set `lifetime: -1`, so spawned entities
-   are temporary and won't survive domain-server restart.
+   supported format). Convert to FBX/GLB or use the avatar pipeline instead — see
+   STATUS.md's VRM joint animation section for the working conversion pipeline.
+2. **Entity persistence** — fixed; `overte_entity_spawn` now accepts `permanent=True`
+   which sets `lifetime: -1` so entities survive a domain-server restart. Default
+   spawns are still temporary unless this flag is passed.
 3. **World Labs GLB import** — GLB/glTF is supported by Overte Model entities;
-   needs testing with an exported scene.
-4. **ARCHITECTURE.md** — This file supersedes the stale vircadia-era doc.
+   an end-to-end in-Interface test is still pending (see STATUS.md Remaining).
+4. **This file's location** — moved from repo root to `docs/ARCHITECTURE.md`
+   (2026-07-30) per the updated fleet README standard.

@@ -10,13 +10,9 @@ username/password has been set on the domain-server's local web UI
 (http://localhost:40100/settings). Per fleet convention, local dev setups
 default to admin/admin.
 
-HONESTY NOTE: this has NOT yet been verified against a live domain-server
-(none is running on Goliath as of 2026-07-20 -- Overte isn't installed yet).
-The endpoint paths and auth handling are correct per the domain-server's
-long-standing HTTP admin API (inherited unchanged from the original High
-Fidelity codebase through Vircadia-native-core into Overte), but the exact
-response shape has not been confirmed against a running instance. Treat the
-"live" parsing below as best-effort until tested against a real server.
+VERIFIED LIVE (2026-07-30): confirmed against a real Overte 2026.04.1
+domain-server on Goliath. /nodes.json and /settings.json both return the
+shapes this module expects. See STATUS.md for the verification record.
 """
 
 import logging

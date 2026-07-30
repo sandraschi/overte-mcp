@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Box, Code, Layers, Plus, Send, TreePine } from "lucide-react";
+import { Box, Code, Layers, Plus, Send, ShieldAlert, TreePine } from "lucide-react";
 import { useState } from "react";
 import { apiUrl } from "../lib/api-base";
 
@@ -22,51 +22,20 @@ export function EntitiesPage() {
   const [modelUrl, setModelUrl] = useState("");
   const [scriptUrl, setScriptUrl] = useState("");
 
-  // Retrieve entities list
-  const { data, isLoading, refetch } = useQuery<{ items: Entity[] }>({
+  // Retrieve entities list from server-side tracking
+  const { data, isLoading, refetch } = useQuery<{ items: Entity[]; source: string }>({
     queryKey: ["entitiesList"],
     queryFn: async () => {
-      // NOTE: there is no real "list entities" endpoint yet (no overte_entity_list
-      // tool exists -- see ARCHITECTURE.md). This is hardcoded MOCK DATA for UI
-      // layout purposes only, clearly labeled as such below and in the entity names.
-      const res = await fetch(apiUrl("/api/overte/status"));
-      if (!res.ok) throw new Error("Failed to load domain entities");
-
-      return {
-        items: [
-          {
-            id: "mock-0001",
-            name: "[MOCK] Joe Mocky's Hub Prop",
-            type: "Model",
-            position: [0.0, 1.5, -3.0],
-            scale: [1.5, 1.5, 1.5],
-            model_url: "https://example.invalid/models/mock-hub.glb",
-            script_url: "http://example.invalid/scripts/mock-spin.js",
-          },
-          {
-            id: "mock-0002",
-            name: "[MOCK] Hannes Mockinger's Display",
-            type: "Web",
-            position: [2.5, 1.8, -2.5],
-            scale: [1.2, 0.8, 0.05],
-            script_url: "http://example.invalid/scripts/mock-telemetry.js",
-          },
-          {
-            id: "mock-0003",
-            name: "[MOCK] Boundary Light",
-            type: "Light",
-            position: [-2.0, 3.0, -1.5],
-            scale: [0.2, 0.2, 0.2],
-          },
-        ],
-      };
+      const res = await fetch(apiUrl("/api/overte/entities"));
+      if (!res.ok) throw new Error("Failed to load entities");
+      return res.json();
     },
+    refetchInterval: 5000,
   });
 
   const entities = data?.items || [];
+  const source = data?.source;
 
-  // Spawn entity mutation -- SIMULATED backend (see tools/entities.py); no real
-  // in-world entity gets created by this call yet.
   const spawnMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch(apiUrl("/api/overte/spawn"), {
@@ -108,11 +77,15 @@ export function EntitiesPage() {
         </div>
       </div>
 
-      <div className="glass-panel border border-amber-500/30 text-amber-300 text-xs px-4 py-2">
-        Entity list below is MOCK DATA for layout purposes -- no "list entities" tool exists yet.
-        Spawn is wired to a real endpoint, but that endpoint currently returns SIMULATED results (no
-        live Overte bridge). See ARCHITECTURE.md.
-      </div>
+      {source === "simulated" && (
+        <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-xs px-4 py-2">
+          <ShieldAlert className="w-4 h-4 shrink-0" />
+          <span>
+            Bridge disconnected — showing only server-tracked entities. Load overte-mcp-bridge.js in
+            Interface for live operations.
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Entity Spawner Box */}

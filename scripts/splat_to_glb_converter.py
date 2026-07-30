@@ -102,9 +102,14 @@ def load_ply_to_splats(path: str) -> dict:
     vertex = ply.elements[0]
     n = len(vertex)
 
-    means = np.stack([np.asarray(vertex["x"]), np.asarray(vertex["y"]), np.asarray(vertex["z"])], axis=1)
+    means = np.stack(
+        [np.asarray(vertex["x"]), np.asarray(vertex["y"]), np.asarray(vertex["z"])], axis=1
+    )
     opacities = np.asarray(vertex["opacity"])
-    sh0 = np.stack([np.asarray(vertex["f_dc_0"]), np.asarray(vertex["f_dc_1"]), np.asarray(vertex["f_dc_2"])], axis=1)
+    sh0 = np.stack(
+        [np.asarray(vertex["f_dc_0"]), np.asarray(vertex["f_dc_1"]), np.asarray(vertex["f_dc_2"])],
+        axis=1,
+    )
 
     f_rest_names = sorted(
         (p.name for p in vertex.properties if p.name.startswith("f_rest_")),
@@ -117,10 +122,16 @@ def load_ply_to_splats(path: str) -> dict:
     else:
         f_rest = np.zeros((n, 0, 3), dtype=np.float32)
 
-    scale_names = sorted((p.name for p in vertex.properties if p.name.startswith("scale_")), key=lambda s: int(s.split("_")[-1]))
+    scale_names = sorted(
+        (p.name for p in vertex.properties if p.name.startswith("scale_")),
+        key=lambda s: int(s.split("_")[-1]),
+    )
     scales = np.stack([np.asarray(vertex[name]) for name in scale_names], axis=1)
 
-    rot_names = sorted((p.name for p in vertex.properties if p.name.startswith("rot_")), key=lambda s: int(s.split("_")[-1]))
+    rot_names = sorted(
+        (p.name for p in vertex.properties if p.name.startswith("rot_")),
+        key=lambda s: int(s.split("_")[-1]),
+    )
     quats = np.stack([np.asarray(vertex[name]) for name in rot_names], axis=1)
 
     return {
@@ -182,14 +193,20 @@ def convert(splat_path, glb_path):
     data = read_ngsp(splat_path)
 
     verts, colors, triangles = splat_to_mesh(
-        data["positions"], data["colors"], data["opacities"],
-        subsample=50, opacity_threshold=0.05,
+        data["positions"],
+        data["colors"],
+        data["opacities"],
+        subsample=50,
+        opacity_threshold=0.05,
     )
     if verts is None:
         print("Mesh generation failed, trying with lower subsample...")
         verts, colors, triangles = splat_to_mesh(
-            data["positions"], data["colors"], data["opacities"],
-            subsample=10, opacity_threshold=0.01,
+            data["positions"],
+            data["colors"],
+            data["opacities"],
+            subsample=10,
+            opacity_threshold=0.01,
         )
     if verts is not None:
         os.makedirs(os.path.dirname(glb_path) or ".", exist_ok=True)

@@ -1,4 +1,5 @@
 """Test VRM extension loading and list import operators."""
+
 import os
 
 import bpy

@@ -1,4 +1,5 @@
 """Parse NGSP v2 binary format from Marble SPZ file and export as standard PLY."""
+
 import gzip
 import os
 import struct
@@ -35,10 +36,10 @@ def read_ngsp_v2(filepath):
             print(f"Truncated descriptor at offset {pos}")
             break
 
-        tag = remaining[pos:pos+4].rstrip(b'\x00').decode('ascii', errors='replace')
-        elem_size = struct.unpack("I", remaining[pos+4:pos+8])[0]
-        num_elems = struct.unpack("I", remaining[pos+8:pos+12])[0]
-        data_len = struct.unpack("I", remaining[pos+12:pos+16])[0]
+        tag = remaining[pos : pos + 4].rstrip(b"\x00").decode("ascii", errors="replace")
+        elem_size = struct.unpack("I", remaining[pos + 4 : pos + 8])[0]
+        num_elems = struct.unpack("I", remaining[pos + 8 : pos + 12])[0]
+        data_len = struct.unpack("I", remaining[pos + 12 : pos + 16])[0]
 
         data_start = pos + 24
         data_end = data_start + data_len
@@ -95,8 +96,12 @@ def splats_to_ply(sections, output_path):
 
     # Build structured array for PLY
     dtype_list = [
-        ("x", "f4"), ("y", "f4"), ("z", "f4"),
-        ("nx", "f4"), ("ny", "f4"), ("nz", "f4"),
+        ("x", "f4"),
+        ("y", "f4"),
+        ("z", "f4"),
+        ("nx", "f4"),
+        ("ny", "f4"),
+        ("nz", "f4"),
     ]
     if f_dc is not None:
         for j in range(3):
@@ -159,9 +164,13 @@ if __name__ == "__main__":
     spz_path = os.environ.get("SPLAT_INPUT_PATH", "")
     ply_path = os.environ.get("PLY_OUTPUT_PATH", "")
     if not spz_path:
-        spz_path = os.path.join(os.path.dirname(__file__) or ".", "..", "models", "contemporary-living-room_full.spz")
+        spz_path = os.path.join(
+            os.path.dirname(__file__) or ".", "..", "models", "contemporary-living-room_full.spz"
+        )
     if not ply_path:
-        ply_path = os.path.join(os.path.dirname(__file__) or ".", "..", "models", "contemporary-living-room_raw.ply")
+        ply_path = os.path.join(
+            os.path.dirname(__file__) or ".", "..", "models", "contemporary-living-room_raw.ply"
+        )
 
     sections = read_ngsp_v2(os.path.normpath(spz_path))
     print(f"\nSections found: {list(sections.keys())}")

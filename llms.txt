@@ -8,7 +8,7 @@
 
 - [README.md](README.md) — status table, quick start
 - [INSTALL.md](INSTALL.md) — Overte setup, stdio, Claude Desktop, MCPB
-- [ARCHITECTURE.md](ARCHITECTURE.md) — ports, bridge, packaging layout
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — ports, bridge, packaging layout
 - [mcpb/README.md](mcpb/README.md) — Claude Desktop bundle
 - [glama.json](glama.json) — Glama registry metadata (excluded from `.mcpb`)
 - [CHANGELOG.md](CHANGELOG.md)
