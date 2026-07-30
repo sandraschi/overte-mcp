@@ -34,15 +34,10 @@ if (-not $BackendOnly -and -not (Test-Path (Join-Path $WebRoot "node_modules")))
 }
 
 # --- Start backend ---
-$BackendJob = $null
 if (-not $FrontendOnly) {
     Write-Host "Starting backend on :$BackendPort ..." -ForegroundColor Cyan
-    $BackendJob = Start-Job -Name "overte-backend" -ScriptBlock {
-        param($Root, $Port, $Entry)
-        Set-Location $Root
-        $env:MCP_PORT = "$Port"; $env:MCP_HOST = "127.0.0.1"
-        uv run python $Entry
-    } -ArgumentList $ScriptRoot, $BackendPort, $BackendEntry
+    $env:MCP_PORT = "$BackendPort"; $env:MCP_HOST = "127.0.0.1"
+    Start-Process powershell -ArgumentList "-NoProfile", "-Command", "uv run python $BackendEntry" -WindowStyle Normal -WorkingDirectory $ScriptRoot
 
     # Health poll (up to 60s)
     $health = "http://127.0.0.1:$BackendPort/api/health"
@@ -73,9 +68,11 @@ Write-Host "Backend  : http://127.0.0.1:$BackendPort/api/health"
 
 # --- Keep alive ---
 while ($true) {
-    if ($null -ne $BackendJob -and $BackendJob.State -in @("Completed", "Failed")) {
-        Receive-Job $BackendJob
-        break
+    Start-Sleep 10
+    try {
+        $null = Invoke-WebRequest -Uri $health -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+    } catch {
+        Write-Host "Backend disconnected. Restarting..." -ForegroundColor Yellow
+        Start-Process powershell -ArgumentList "-NoProfile", "-Command", "uv run python $BackendEntry" -WindowStyle Normal -WorkingDirectory $ScriptRoot
     }
-    Start-Sleep 5
 }
