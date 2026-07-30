@@ -278,6 +278,37 @@ async def websocket_endpoint(websocket: WebSocket):
             _active_ws = None
 
 
+_SCRIPT_MANIFEST = [
+    {
+        "name": "overte-mcp-bridge.js",
+        "description": "WebSocket bridge client. Connects to the MCP backend for live entity spawn/inject. Required for live operations.",
+        "category": "infrastructure",
+    },
+    {
+        "name": "dance-script.js",
+        "description": "Skeletal dance animation for VRM/avatar entities. Bobs, spins, swings arms, tilts head, and sways hips.",
+        "category": "animation",
+    },
+    {
+        "name": "spin.js",
+        "description": "Simple continuous spin animation. Attaches to any entity and rotates it along the Y axis at configurable speed.",
+        "category": "animation",
+    },
+]
+
+
+@app.get("/api/overte/scripts")
+async def list_scripts():
+    """List available script files with descriptions."""
+    manifest = list(_SCRIPT_MANIFEST)
+    # Check which files actually exist
+    for s in manifest:
+        sp = _scripts_dir / s["name"]
+        s["exists"] = sp.exists()
+        s["url"] = f"http://localhost:{BACKEND_PORT}/scripts/{s['name']}"
+    return {"scripts": manifest, "count": len(manifest)}
+
+
 @app.get("/api/overte/entities")
 async def list_tracked_entities():
     """Return all entities tracked by this server (spawned via bridge)."""
@@ -406,6 +437,12 @@ if _models_dir.exists():
     _log("http_server", "INFO", f"Model files served from {_models_dir}")
 else:
     _log("http_server", "WARNING", f"Models directory not found: {_models_dir}")
+
+# Serve scripts for Overte entity script URLs
+_scripts_dir = Path(__file__).resolve().parent.parent.parent / "scripts"
+if _scripts_dir.exists():
+    app.mount("/scripts", StaticFiles(directory=str(_scripts_dir)), name="scripts")
+    _log("http_server", "INFO", f"Scripts served from {_scripts_dir}")
 
 # Mount MCP streamable HTTP protocol at /mcp for stdio proxy pattern
 try:
