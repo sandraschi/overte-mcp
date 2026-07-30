@@ -1,18 +1,13 @@
 import {
-  AppWindow,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Globe,
   HelpCircle,
   LayoutDashboard,
-  MessageSquare,
-  ScrollText,
-  Settings,
   Terminal,
   TreePine,
   Users,
-  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -28,12 +23,6 @@ const navItems = [
   { href: "/avatars", label: "Avatars", icon: Users, section: "space" },
   { href: "/entities", label: "Entities Explorer", icon: TreePine, section: "space" },
   { href: "/scripting", label: "JS Scripting", icon: Terminal, section: "systems" },
-  { href: "/chat", label: "Chat", icon: MessageSquare, section: "intelligence" },
-  { href: "/tools", label: "Tools", icon: Wrench, section: "intelligence" },
-  { href: "/skills", label: "Skills", icon: ScrollText, section: "intelligence" },
-  { href: "/logs", label: "Logs", icon: ScrollText, section: "meta" },
-  { href: "/settings", label: "Settings", icon: Settings, section: "meta" },
-  { href: "/apps-hub", label: "Apps Hub", icon: AppWindow, section: "meta" },
   { href: "/help", label: "Help Hub", icon: HelpCircle, section: "meta" },
 ];
 
@@ -41,27 +30,23 @@ const sections: Record<string, string> = {
   main: "Overview",
   space: "Space",
   systems: "Systems",
-  intelligence: "Intelligence",
   meta: "Meta",
 };
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
 
-  // Group items by section
   const grouped: Record<string, typeof navItems> = {};
   for (const item of navItems) {
     if (!grouped[item.section]) grouped[item.section] = [];
     grouped[item.section].push(item);
   }
 
-  // Handle collapsible states for categories
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {
       main: true,
       space: true,
       systems: true,
-      intelligence: true,
       meta: true,
     };
     for (const item of navItems) {
@@ -175,7 +160,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         />
                         {!collapsed && <span>{item.label}</span>}
 
-                        {/* Collapsed Tooltip */}
                         {collapsed && (
                           <span
                             style={{
