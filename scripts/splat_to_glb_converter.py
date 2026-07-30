@@ -89,6 +89,50 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
+def load_ply_to_splats(path: str) -> dict:
+    """Read a 3D Gaussian Splatting PLY file into splat parameter tensors.
+    Supports standard 3DGS PLY format with f_dc_*, f_rest_* properties.
+    """
+    try:
+        from plyfile import PlyData
+    except ImportError:
+        raise ImportError("Install plyfile: pip install plyfile")
+
+    ply = PlyData.read(str(path))
+    vertex = ply.elements[0]
+    n = len(vertex)
+
+    means = np.stack([np.asarray(vertex["x"]), np.asarray(vertex["y"]), np.asarray(vertex["z"])], axis=1)
+    opacities = np.asarray(vertex["opacity"])
+    sh0 = np.stack([np.asarray(vertex["f_dc_0"]), np.asarray(vertex["f_dc_1"]), np.asarray(vertex["f_dc_2"])], axis=1)
+
+    f_rest_names = sorted(
+        (p.name for p in vertex.properties if p.name.startswith("f_rest_")),
+        key=lambda s: int(s.split("_")[-1]),
+    )
+    if f_rest_names:
+        f_rest = np.stack([np.asarray(vertex[name]) for name in f_rest_names], axis=1)
+        k = len(f_rest_names) // 3
+        f_rest = f_rest.reshape(n, 3, k).swapaxes(1, 2)
+    else:
+        f_rest = np.zeros((n, 0, 3), dtype=np.float32)
+
+    scale_names = sorted((p.name for p in vertex.properties if p.name.startswith("scale_")), key=lambda s: int(s.split("_")[-1]))
+    scales = np.stack([np.asarray(vertex[name]) for name in scale_names], axis=1)
+
+    rot_names = sorted((p.name for p in vertex.properties if p.name.startswith("rot_")), key=lambda s: int(s.split("_")[-1]))
+    quats = np.stack([np.asarray(vertex[name]) for name in rot_names], axis=1)
+
+    return {
+        "means": means.astype(np.float32),
+        "scales": scales.astype(np.float32),
+        "quats": quats.astype(np.float32),
+        "opacities": opacities.astype(np.float32),
+        "sh0": sh0[:, None, :].astype(np.float32),
+        "shN": f_rest.astype(np.float32),
+    }
+
+
 def splat_to_mesh(positions, colors, opacities, subsample=50, opacity_threshold=0.05):
     """Filter gaussian splat point cloud and create mesh via Delaunay."""
     from scipy.spatial import Delaunay

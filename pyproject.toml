@@ -18,6 +18,7 @@ dependencies = [
     "gsplat>=1.0",
     "scipy>=1.18.0",
     "trimesh>=4.12.2",
+    "plyfile>=1.1.5",
 ]
 
 [project.scripts]
