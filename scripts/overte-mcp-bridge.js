@@ -21,7 +21,8 @@
         socket.onmessage = function(event) {
             try {
                 var message = JSON.parse(event.data);
-                handleMessage(message);
+                var sock = socket; // capture socket for this message's response
+                handleMessage(message, sock);
             } catch (e) {
                 print("[overte-mcp-bridge] Error parsing message: " + e);
             }
@@ -47,16 +48,16 @@
         }, backoffMs);
     }
 
-    function handleMessage(msg) {
+    function handleMessage(msg, sock) {
         var action = msg.action;
         var reqId = msg.request_id;
-        
+
         print("[overte-mcp-bridge] Handling action: " + action + " (ID: " + reqId + ")");
 
         if (action === "spawn") {
             try {
                 var props = msg.properties || {};
-                
+
                 // Set default position in front of user if not provided (and in client script mode)
                 if (!props.position && typeof MyAvatar !== "undefined" && typeof Vec3 !== "undefined") {
                     var avatarPos = MyAvatar.position;
@@ -64,57 +65,63 @@
                     var frontOffset = Vec3.multiplyQbyV(avatarRot, { x: 0, y: 0, z: -2 });
                     props.position = Vec3.sum(avatarPos, frontOffset);
                 }
-                
+
                 var newEntityId = Entities.addEntity(props);
-                
+
                 sendResponse({
                     request_id: reqId,
                     status: "success",
                     entity_id: newEntityId
-                });
+                }, sock);
             } catch (err) {
                 sendResponse({
                     request_id: reqId,
                     status: "error",
                     message: err.toString()
-                });
+                }, sock);
             }
         } else if (action === "inject") {
             try {
                 var entityId = msg.entity_id;
                 var scriptUrl = msg.script_url;
                 var scriptData = msg.script_data || {};
-                
+
                 Entities.editEntity(entityId, {
                     script: scriptUrl,
                     userData: JSON.stringify(scriptData)
                 });
-                
+
                 sendResponse({
                     request_id: reqId,
                     status: "success"
-                });
+                }, sock);
             } catch (err) {
                 sendResponse({
                     request_id: reqId,
                     status: "error",
                     message: err.toString()
-                });
+                }, sock);
             }
         } else {
             sendResponse({
                 request_id: reqId,
                 status: "error",
                 message: "Unknown action: " + action
-            });
+            }, sock);
         }
     }
 
-    function sendResponse(response) {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify(response));
+    function sendResponse(response, sock) {
+        var target = sock || socket;
+        var WS_OPEN = 1; // WebSocket.OPEN constant
+        if (target && target.readyState === WS_OPEN) {
+            try {
+                target.send(JSON.stringify(response));
+            } catch (e) {
+                print("[overte-mcp-bridge] send error: " + e);
+            }
         } else {
-            print("[overte-mcp-bridge] Cannot send response: socket not open");
+            print("[overte-mcp-bridge] Cannot send: state=" + (target ? target.readyState : "null"));
         }
     }
 
