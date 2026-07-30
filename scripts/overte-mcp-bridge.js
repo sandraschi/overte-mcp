@@ -39,13 +39,23 @@
     }
 
     function scheduleReconnect() {
-        if (reconnectTimeout) {
-            clearTimeout(reconnectTimeout);
+        backoffMs = Math.min(backoffMs * 2, maxBackoffMs);
+        print("[overte-mcp-bridge] Reconnecting in " + backoffMs + "ms...");
+        // Overte QtScript uses Script.setTimeout, not global setTimeout
+        if (typeof Script !== "undefined" && Script.setTimeout) {
+            Script.setTimeout(function() { connect(); }, backoffMs);
+        } else {
+            // Fallback: retry immediately after a delay via update loop
+            var retryUntil = Date.now() + backoffMs;
+            var waiter = function() {
+                if (Date.now() >= retryUntil) {
+                    connect();
+                } else {
+                    Script.setTimeout(waiter, 100);
+                }
+            };
+            Script.setTimeout(waiter, 100);
         }
-        reconnectTimeout = setTimeout(function() {
-            backoffMs = Math.min(backoffMs * 2, maxBackoffMs);
-            connect();
-        }, backoffMs);
     }
 
     function handleMessage(msg, sock) {
