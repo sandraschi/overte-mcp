@@ -10,9 +10,9 @@ import {
   ScrollText,
   Settings,
   Terminal,
-  Tool,
   TreePine,
   Users,
+  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -29,7 +29,7 @@ const navItems = [
   { href: "/entities", label: "Entities Explorer", icon: TreePine, section: "space" },
   { href: "/scripting", label: "JS Scripting", icon: Terminal, section: "systems" },
   { href: "/chat", label: "Chat", icon: MessageSquare, section: "intelligence" },
-  { href: "/tools", label: "Tools", icon: Tool, section: "intelligence" },
+  { href: "/tools", label: "Tools", icon: Wrench, section: "intelligence" },
   { href: "/skills", label: "Skills", icon: ScrollText, section: "intelligence" },
   { href: "/logs", label: "Logs", icon: ScrollText, section: "meta" },
   { href: "/settings", label: "Settings", icon: Settings, section: "meta" },
