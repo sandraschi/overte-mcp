@@ -44,7 +44,7 @@ export const useLLMStore = create<LLMState>((set) => ({
   setProbing: (b) => set({ probing: b }),
 }));
 
-const PROBE_TIMEOUT = 3000;
+const PROBE_TIMEOUT = 1500;
 
 export async function probeProviders(store: LLMState) {
   const results: ProviderInfo[] = [];

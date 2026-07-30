@@ -12,7 +12,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const store = useLLMStore();
 
   useEffect(() => {
-    probeProviders(store);
+    const t = setTimeout(() => probeProviders(store), 2000);
+    return () => clearTimeout(t);
   }, [store]);
 
   return (
