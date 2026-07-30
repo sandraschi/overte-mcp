@@ -9,7 +9,7 @@ $ErrorActionPreference = "Stop"
 $ScriptRoot = Split-Path -Parent $PSCommandPath
 $BackendPort = 11110
 $FrontendPort = 11111
-$BackendModule = "src.overte_mcp.http_server"
+$BackendEntry = Join-Path $ScriptRoot "run_server.py"
 $WebRoot = Join-Path $ScriptRoot "webapp"
 
 # --- Port zombie clearing ---
@@ -38,10 +38,11 @@ $BackendJob = $null
 if (-not $FrontendOnly) {
     Write-Host "Starting backend on :$BackendPort ..." -ForegroundColor Cyan
     $BackendJob = Start-Job -Name "overte-backend" -ScriptBlock {
-        param($Root, $Port, $Mod)
+        param($Root, $Port, $Entry)
         Set-Location $Root
-        uv run python -m $Mod
-    } -ArgumentList $ScriptRoot, $BackendPort, $BackendModule
+        $env:MCP_PORT = "$Port"; $env:MCP_HOST = "127.0.0.1"
+        uv run python $Entry
+    } -ArgumentList $ScriptRoot, $BackendPort, $BackendEntry
 
     # Health poll (up to 60s)
     $health = "http://127.0.0.1:$BackendPort/api/health"
