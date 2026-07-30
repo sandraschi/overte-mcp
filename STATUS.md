@@ -45,7 +45,9 @@ Overte Domain Server HTTP admin API (`/nodes.json`, `/settings.json`) + WebSocke
 | Tauri NSIS build | ✅ | `native/build.ps1` full pipeline |
 | CORS origins | ✅ | Tauri + Tailscale + LAN |
 | Session context injection | ✅ | `.cursorrules` + `.claude-plugin/` |
-| STATUS.md | ✅ | This file |
+| `AGENTS.md` | ✅ | Root — agent navigation map |
+| `.env.example` | ✅ | Root — documented env vars |
+| `STATUS.md` | ✅ | This file |
 
 ## Investigation findings (2026-07-30)
 
@@ -53,7 +55,7 @@ Overte Domain Server HTTP admin API (`/nodes.json`, `/settings.json`) + WebSocke
 Domain-server has persistence enabled (`NoPersist: false`, `persistInterval: 30000ms`, `persistFilePath: models.json.gz`). However, entities spawned via the bridge default to temporary (lifetime in seconds). Only entities with `lifetime: -1` (permanent) are persisted to `models.json.gz`. **Fixed:** added `permanent` flag to `overte_entity_spawn`. Pass `permanent=True` to persist across restarts.
 
 ### VRM joint animation
-Overte does NOT support VRM as a Model entity format. Supported formats: FBX, glTF, OBJ. VRM is an avatar-only format (loaded via .fst files). When loaded as a Model entity, `Entities.getJointNames()` returns 0 because VRM skeletal data is stored in glTF extensions that the entity pipeline doesn't parse. **Fixed:** Created Blender VRM→FBX conversion pipeline (`scripts/vrm_to_fbx_converter.py`). Nekomimi-chan FBX (3.8 MB) with full armature hosted at `http://localhost:11110/models/Nekomimi-chan.fbx`.
+Overte does NOT support VRM as a Model entity format. Supported formats: FBX, glTF, OBJ. VRM is an avatar-only format (loaded via .fst files). When loaded as a Model entity, `Entities.getJointNames()` returns 0 because VRM skeletal data is stored in glTF extensions that the entity pipeline doesn't parse. **Fixed:** Created Blender VRM→GLB conversion pipeline (`scripts/vrm_to_glb_converter.py`). Nekomimi-chan GLB (11.6 MB) with full armature + embedded textures hosted at `http://localhost:11110/models/Nekomimi-chan.glb`. Uses GLB instead of FBX because VRM is built on glTF — FBX loses MToon shader textures.
 
 ### World Labs GLB import
 Overte supports glTF/GLB as Model entities. A World Labs GLB export should work when hosted at a URL and passed to `overte_entity_spawn(type="Model", model_url="...")`. Needs testing with an actual World Labs export.
@@ -61,10 +63,10 @@ Overte supports glTF/GLB as Model entities. A World Labs GLB export should work 
 ### Dashboard SOTA pages
 Chat, Settings, Tools, Skills, and Logs pages built and verified. TypeScript and Biome check clean. Production build passes (463 KB JS + 28 KB CSS). All pages have `data-testid` attributes for CUA/Playwright targeting.
 
-## Remaining (after v0.2.0)
+## Remaining
 
 - [ ] Test World Labs GLB → Model entity pipeline (need actual World Labs export)
-- [ ] End-to-end: spawn Nekomimi-chan FBX with dance script in Overte, verify joints work
+- [ ] End-to-end: spawn Nekomimi-chan GLB with dance script in Overte, verify joints and textures work
 - [ ] Bridge stress-test — run `scripts/bridge-stress-test.ps1` while bridge is connected
 
 ### Explicitly out of scope

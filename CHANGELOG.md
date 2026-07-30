@@ -8,8 +8,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 - Entity persistence: `permanent` flag on `overte_entity_spawn` sets `lifetime: -1` for cross-restart persistence
-- FBX model serving: Nekomimi-chan FBX (3.8 MB) with full armature at `/models/Nekomimi-chan.fbx`
-- VRM->FBX conversion pipeline: `scripts/vrm_to_fbx_converter.py` (headless Blender 4.4)
+- GLB model serving: Nekomimi-chan GLB (11.6 MB) with full armature + embedded textures at `/models/Nekomimi-chan.glb`
+- VRM->GLB conversion pipeline: `scripts/vrm_to_glb_converter.py` (headless Blender 4.4)
 - SOTA dashboard pages: Chat (skill-first, 4 personalities, provider detection), Settings (health KPIs, LLM probes), Tools (dynamic discovery, search), Skills (markdown rendering), Logs (level filter, auto-refresh)
 - `AGENTS.md` — per-repo agent navigation map
 - `.env.example` — documented env vars
@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file. The format 
 - `glama.json`, `mcpb/manifest.json`, `README.md`, `STATUS.md` — all metadata updated to reflect all 3 tools verified live
 
 ### Fixed
+- **VRM conversion: switched from FBX to GLB** — initial FBX export caused missing textures (MToon shader lost in FBX) and geometry clipped by stray Cube/Light/Camera objects (scene clear missed collections). GLB preserves MToon textures via glTF PBR material pipeline. Aggressive collection-level scene clear prevents object bleed.
 - VRM skeletal investigation: Overte does NOT support VRM as Model entity format (FBX/glTF/OBJ only)
 - Domain-server persistence: entities default temporary without explicit `lifetime`
 
