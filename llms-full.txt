@@ -24,7 +24,7 @@ Companion to [llms.txt](llms.txt). Curated tool, env, run, architecture, and tro
 - `permanent: True` sets `lifetime: -1` so entity persists across domain-server restarts
 - **Path:** Prefer local FastAPI/bridge; if no WS client → labeled simulated
 - **Bridge:** Load `scripts/overte-mcp-bridge.js` in Overte Interface while backend listens on `11110`
-- **Example:** `overte_entity_spawn(name="Neko", type="Model", model_url="http://localhost:11110/models/Nekomimi-chan.fbx", permanent=True)`
+- **Example:** `overte_entity_spawn(name="Neko", type="Model", model_url="http://localhost:11110/models/Nekomimi-chan.glb", permanent=True)`
 
 ### overte_script_inject
 
