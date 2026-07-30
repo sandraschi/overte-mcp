@@ -12,11 +12,16 @@ $FrontendPort = 11111
 $BackendEntry = Join-Path $ScriptRoot "run_server.py"
 $WebRoot = Join-Path $ScriptRoot "webapp"
 
-# --- Port zombie clearing ---
-Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue |
-    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
-Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue |
-    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+# --- Port zombie clearing (retry loop for TIME_WAIT) ---
+for ($i = 0; $i -lt 5; $i++) {
+    Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue |
+        ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+    Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue |
+        ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+    Start-Sleep 1
+    $occupied = Get-NetTCPConnection -LocalPort $BackendPort,$FrontendPort -ErrorAction SilentlyContinue
+    if (-not $occupied) { break }
+}
 
 # --- Prereqs ---
 if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
