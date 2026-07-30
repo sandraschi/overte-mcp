@@ -54,6 +54,42 @@ export function ScriptingPage() {
 
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState<string | null>(null);
+
+  const scriptDetails: Record<
+    string,
+    { howto: string; requires: string; config: string; example: string }
+  > = {
+    "spin.js": {
+      howto:
+        "1. Spawn any entity in-world\n2. Inject this script onto it\n3. The entity will rotate continuously along the Y axis",
+      requires:
+        "Any spawned entity (Box, Sphere, Model). No bridge needed to inject if the entity already has a script property.",
+      config:
+        "Set script_data.speed (default 45) to control rotation speed in degrees/second. Higher = faster spin.",
+      example:
+        'overte_entity_spawn(name="Spinner", type="Box", position=[0,1,-3])\noverte_script_inject(entity_id="<uuid>", script_url="http://localhost:11110/scripts/spin.js", script_data={"speed": 90})',
+    },
+    "dance-script.js": {
+      howto:
+        "1. Spawn a Model entity with an FBX/glTF file that has an armature\n2. Inject this script\n3. The model will bob, spin, and swing its limbs",
+      requires:
+        "Model entity with armature/joints (FBX or glTF format). NOT compatible with VRM files loaded as entities.",
+      config:
+        "No configuration parameters. Animation timing is hardcoded. Modify the script source to change dance patterns.",
+      example:
+        'overte_entity_spawn(name="Dancer", type="Model", model_url="http://localhost:11110/models/Nekomimi-chan.glb")\noverte_script_inject(entity_id="<uuid>", script_url="http://localhost:11110/scripts/dance-script.js")',
+    },
+    "overte-mcp-bridge.js": {
+      howto:
+        "1. Open Overte Interface\n2. Go to Edit > Running Scripts > +\n3. Navigate to this file and load it\n4. The bridge connects to ws://localhost:11110 and enables MCP live operations",
+      requires: "Running Overte MCP backend on port 11110. Overte Interface client must be open.",
+      config:
+        "No configuration. Reconnect backoff is 1s-30s exponential. Edit the wsUrl variable in the script to change the backend address.",
+      example:
+        "Load this script in Interface, then use overte_entity_spawn or overte_script_inject from any MCP client.",
+    },
+  };
   const [aiError, setAiError] = useState<string | null>(null);
 
   const [showLoadUrl, setShowLoadUrl] = useState(false);
@@ -421,35 +457,81 @@ export function ScriptingPage() {
                     </h4>
                     <div className="space-y-2">
                       {scripts.map((script) => (
-                        <div
-                          key={script.name}
-                          className={`glass-card p-3 space-y-2 ${
-                            loadedScript === script.name ? "border-amber-500/40 bg-amber-500/5" : ""
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-bold text-white truncate">
-                              {script.name}
-                            </span>
-                            <button
-                              onClick={() => loadScript(script)}
-                              style={{
-                                background: "rgba(245, 158, 11, 0.15)",
-                                border: "1px solid rgba(245, 158, 11, 0.3)",
-                                borderRadius: "6px",
-                                padding: "3px 8px",
-                                color: "white",
-                                cursor: "pointer",
-                                fontSize: "9px",
-                              }}
-                              className="font-bold hover:bg-amber-500/20 transition-all shrink-0"
-                            >
-                              Load
-                            </button>
-                          </div>
-                          <p className="text-[10px] text-slate-400 leading-relaxed">
-                            {script.description}
-                          </p>
+                        <div key={script.name}>
+                          <button
+                            type="button"
+                            className={`glass-card p-3 space-y-2 cursor-pointer transition-all text-left w-full ${
+                              loadedScript === script.name
+                                ? "border-amber-500/40 bg-amber-500/5"
+                                : ""
+                            } ${selectedDetail === script.name ? "ring-1 ring-amber-500/20" : ""}`}
+                            onClick={() =>
+                              setSelectedDetail(selectedDetail === script.name ? null : script.name)
+                            }
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-white truncate">
+                                {script.name}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  loadScript(script);
+                                }}
+                                style={{
+                                  background: "rgba(245, 158, 11, 0.15)",
+                                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                                  borderRadius: "6px",
+                                  padding: "3px 8px",
+                                  color: "white",
+                                  cursor: "pointer",
+                                  fontSize: "9px",
+                                }}
+                                className="font-bold hover:bg-amber-500/20 transition-all shrink-0"
+                              >
+                                Load
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-slate-400 leading-relaxed">
+                              {script.description}
+                            </p>
+                          </button>
+                          {selectedDetail === script.name && scriptDetails[script.name] && (
+                            <div className="mt-1 mb-2 bg-black/30 border border-white/5 rounded-lg p-3 space-y-2 text-[10px]">
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-amber-500 mb-0.5">
+                                  How to use
+                                </p>
+                                <p className="text-slate-300 whitespace-pre-line">
+                                  {scriptDetails[script.name].howto}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-indigo-400 mb-0.5">
+                                  Requires
+                                </p>
+                                <p className="text-slate-400">
+                                  {scriptDetails[script.name].requires}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 mb-0.5">
+                                  Configuration
+                                </p>
+                                <p className="text-slate-400">
+                                  {scriptDetails[script.name].config}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-sky-400 mb-0.5">
+                                  Example
+                                </p>
+                                <pre className="font-mono text-[9px] text-sky-400 bg-black/40 p-2 rounded-lg mt-0.5 whitespace-pre-wrap">
+                                  {scriptDetails[script.name].example}
+                                </pre>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
