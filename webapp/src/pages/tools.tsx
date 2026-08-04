@@ -31,7 +31,10 @@ export function ToolsPage() {
     queryFn: async () => {
       const r = await fetch(apiUrl("/api/tools"));
       if (!r.ok) throw new Error("Failed to fetch tools");
-      return r.json();
+      const data = await r.json();
+      // Backend returns {"tools": [...]}; tolerate a bare array too.
+      if (Array.isArray(data)) return data;
+      return Array.isArray(data?.tools) ? data.tools : [];
     },
   });
 
