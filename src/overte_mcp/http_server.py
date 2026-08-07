@@ -231,6 +231,109 @@ async def get_domain_status(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+# ---------------------------------------------------------------------------
+# Overte WinApp detection & lifecycle
+# ---------------------------------------------------------------------------
+
+_OVERTE_PATHS = [
+    Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Overte",
+    Path("C:/Program Files/Overte"),
+    Path("C:/Program Files (x86)/Overte"),
+]
+
+_OVERTE_BINS = {
+    "domain-server": "domain-server.exe",
+    "interface": "interface.exe",
+}
+
+
+def _find_overte_install() -> dict[str, str | None]:
+    """Check known paths for Overte binaries. Returns {name: path | None}."""
+    found: dict[str, str | None] = {}
+    for name, exe in _OVERTE_BINS.items():
+        found[name] = None
+        for base in _OVERTE_PATHS:
+            candidate = base / exe
+            if candidate.exists():
+                found[name] = str(candidate)
+                break
+    return found
+
+
+def _check_overte_processes() -> dict[str, bool]:
+    """Check if Overte processes are running via tasklist."""
+    running: dict[str, bool] = {}
+    for name, exe in _OVERTE_BINS.items():
+        try:
+            result = subprocess.run(
+                ["tasklist", "/FI", f"IMAGENAME eq {exe}", "/NH"],
+                capture_output=True, text=True, timeout=5,
+            )
+            running[name] = exe.lower() in result.stdout.lower()
+        except Exception:
+            running[name] = False
+    return running
+
+
+@app.get("/api/overte/app/detect")
+async def detect_app():
+    """Detect Overte installation and running processes."""
+    installed = _find_overte_install()
+    running = _check_overte_processes()
+    any_installed = any(v is not None for v in installed.values())
+    return {
+        "installed": any_installed,
+        "paths": installed,
+        "running": running,
+    }
+
+
+@app.post("/api/overte/app/start")
+async def start_app(data: dict):
+    """Launch an Overte binary (domain-server or interface)."""
+    target = data.get("target", "").strip().lower()
+    if target not in _OVERTE_BINS:
+        raise HTTPException(status_code=400, detail=f"Unknown target: {target}. Use 'domain-server' or 'interface'.")
+    installed = _find_overte_install()
+    path = installed.get(target)
+    if not path:
+        raise HTTPException(status_code=404, detail=f"{target} not found. Install Overte first.")
+    try:
+        proc = subprocess.Popen(
+            [path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        _log("app", "INFO", f"Launched {target} (PID {proc.pid})")
+        return {"status": "success", "message": f"{target} launched (PID {proc.pid})", "pid": proc.pid}
+    except Exception as e:
+        logger.error(f"Failed to launch {target}: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/api/overte/app/stop")
+async def stop_app(data: dict):
+    """Kill an Overte binary (domain-server or interface)."""
+    target = data.get("target", "").strip().lower()
+    if target not in _OVERTE_BINS:
+        raise HTTPException(status_code=400, detail=f"Unknown target: {target}. Use 'domain-server' or 'interface'.")
+    exe = _OVERTE_BINS[target]
+    try:
+        subprocess.run(
+            ["taskkill", "/F", "/IM", exe, "/T"],
+            capture_output=True, timeout=10,
+        )
+        _log("app", "INFO", f"Stopped {target} ({exe})")
+        return {"status": "success", "message": f"{target} stopped"}
+    except Exception as e:
+        logger.error(f"Failed to stop {target}: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# ---------------------------------------------------------------------------
+
+
 async def _send_ws_command(action: str, payload: dict) -> dict | None:
     global _active_ws
     if not _active_ws:

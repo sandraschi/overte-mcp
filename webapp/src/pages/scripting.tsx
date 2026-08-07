@@ -37,7 +37,6 @@ export function ScriptingPage() {
 
   this.preload = function(entityID) {
     _entityID = entityID;
-    console.log("Entity script loaded for: " + _entityID);
   };
 
   this.update = function(deltaTime) {
