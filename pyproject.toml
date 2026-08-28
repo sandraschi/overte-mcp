@@ -1,7 +1,7 @@
 [project]
 name = "overte-mcp"
 version = "0.2.1"
-description = "Overte (open-source Vircadia-lineage metaverse) Model Context Protocol server for domain administration and in-world entity orchestration"
+description = "Overte metaverse control: domain admin, entities, scripts, and a web dashboard"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
