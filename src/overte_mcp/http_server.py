@@ -223,27 +223,39 @@ async def list_tools():
     }
 
 
+_SKILLS_DIR = Path(__file__).resolve().parent / "skills"
+_SKILLS_REGISTRY = {
+    "overte-admin": "Overte Domain Administration",
+    "overte-user": "Overte World Building & Testing",
+}
+
+
 @app.get("/api/skills")
 async def list_skills():
-    """List available Overte skills."""
-    return {
-        "skills": [
-            {
-                "name": "overte-admin",
-                "title": "Overte Domain Administration",
-                "description": "Core skill for domain-server node monitoring and configuration.",
-            }
-        ]
-    }
+    """List available Overte skills. Reads the same SKILL.md files the MCP skill://
+    resources serve (server.py) - no separate hardcoded copy, so this can't drift stale the
+    way the pre-2026-09-02 version of this endpoint did."""
+    skills = []
+    for name, title in _SKILLS_REGISTRY.items():
+        skill_path = _SKILLS_DIR / name / "SKILL.md"
+        first_para = ""
+        if skill_path.exists():
+            lines = skill_path.read_text(encoding="utf-8").splitlines()
+            first_para = next((line for line in lines[1:] if line.strip()), "")
+        skills.append({"name": name, "title": title, "description": first_para})
+    return {"skills": skills}
 
 
-@app.get("/api/skill/overte-admin")
-async def get_overte_skill():
-    """Return the overte-admin skill content."""
-    return {
-        "name": "overte-admin",
-        "content": "# Overte Domain Administration\n\nManage Overte domain-servers: query connected nodes, monitor settings, spawn entities, inject scripts.\n\n## Tools\n- `overte_domain_status` - query /nodes.json and /settings.json\n- `overte_entity_spawn` - spawn Box, Sphere, Web, or Model entities\n- `overte_script_inject` - attach JS behaviors to entities\n\n## Architecture\nOverte Domain Server (port 40100) + WebSocket bridge (port 11110) + FastAPI gateway + React dashboard.",
-    }
+@app.get("/api/skill/{name}")
+async def get_skill(name: str):
+    """Return one skill's full content, read from its SKILL.md - same source of truth as the
+    MCP skill://<name> resource in server.py."""
+    if name not in _SKILLS_REGISTRY:
+        raise HTTPException(status_code=404, detail=f"Unknown skill {name!r}. Known: {sorted(_SKILLS_REGISTRY)}")
+    skill_path = _SKILLS_DIR / name / "SKILL.md"
+    if not skill_path.exists():
+        raise HTTPException(status_code=404, detail=f"SKILL.md missing on disk for {name!r}")
+    return {"name": name, "content": skill_path.read_text(encoding="utf-8")}
 
 
 @app.get("/api/v1/diagnostics")

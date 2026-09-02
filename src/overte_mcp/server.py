@@ -61,6 +61,15 @@ def get_overte_skill() -> str:
     return "# Overte Admin\n\nSkill content not available."
 
 
+@mcp.resource("skill://overte-user")
+def get_overte_user_skill() -> str:
+    """Skill content for building/testing/animating content in a live Overte world."""
+    skill_path = Path(__file__).parent / "skills" / "overte-user" / "SKILL.md"
+    if skill_path.exists():
+        return skill_path.read_text(encoding="utf-8")
+    return "# Overte User\n\nSkill content not available."
+
+
 @mcp.resource("server://info")
 def get_server_info() -> dict:
     """Server metadata and uptime."""

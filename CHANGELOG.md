@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+## [Unreleased] - 2026-09-03
+
+### Added (overte-user skill; overte-admin refresh; skill endpoints deduplicated)
+- New `overte-user` skill (`src/overte_mcp/skills/overte-user/SKILL.md`, registered as
+  `skill://overte-user` in `server.py` and `/api/skill/overte-user` via `http_server.py`):
+  task-oriented recipes (spawn+light a scene, animate, fixture-spawn, nearby search, cleanup)
+  for building/testing content, as distinct from `overte-admin`'s reference-style tool/
+  architecture inventory.
+- `overte-admin` refreshed: was 3 tools (from an early stage of this repo), now documents all
+  9 current MCP tools plus the REST-only model/texture/backup/scripts endpoints that have no
+  MCP-tool equivalent. Corrected an inaccurate claim in the draft of this refresh itself:
+  `overte_entity_spawn`/`overte_script_inject` still have a `"source": "simulated"` fallback
+  when the WebSocket bridge is disconnected; only `overte_entity_update`/`_delete`/`_animate`/
+  `overte_nearby_entities`/`overte_fixture_spawn` are live-only with no simulation.
+- **Bug fixed while refreshing**: `/api/skills` and `/api/skill/overte-admin` in
+  `http_server.py` had a *third*, independently-hardcoded copy of the skill content inline in
+  Python (separate from `server.py`'s `skill://overte-admin` resource and the SKILL.md file
+  itself) - it only listed 3 tools too, and would have silently drifted from the SKILL.md file
+  again the next time either one was edited without editing the other two. Both endpoints now
+  read straight from the SKILL.md files (one source of truth for all three surfaces: MCP
+  resource, REST endpoint, and the file itself); `/api/skill/overte-admin` is now
+  `/api/skill/{name}`, matching what the webapp's `skills.tsx` was already calling
+  dynamically.
+- **Verification**: offline only - imported both modified modules directly and called
+  `list_skills()`/`get_skill()`/the two MCP resource functions, confirmed correct content and
+  length from all four surfaces. Not tested through a running server or the webapp UI.
+
 ## [Unreleased] - 2026-09-02
 
 ### Added (model + texture depots, backup/restore, entities UI wiring)
