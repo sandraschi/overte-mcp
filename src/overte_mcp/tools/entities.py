@@ -154,5 +154,6 @@ async def spawn_fixture_impl(input_data: FixtureSpawnInput) -> dict[str, Any]:
             "position": input_data.position,
             "forward_distance": input_data.forward_distance,
             "name": input_data.name,
+            "color": input_data.color,
         },
     )

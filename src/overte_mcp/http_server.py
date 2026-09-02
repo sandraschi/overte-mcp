@@ -795,24 +795,26 @@ def _rotate_vector(quat_xyzw: tuple, v: tuple) -> tuple:
 # has no native cylinder/mesh-library primitive and this doesn't fabricate fake model URLs
 # for objects no GLB actually exists for. Each preset is one or more parts with an offset
 # from the fixture's placement point (its base, roughly floor-of-object level).
+# Color is no longer baked in here - FixtureSpawnInput.color (default white) is applied
+# uniformly to every part at spawn time, so the same preset can be recolored per call.
 FIXTURE_PRESETS: dict[str, list[dict[str, Any]]] = {
     "box": [
-        {"type": "Box", "offset": (0, 0.05, 0), "dimensions": (0.1, 0.1, 0.1), "color": (0.6, 0.45, 0.3)},
+        {"type": "Box", "offset": (0, 0.05, 0), "dimensions": (0.1, 0.1, 0.1)},
     ],
     "cup": [
-        {"type": "Box", "offset": (0, 0.05, 0), "dimensions": (0.08, 0.10, 0.08), "color": (0.95, 0.95, 0.98)},
+        {"type": "Box", "offset": (0, 0.05, 0), "dimensions": (0.08, 0.10, 0.08)},
     ],
     "ball": [
-        {"type": "Sphere", "offset": (0, 0.035, 0), "dimensions": (0.07, 0.07, 0.07), "color": (0.9, 0.35, 0.1)},
+        {"type": "Sphere", "offset": (0, 0.035, 0), "dimensions": (0.07, 0.07, 0.07)},
     ],
     "table": [
-        {"type": "Box", "offset": (0, 0.715, 0), "dimensions": (1.2, 0.05, 0.6), "color": (0.45, 0.30, 0.18)},
-        {"type": "Box", "offset": (0, 0.35, 0), "dimensions": (0.08, 0.70, 0.08), "color": (0.35, 0.22, 0.12)},
+        {"type": "Box", "offset": (0, 0.715, 0), "dimensions": (1.2, 0.05, 0.6)},
+        {"type": "Box", "offset": (0, 0.35, 0), "dimensions": (0.08, 0.70, 0.08)},
     ],
     "chair": [
-        {"type": "Box", "offset": (0, 0.45, 0), "dimensions": (0.4, 0.05, 0.4), "color": (0.4, 0.25, 0.15)},
-        {"type": "Box", "offset": (0, 0.70, -0.18), "dimensions": (0.4, 0.5, 0.05), "color": (0.4, 0.25, 0.15)},
-        {"type": "Box", "offset": (0, 0.225, 0), "dimensions": (0.35, 0.45, 0.35), "color": (0.35, 0.22, 0.12)},
+        {"type": "Box", "offset": (0, 0.45, 0), "dimensions": (0.4, 0.05, 0.4)},
+        {"type": "Box", "offset": (0, 0.70, -0.18), "dimensions": (0.4, 0.5, 0.05)},
+        {"type": "Box", "offset": (0, 0.225, 0), "dimensions": (0.35, 0.45, 0.35)},
     ],
 }
 
@@ -850,17 +852,17 @@ async def post_fixture_spawn(request: FixtureSpawnInput):
         )
 
     base_name = request.name or request.fixture
+    fixture_color = _rgb01_to_overte(request.color if len(request.color) == 3 else [1.0, 1.0, 1.0])
     entity_ids = []
     for i, part in enumerate(parts):
         ox, oy, oz = part["offset"]
         dx, dy, dz = part["dimensions"]
-        cr, cg, cb = part["color"]
         properties = {
             "type": part["type"],
             "name": f"{base_name}_{i}" if len(parts) > 1 else base_name,
             "position": {"x": base[0] + ox, "y": base[1] + oy, "z": base[2] + oz},
             "dimensions": {"x": dx, "y": dy, "z": dz},
-            "color": _rgb01_to_overte([cr, cg, cb]),
+            "color": fixture_color,
         }
         res = await _send_ws_command("spawn", {"properties": properties})
         if not res or res.get("status") != "success":

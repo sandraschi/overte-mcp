@@ -184,7 +184,7 @@ async def overte_entity_spawn(
         str | None,
         Field(description="Entity/avatar UUID to parent this to - position becomes relative. Use 'MyAvatar' to attach to the local user."),
     ] = None,
-    color: Annotated[list[float] | None, Field(description="RGB as 0.0-1.0 floats. Used by Light/Box/Sphere.")] = None,
+    color: Annotated[list[float], Field(description="RGB as 0.0-1.0 floats, default white. Used by Light/Box/Sphere; harmless no-op on Model entities.")] = [1.0, 1.0, 1.0],
     intensity: Annotated[float | None, Field(description="Light brightness. Only meaningful when entity_type='Light'.")] = None,
     is_spotlight: Annotated[bool | None, Field(description="True for a directional cone, False/omitted for omnidirectional.")] = None,
     falloff_radius: Annotated[float | None, Field(description="Distance in meters a Light's intensity falls off by.")] = None,
@@ -407,23 +407,27 @@ async def overte_fixture_spawn(
     ] = None,
     forward_distance: Annotated[float, Field(description="Meters in front of the user when position is omitted.")] = 1.5,
     name: Annotated[str | None, Field(description="Override the entity name (defaults to the fixture name).")] = None,
+    color: Annotated[list[float], Field(description="RGB as 0.0-1.0 floats, default white. Applied uniformly to every part of a multi-part fixture.")] = [1.0, 1.0, 1.0],
     ctx: Any = None,
 ) -> dict:
     """Spawn a preset test fixture for gripper/manipulation testing: box, cup, ball, table,
     or chair. Box/Sphere primitive approximations sized for realistic grip-testing
     dimensions - Overte has no cylinder primitive and this doesn't fabricate fake model URLs
-    for objects no GLB actually exists for. table/chair spawn as several Box parts. Live-only
-    (bridge required).
+    for objects no GLB actually exists for. table/chair spawn as several Box parts, all the
+    same color. Live-only (bridge required).
 
     ## Return Format
     {"success": bool, "message": str, "data": {"source": str, "entity_ids": [...], "position": {...}}}
 
     ## Examples
     overte_fixture_spawn(fixture="cup")
+    overte_fixture_spawn(fixture="ball", color=[0.9, 0.2, 0.1])
     overte_fixture_spawn(fixture="table", position=[2000, 1995, 2015])
     """
     result = await spawn_fixture_impl(
-        FixtureSpawnInput(fixture=fixture, position=position, forward_distance=forward_distance, name=name)
+        FixtureSpawnInput(
+            fixture=fixture, position=position, forward_distance=forward_distance, name=name, color=color
+        )
     )
     success = result.get("status") == "success"
     return {

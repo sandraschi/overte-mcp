@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased] - 2026-09-02
 
+### Changed (color default)
+- `EntitySpawnInput.color` and `FixtureSpawnInput.color` now default to white `[1,1,1]`
+  instead of `None`/hardcoded per-part presets, applied uniformly - `overte_entity_update`'s
+  `color` stays `None`-default deliberately (an update with no color shouldn't reset one).
+  Live-verified: a freshly spawned box read back `color: {red:255, green:255, blue:255}`.
+- `FIXTURE_PRESETS` dropped its hardcoded per-part colors (table/chair were brown, ball
+  orange) now that color is a request-time parameter instead.
+
 ### Added (fixture spawner)
 - `overte_fixture_spawn` + `POST /api/overte/fixture` — one-call preset test fixtures for
   gripper/manipulation testing: `box`, `cup`, `ball`, `table`, `chair`. Box/Sphere primitive

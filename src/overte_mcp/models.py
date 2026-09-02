@@ -57,9 +57,9 @@ class EntitySpawnInput(BaseModel):
             "(e.g. a headlight that follows you)."
         ),
     )
-    color: list[float] | None = Field(
-        default=None,
-        description="RGB color as 0.0-1.0 floats (converted to Overte's 0-255 byte range). Used by Light/Box/Sphere.",
+    color: list[float] = Field(
+        default=[1.0, 1.0, 1.0],
+        description="RGB color as 0.0-1.0 floats, default white (converted to Overte's 0-255 byte range). Used by Light/Box/Sphere; harmless no-op on Model entities, which carry their own material colors.",
     )
     intensity: float | None = Field(
         default=None, description="Light entity brightness. Only meaningful when type='Light'."
@@ -110,6 +110,10 @@ class FixtureSpawnInput(BaseModel):
         default=1.5, description="Meters in front of the user when position is omitted"
     )
     name: str | None = Field(default=None, description="Override the entity name (defaults to the fixture name)")
+    color: list[float] = Field(
+        default=[1.0, 1.0, 1.0],
+        description="RGB as 0.0-1.0 floats, default white. Applied uniformly to every part of a multi-part fixture.",
+    )
 
 
 class NearbyEntitiesInput(BaseModel):
