@@ -177,7 +177,7 @@ async def get_overte_skill():
     """Return the overte-admin skill content."""
     return {
         "name": "overte-admin",
-        "content": "# Overte Domain Administration\n\nManage Overte domain-servers: query connected nodes, monitor settings, spawn entities, inject scripts.\n\n## Tools\n- `overte_domain_status` — query /nodes.json and /settings.json\n- `overte_entity_spawn` — spawn Box, Sphere, Web, or Model entities\n- `overte_script_inject` — attach JS behaviors to entities\n\n## Architecture\nOverte Domain Server (port 40100) + WebSocket bridge (port 11110) + FastAPI gateway + React dashboard.",
+        "content": "# Overte Domain Administration\n\nManage Overte domain-servers: query connected nodes, monitor settings, spawn entities, inject scripts.\n\n## Tools\n- `overte_domain_status` - query /nodes.json and /settings.json\n- `overte_entity_spawn` - spawn Box, Sphere, Web, or Model entities\n- `overte_script_inject` - attach JS behaviors to entities\n\n## Architecture\nOverte Domain Server (port 40100) + WebSocket bridge (port 11110) + FastAPI gateway + React dashboard.",
     }
 
 
@@ -231,6 +231,36 @@ async def get_domain_status(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@app.get("/api/overte/avatar")
+async def get_avatar_state():
+    """Query the local user's avatar position/orientation via the WebSocket bridge.
+
+    No domain-server admin API involved - this goes through the same bridge script as
+    spawn/inject, so it needs Interface running with overte-mcp-bridge.js loaded.
+    """
+    if not _active_ws:
+        return {
+            "status": "success",
+            "source": "simulated",
+            "warning": (
+                "No active WebSocket bridge client connected. Using placeholder data. "
+                "Connect scripts/overte-mcp-bridge.js inside Overte."
+            ),
+            "position": {"x": 0.0, "y": 0.0, "z": 0.0},
+            "orientation": {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0},
+        }
+    res = await _send_ws_command("get_avatar", {})
+    if not res or res.get("status") != "success":
+        msg = res.get("message", "WebSocket timeout/error.") if res else "WebSocket timeout/error."
+        raise HTTPException(status_code=400, detail=msg)
+    return {
+        "status": "success",
+        "source": "live",
+        "position": res["position"],
+        "orientation": res["orientation"],
+    }
+
+
 # ---------------------------------------------------------------------------
 # Overte WinApp detection & lifecycle
 # ---------------------------------------------------------------------------
@@ -267,7 +297,9 @@ def _check_overte_processes() -> dict[str, bool]:
         try:
             result = subprocess.run(
                 ["tasklist", "/FI", f"IMAGENAME eq {exe}", "/NH"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             running[name] = exe.lower() in result.stdout.lower()
         except Exception:
@@ -293,7 +325,9 @@ async def start_app(data: dict):
     """Launch an Overte binary (domain-server or interface)."""
     target = data.get("target", "").strip().lower()
     if target not in _OVERTE_BINS:
-        raise HTTPException(status_code=400, detail=f"Unknown target: {target}. Use 'domain-server' or 'interface'.")
+        raise HTTPException(
+            status_code=400, detail=f"Unknown target: {target}. Use 'domain-server' or 'interface'."
+        )
     installed = _find_overte_install()
     path = installed.get(target)
     if not path:
@@ -306,7 +340,11 @@ async def start_app(data: dict):
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
         )
         _log("app", "INFO", f"Launched {target} (PID {proc.pid})")
-        return {"status": "success", "message": f"{target} launched (PID {proc.pid})", "pid": proc.pid}
+        return {
+            "status": "success",
+            "message": f"{target} launched (PID {proc.pid})",
+            "pid": proc.pid,
+        }
     except Exception as e:
         logger.error(f"Failed to launch {target}: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -317,12 +355,15 @@ async def stop_app(data: dict):
     """Kill an Overte binary (domain-server or interface)."""
     target = data.get("target", "").strip().lower()
     if target not in _OVERTE_BINS:
-        raise HTTPException(status_code=400, detail=f"Unknown target: {target}. Use 'domain-server' or 'interface'.")
+        raise HTTPException(
+            status_code=400, detail=f"Unknown target: {target}. Use 'domain-server' or 'interface'."
+        )
     exe = _OVERTE_BINS[target]
     try:
         subprocess.run(
             ["taskkill", "/F", "/IM", exe, "/T"],
-            capture_output=True, timeout=10,
+            capture_output=True,
+            timeout=10,
         )
         _log("app", "INFO", f"Stopped {target} ({exe})")
         return {"status": "success", "message": f"{target} stopped"}
@@ -381,7 +422,7 @@ async def websocket_endpoint(websocket: WebSocket):
             _active_ws = None
 
 
-# Scripts depot root — entity scripts stored under data/scripts/
+# Scripts depot root - entity scripts stored under data/scripts/
 _SCRIPTS_DEPOT = Path(__file__).resolve().parent.parent.parent / "data" / "scripts"
 _SCRIPTS_MANIFEST_PATH = _SCRIPTS_DEPOT / "manifest.json"
 

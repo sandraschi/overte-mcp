@@ -90,6 +90,24 @@
                     message: err.toString()
                 }, sock);
             }
+        } else if (action === "get_avatar") {
+            try {
+                if (typeof MyAvatar === "undefined") {
+                    throw new Error("MyAvatar not available in this script context");
+                }
+                sendResponse({
+                    request_id: reqId,
+                    status: "success",
+                    position: MyAvatar.position,
+                    orientation: MyAvatar.orientation
+                }, sock);
+            } catch (err) {
+                sendResponse({
+                    request_id: reqId,
+                    status: "error",
+                    message: err.toString()
+                }, sock);
+            }
         } else if (action === "inject") {
             try {
                 var entityId = msg.entity_id;

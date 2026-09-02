@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+## [Unreleased] - 2026-09-02
+
+### Added
+- `GET /api/overte/avatar` + a matching `get_avatar` bridge command in
+  `scripts/overte-mcp-bridge.js` — queries the local user's real `MyAvatar.position`/
+  `orientation` via the WebSocket bridge. Same live/simulated labeling discipline as every
+  other endpoint. Found the need for this live: `overte_entity_spawn` only ever accepted an
+  absolute world coordinate, and the bridge's own dead "spawn in front of user if no position
+  given" fallback could never trigger because the backend always fills in a concrete
+  `{x,y,z}` default before forwarding to the bridge — spawned entities landed at literal
+  (2,0,2)-style coordinates unrelated to wherever the user's avatar actually was (in this
+  case, off by roughly 2000 units on every axis). No teleport/position-set tool yet — this is
+  read-only.
+
 ## [0.2.1] - 2026-07-30
 
 ### Added
