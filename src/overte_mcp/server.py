@@ -340,17 +340,19 @@ async def overte_entity_delete(
 @mcp.tool(annotations=_MUTATING)
 async def overte_entity_animate(
     entity_id: Annotated[str, Field(description="Overte target entity UUID.")],
-    mode: Annotated[str, Field(description="'spin' (continuous rotation) or 'bob' (up/down oscillation).")] = "spin",
+    mode: Annotated[str, Field(description="'spin' (continuous rotation), 'bob' (smooth sinusoidal oscillation), or 'bounce' (real drop-and-rebound physics with energy loss, not a sine wave).")] = "spin",
     axis: Annotated[list[float], Field(description="Rotation axis for 'spin' (normalized).")] = [0.0, 1.0, 0.0],
-    speed: Annotated[float, Field(description="'spin': radians/second. 'bob': oscillations/second.")] = 1.0,
-    amplitude: Annotated[float, Field(description="'bob' only: peak-to-center displacement in meters.")] = 0.1,
+    speed: Annotated[float, Field(description="'spin': radians/second. 'bob': oscillations/second. 'bounce': overall pace (scales effective gravity).")] = 1.0,
+    amplitude: Annotated[float, Field(description="'bob'/'bounce': peak height above the settled position, in meters.")] = 0.1,
+    damping: Annotated[float, Field(description="'bounce' only: energy retained per bounce, 0-1 (0.6 = each bounce reaches 60% of the previous height).")] = 0.6,
     duration_s: Annotated[float, Field(description="How long to animate before stopping.")] = 5.0,
     tick_hz: Annotated[float, Field(description="Update rate over the bridge.")] = 10.0,
     ctx: Any = None,
 ) -> dict:
-    """Loop-animate an entity in place: continuous spin or vertical bob. Server-driven
-    (repeated position/rotation updates over the WebSocket bridge, not a baked animation
-    clip) - this call blocks for duration_s while it runs. Live-only (bridge required).
+    """Loop-animate an entity in place: continuous spin, vertical bob, or a real bounce.
+    Server-driven (repeated position/rotation updates over the WebSocket bridge, not a baked
+    animation clip) - this call blocks for duration_s while it runs. Live-only (bridge
+    required).
 
     ## Return Format
     {"success": bool, "message": str, "data": {"source": str}}
@@ -358,11 +360,12 @@ async def overte_entity_animate(
     ## Examples
     overte_entity_animate(entity_id="abc-123", mode="spin", speed=1.5, duration_s=10)
     overte_entity_animate(entity_id="abc-123", mode="bob", amplitude=0.2, speed=0.5, duration_s=8)
+    overte_entity_animate(entity_id="abc-123", mode="bounce", amplitude=0.4, damping=0.65, duration_s=8)
     """
     result = await animate_entity_impl(
         EntityAnimateInput(
             entity_id=entity_id, mode=mode, axis=axis, speed=speed, amplitude=amplitude,
-            duration_s=duration_s, tick_hz=tick_hz,
+            damping=damping, duration_s=duration_s, tick_hz=tick_hz,
         )
     )
     success = result.get("status") == "success"

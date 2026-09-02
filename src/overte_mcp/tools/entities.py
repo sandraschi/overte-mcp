@@ -124,7 +124,7 @@ async def delete_entity_impl(input_data: EntityDeleteInput) -> dict[str, Any]:
 
 
 async def animate_entity_impl(input_data: EntityAnimateInput) -> dict[str, Any]:
-    """Loop-animate an entity (spin/bob) for a fixed duration - blocks for that long."""
+    """Loop-animate an entity (spin/bob/bounce) for a fixed duration - blocks for that long."""
     return await _post(
         "/animate",
         {
@@ -133,6 +133,7 @@ async def animate_entity_impl(input_data: EntityAnimateInput) -> dict[str, Any]:
             "axis": input_data.axis,
             "speed": input_data.speed,
             "amplitude": input_data.amplitude,
+            "damping": input_data.damping,
             "duration_s": input_data.duration_s,
             "tick_hz": input_data.tick_hz,
         },

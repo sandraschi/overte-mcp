@@ -6,6 +6,31 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased] - 2026-09-02
 
+### Added (capability exploration: shapes, particles, textures, real bounce)
+- `extra_properties: dict | None` escape hatch on `EntitySpawnInput`/`EntityUpdateInput` -
+  merged into the properties dict verbatim. Needed because Overte has far more entity
+  properties (shape, particle emission, textures, ...) than are worth dedicated Pydantic
+  fields for each.
+- `get_entity` bridge command now accepts an optional custom `properties` list from the
+  caller (`GET /api/overte/entity/{id}?properties=a,b,c` or `?properties=all`) instead of a
+  fixed hardcoded set - needed to inspect `textures`/`shape`/particle fields.
+- **Correction**: earlier claimed "Overte has no cylinder primitive" - wrong. Live-verified:
+  `type="Shape"` entities support a `shape` property with Cylinder, Dodecahedron (also
+  tested), and per Overte's documented enum also Cone/Icosahedron/Octahedron/Tetrahedron/
+  Torus/etc. `FIXTURE_PRESETS`' comment corrected.
+- **Verified live**: `textures` is a real, settable, persisting property on Model entities
+  (tested on the spawned Nori A3 - wrote a JSON material-override string, read it back
+  unchanged; visual effect unconfirmed since the guessed material-slot name almost certainly
+  doesn't match the model's real ones). `ParticleEffect` entities work (spawned a flame-like
+  emitter: `isEmitting`, `emitRate`, `color`, `alpha`, `particleRadius`,
+  `emitAcceleration` all accepted and read back correctly) - fog/smoke/sparkle would use the
+  same entity type with different presets, not yet built.
+- `overte_entity_animate` gained a `bounce` mode: real drop-and-rebound physics (position as
+  a closed-form function of elapsed time within the current bounce segment, energy loss via
+  `damping` per landing) rather than `bob`'s constant-period sine wave. Verified numerically
+  before running live (peak heights decay geometrically, settles instead of bouncing
+  forever) and live-tested on a spawned ball fixture (59 ticks over 6s, no errors).
+
 ### Changed (color default)
 - `EntitySpawnInput.color` and `FixtureSpawnInput.color` now default to white `[1,1,1]`
   instead of `None`/hardcoded per-part presets, applied uniformly - `overte_entity_update`'s

@@ -677,6 +677,8 @@ async def post_entity_spawn(request: EntitySpawnInput):
                 properties["isSpotlight"] = request.is_spotlight
             if request.falloff_radius is not None:
                 properties["falloffRadius"] = request.falloff_radius
+            if request.extra_properties:
+                properties.update(request.extra_properties)
             payload = {"properties": properties}
             res = await _send_ws_command("spawn", payload)
             if res and res.get("status") == "success":
@@ -743,6 +745,8 @@ async def post_entity_update(request: EntityUpdateInput):
         properties["intensity"] = request.intensity
     if request.color and len(request.color) == 3:
         properties["color"] = _rgb01_to_overte(request.color)
+    if request.extra_properties:
+        properties.update(request.extra_properties)
     if not properties:
         raise HTTPException(status_code=400, detail="Nothing to update - pass position and/or dimensions.")
 
@@ -778,6 +782,26 @@ def _axis_angle_quat(axis: tuple, angle: float) -> tuple:
     return (axis[0] * s, axis[1] * s, axis[2] * s, math.cos(half))
 
 
+def _bounce_height(t: float, amplitude: float, damping: float, speed: float) -> float:
+    """A real bounce, not a sine wave: t=0 starts on the ground with upward velocity, rises
+    to `amplitude`, falls back under gravity, and each landing loses energy (kinetic energy
+    *= damping, so velocity *= sqrt(damping)) - bounces get both shorter and lower, unlike
+    abs(sin(t)) which keeps a constant period regardless of height. Verified numerically:
+    peak heights decay geometrically (0.30 -> ~0.15 -> ~0.04m at damping=0.6) and it settles
+    to the ground rather than bouncing forever. `speed` scales the effective gravity, so it
+    controls overall pace without the caller needing to reason about g directly."""
+    g = 9.8 * max(speed, 0.05)
+    v = math.sqrt(2 * g * amplitude) if amplitude > 0 else 0.0
+    remaining = t
+    while v > 1e-4:
+        duration = 2 * v / g
+        if remaining <= duration:
+            return max(v * remaining - 0.5 * g * remaining * remaining, 0.0)
+        remaining -= duration
+        v *= math.sqrt(max(min(damping, 1.0), 0.0))
+    return 0.0
+
+
 def _rotate_vector(quat_xyzw: tuple, v: tuple) -> tuple:
     """Rotate vector v by quaternion q (x,y,z,w): v' = v + 2*w*(qxyz x v) + 2*(qxyz x (qxyz x v))."""
     qx, qy, qz, qw = quat_xyzw
@@ -791,10 +815,14 @@ def _rotate_vector(quat_xyzw: tuple, v: tuple) -> tuple:
     return (vx + qw * tx + cx, vy + qw * ty + cy, vz + qw * tz + cz)
 
 
-# Box/Sphere primitive approximations, sized for realistic grip-testing dimensions - Overte
-# has no native cylinder/mesh-library primitive and this doesn't fabricate fake model URLs
-# for objects no GLB actually exists for. Each preset is one or more parts with an offset
-# from the fixture's placement point (its base, roughly floor-of-object level).
+# Box/Sphere primitive approximations. CORRECTION: Overte's type="Shape" entity DOES support
+# a cylinder (and other platonic-solid-ish shapes: Cone, Dodecahedron, Icosahedron,
+# Octahedron, Tetrahedron, Torus, ...) via its `shape` property - live-verified
+# (spawn(type="Shape", extra_properties={"shape":"Cylinder"}) produced a real cylinder,
+# read back correctly). These presets stay Box/Sphere anyway since a cup/table/chair isn't
+# better served by a cylinder or dodecahedron, not because cylinders don't exist. Each preset
+# is one or more parts with an offset from the fixture's placement point (its base, roughly
+# floor-of-object level).
 # Color is no longer baked in here - FixtureSpawnInput.color (default white) is applied
 # uniformly to every part at spawn time, so the same preset can be recolored per call.
 FIXTURE_PRESETS: dict[str, list[dict[str, Any]]] = {
@@ -890,16 +918,18 @@ async def post_fixture_spawn(request: FixtureSpawnInput):
 
 @app.post("/api/overte/animate")
 async def post_entity_animate(request: EntityAnimateInput):
-    """Loop-animate an entity in place: 'spin' (continuous rotation) or 'bob' (vertical
-    oscillation). Server-driven, same pattern as norirobotics-mcp's Resonite wave-demo
-    script - repeated 'update' calls over the bridge, not a client-side animation clip."""
+    """Loop-animate an entity in place: 'spin' (continuous rotation), 'bob' (smooth
+    sinusoidal oscillation), or 'bounce' (real drop-and-rebound physics - shortening,
+    lowering bounces from energy loss, not a constant-period sine wave). Server-driven, same
+    pattern as norirobotics-mcp's Resonite wave-demo script - repeated 'update' calls over
+    the bridge, not a client-side animation clip."""
     if not _active_ws:
         raise HTTPException(
             status_code=400,
             detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
         )
-    if request.mode not in ("spin", "bob"):
-        raise HTTPException(status_code=400, detail="mode must be 'spin' or 'bob'")
+    if request.mode not in ("spin", "bob", "bounce"):
+        raise HTTPException(status_code=400, detail="mode must be 'spin', 'bob', or 'bounce'")
 
     start_res = await _send_ws_command("get_entity", {"entity_id": request.entity_id})
     if not start_res or start_res.get("status") != "success":
@@ -918,8 +948,13 @@ async def post_entity_animate(request: EntityAnimateInput):
             delta = _axis_angle_quat(axis, request.speed * t)
             x, y, z, w = _quat_mul(rest_rot_t, delta)
             properties = {"rotation": {"x": x, "y": y, "z": z, "w": w}}
-        else:  # bob
+        elif request.mode == "bob":
             offset = request.amplitude * math.sin(2 * math.pi * request.speed * t)
+            properties = {
+                "position": {"x": rest_pos["x"], "y": rest_pos["y"] + offset, "z": rest_pos["z"]}
+            }
+        else:  # bounce
+            offset = _bounce_height(t, request.amplitude, request.damping, request.speed)
             properties = {
                 "position": {"x": rest_pos["x"], "y": rest_pos["y"] + offset, "z": rest_pos["z"]}
             }
@@ -957,14 +992,20 @@ async def post_nearby_entities(request: NearbyEntitiesInput):
 
 
 @app.get("/api/overte/entity/{entity_id}")
-async def get_entity_properties(entity_id: str):
-    """Read one entity's live properties (position/rotation/dimensions/parent/etc)."""
+async def get_entity_properties(entity_id: str, properties: str | None = None):
+    """Read one entity's live properties. `properties`: comma-separated property names, or
+    'all' for every property Overte has for it. Omit for a sensible common-fields default."""
     if not _active_ws:
         raise HTTPException(
             status_code=400,
             detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
         )
-    res = await _send_ws_command("get_entity", {"entity_id": entity_id})
+    payload: dict[str, Any] = {"entity_id": entity_id}
+    if properties == "all":
+        payload["properties"] = []
+    elif properties:
+        payload["properties"] = [p.strip() for p in properties.split(",") if p.strip()]
+    res = await _send_ws_command("get_entity", payload)
     if not res or res.get("status") != "success":
         msg = res.get("message", "Entity not found.") if res else "WebSocket timeout/error."
         raise HTTPException(status_code=400, detail=msg)

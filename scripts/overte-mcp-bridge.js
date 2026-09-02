@@ -140,7 +140,8 @@
             }
         } else if (action === "get_entity") {
             try {
-                var getProps = Entities.getEntityProperties(msg.entity_id, ["name", "type", "position", "rotation", "dimensions", "parentID", "visible", "intensity", "color"]);
+                var wantedProps = msg.properties || ["name", "type", "position", "rotation", "dimensions", "parentID", "visible", "intensity", "color"];
+                var getProps = wantedProps.length ? Entities.getEntityProperties(msg.entity_id, wantedProps) : Entities.getEntityProperties(msg.entity_id);
                 sendResponse({
                     request_id: reqId,
                     status: "success",
