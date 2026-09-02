@@ -17,6 +17,32 @@ All notable changes to this project will be documented in this file. The format 
   (2,0,2)-style coordinates unrelated to wherever the user's avatar actually was (in this
   case, off by roughly 2000 units on every axis). No teleport/position-set tool yet — this is
   read-only.
+- `overte_entity_spawn`'s `scale`/`dimensions` no longer default to a forced `[1,1,1]` box —
+  found live: dimensions stretches/squishes a model to fit that exact bounding box, it is not
+  a uniform scale multiplier, so the previous default silently deformed every non-cubic
+  model. Now omitted unless explicitly requested, letting Overte size the entity from the
+  model's own natural dimensions.
+- Real move/delete/animate/search capability — the bridge previously only knew how to create
+  entities, so every correction meant spawning another copy on top of the last one:
+  - `overte_entity_update` (+ `update` bridge command, `Entities.editEntity`) — move, resize,
+    re-parent, or toggle visibility/intensity/color on an existing entity
+  - `overte_entity_delete` (+ `delete` bridge command, `Entities.deleteEntity`)
+  - `overte_entity_animate` (+ reuses `update`) — server-driven spin/bob loop on an entity,
+    same pattern as `norirobotics-mcp`'s Resonite wave-demo script; blocks for `duration_s`
+  - `overte_nearby_entities` (+ `find_nearby` bridge command, `Entities.findEntities`) —
+    queries the *live world*, unlike `GET /api/overte/entities` which only ever reflected
+    this server's own in-memory spawn-tracking dict
+  - `get_entity` bridge command + `GET /api/overte/entity/{id}` — read one entity's live
+    properties (needed by `animate` to read a starting position/rotation before looping)
+- Light entities: `overte_entity_spawn`/`overte_entity_update` gained `parent_id` (Overte's
+  `parentID` — pass `"MyAvatar"` to attach to the local user, e.g. a headlight), `color`
+  (0.0-1.0 RGB, converted to Overte's 0-255 byte range at the boundary), `intensity`,
+  `is_spotlight`, `falloff_radius`. `type="Light"` was already a valid Overte entity type
+  (undocumented here until now) — no bridge change needed, `Entities.addEntity`/`editEntity`
+  already forward arbitrary properties through.
+- `tool_count` in `/api/health` and `/api/v1/diagnostics`, and the tool lists in `/api/tools`
+  and `/api/v1/diagnostics`, were hardcoded at 4/3 tools and already stale before this pass
+  (missing `overte_sampling_assist`); updated to the real 8.
 
 ## [0.2.1] - 2026-07-30
 

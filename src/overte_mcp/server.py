@@ -11,9 +11,23 @@ import httpx
 from fastmcp import FastMCP
 from pydantic import Field
 
-from .models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
+from .models import (
+    DomainStatusInput,
+    EntityAnimateInput,
+    EntityDeleteInput,
+    EntitySpawnInput,
+    EntityUpdateInput,
+    NearbyEntitiesInput,
+    ScriptInjectInput,
+)
 from .tools.domain import get_domain_status_impl
-from .tools.entities import spawn_entity_impl
+from .tools.entities import (
+    animate_entity_impl,
+    delete_entity_impl,
+    find_nearby_entities_impl,
+    spawn_entity_impl,
+    update_entity_impl,
+)
 from .tools.scripting import inject_script_impl
 
 logger = logging.getLogger(__name__)
@@ -64,7 +78,7 @@ def domain_help(topic: str = "overview") -> str:
     """Context-aware help for Overte domain operations.
 
     ## Return Format
-    str — help text for the requested topic.
+    str - help text for the requested topic.
 
     ## Examples
     domain_help(topic="status")
@@ -144,7 +158,16 @@ async def overte_entity_spawn(
         0.0,
         0.0,
     ],
-    scale: Annotated[list[float], Field(description="X, Y, Z dimensions.")] = [1.0, 1.0, 1.0],
+    scale: Annotated[
+        list[float] | None,
+        Field(
+            description=(
+                "X, Y, Z bounding-box dimensions in meters. Omit to let Overte size the "
+                "entity from the model's own natural dimensions - this stretches/squishes a "
+                "non-cubic model to fit the box given, it is not a uniform scale multiplier."
+            )
+        ),
+    ] = None,
     model_url: Annotated[
         str | None, Field(description="GLB/FBX model resource URL if type is Model.")
     ] = None,
@@ -155,9 +178,17 @@ async def overte_entity_spawn(
         bool,
         Field(description="If True, entity persists across domain-server restarts (lifetime=-1)."),
     ] = False,
+    parent_id: Annotated[
+        str | None,
+        Field(description="Entity/avatar UUID to parent this to - position becomes relative. Use 'MyAvatar' to attach to the local user."),
+    ] = None,
+    color: Annotated[list[float] | None, Field(description="RGB as 0.0-1.0 floats. Used by Light/Box/Sphere.")] = None,
+    intensity: Annotated[float | None, Field(description="Light brightness. Only meaningful when entity_type='Light'.")] = None,
+    is_spotlight: Annotated[bool | None, Field(description="True for a directional cone, False/omitted for omnidirectional.")] = None,
+    falloff_radius: Annotated[float | None, Field(description="Distance in meters a Light's intensity falls off by.")] = None,
     ctx: Any = None,
 ) -> dict:
-    """Spawn a virtual object or 3D GLB model in-world at the specified coordinates.
+    """Spawn a virtual object, 3D GLB model, or Light in-world at the specified coordinates.
 
     Live when scripts/overte-mcp-bridge.js is connected to the FastAPI WS hub;
     otherwise returns a clearly labeled simulated confirmation.
@@ -168,6 +199,7 @@ async def overte_entity_spawn(
     ## Examples
     overte_entity_spawn(name="MyBox")
     overte_entity_spawn(name="Tree", entity_type="Model", model_url="https://example.com/tree.glb", position=[10, 0, -5])
+    overte_entity_spawn(name="Headlamp", entity_type="Light", parent_id="MyAvatar", color=[1,1,0.8], intensity=2.0)
     """
     result = await spawn_entity_impl(
         EntitySpawnInput(
@@ -178,6 +210,11 @@ async def overte_entity_spawn(
             model_url=model_url,
             script_url=script_url,
             permanent=permanent,
+            parent_id=parent_id,
+            color=color,
+            intensity=intensity,
+            is_spotlight=is_spotlight,
+            falloff_radius=falloff_radius,
         )
     )
     success = result.get("status") == "success"
@@ -235,6 +272,130 @@ async def overte_script_inject(
     }
 
 
+@mcp.tool(annotations=_MUTATING)
+async def overte_entity_update(
+    entity_id: Annotated[str, Field(description="Overte target entity UUID.")],
+    position: Annotated[list[float] | None, Field(description="X, Y, Z translation coordinates.")] = None,
+    dimensions: Annotated[list[float] | None, Field(description="X, Y, Z bounding-box dimensions in meters.")] = None,
+    parent_id: Annotated[str | None, Field(description="Re-parent to a different entity/avatar UUID.")] = None,
+    visible: Annotated[bool | None, Field(description="Show/hide without deleting - e.g. toggle a light off.")] = None,
+    intensity: Annotated[float | None, Field(description="Light entity brightness.")] = None,
+    color: Annotated[list[float] | None, Field(description="RGB as 0.0-1.0 floats.")] = None,
+    ctx: Any = None,
+) -> dict:
+    """Move, resize, re-parent, or toggle an existing in-world entity. Live-only (bridge
+    required) - there is nothing meaningful to simulate for an edit to something that may
+    not exist in the simulated world.
+
+    ## Return Format
+    {"success": bool, "message": str, "data": {"source": str}}
+
+    ## Examples
+    overte_entity_update(entity_id="abc-123", position=[5, 0, 5])
+    overte_entity_update(entity_id="abc-123", visible=False)
+    """
+    result = await update_entity_impl(
+        EntityUpdateInput(
+            entity_id=entity_id,
+            position=position,
+            dimensions=dimensions,
+            parent_id=parent_id,
+            visible=visible,
+            intensity=intensity,
+            color=color,
+        )
+    )
+    success = result.get("status") == "success"
+    return {
+        "success": success,
+        "message": result.get("message") or ("Entity updated." if success else "Failed to update entity."),
+        "data": {"source": result.get("source")},
+    }
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def overte_entity_delete(
+    entity_id: Annotated[str, Field(description="Overte target entity UUID.")],
+    ctx: Any = None,
+) -> dict:
+    """Permanently delete an in-world entity. Live-only (bridge required).
+
+    ## Return Format
+    {"success": bool, "message": str, "data": {"source": str}}
+
+    ## Examples
+    overte_entity_delete(entity_id="abc-123")
+    """
+    result = await delete_entity_impl(EntityDeleteInput(entity_id=entity_id))
+    success = result.get("status") == "success"
+    return {
+        "success": success,
+        "message": result.get("message") or ("Entity deleted." if success else "Failed to delete entity."),
+        "data": {"source": result.get("source")},
+    }
+
+
+@mcp.tool(annotations=_MUTATING)
+async def overte_entity_animate(
+    entity_id: Annotated[str, Field(description="Overte target entity UUID.")],
+    mode: Annotated[str, Field(description="'spin' (continuous rotation) or 'bob' (up/down oscillation).")] = "spin",
+    axis: Annotated[list[float], Field(description="Rotation axis for 'spin' (normalized).")] = [0.0, 1.0, 0.0],
+    speed: Annotated[float, Field(description="'spin': radians/second. 'bob': oscillations/second.")] = 1.0,
+    amplitude: Annotated[float, Field(description="'bob' only: peak-to-center displacement in meters.")] = 0.1,
+    duration_s: Annotated[float, Field(description="How long to animate before stopping.")] = 5.0,
+    tick_hz: Annotated[float, Field(description="Update rate over the bridge.")] = 10.0,
+    ctx: Any = None,
+) -> dict:
+    """Loop-animate an entity in place: continuous spin or vertical bob. Server-driven
+    (repeated position/rotation updates over the WebSocket bridge, not a baked animation
+    clip) - this call blocks for duration_s while it runs. Live-only (bridge required).
+
+    ## Return Format
+    {"success": bool, "message": str, "data": {"source": str}}
+
+    ## Examples
+    overte_entity_animate(entity_id="abc-123", mode="spin", speed=1.5, duration_s=10)
+    overte_entity_animate(entity_id="abc-123", mode="bob", amplitude=0.2, speed=0.5, duration_s=8)
+    """
+    result = await animate_entity_impl(
+        EntityAnimateInput(
+            entity_id=entity_id, mode=mode, axis=axis, speed=speed, amplitude=amplitude,
+            duration_s=duration_s, tick_hz=tick_hz,
+        )
+    )
+    success = result.get("status") == "success"
+    return {
+        "success": success,
+        "message": result.get("message") or ("Animation finished." if success else "Animation failed."),
+        "data": {"source": result.get("source")},
+    }
+
+
+@mcp.tool(annotations=_READ_ONLY)
+async def overte_nearby_entities(
+    position: Annotated[list[float] | None, Field(description="Search center. Omit to search around the local user.")] = None,
+    radius: Annotated[float, Field(description="Search radius in meters.")] = 20.0,
+    ctx: Any = None,
+) -> dict:
+    """Find real in-world entities near a point via Entities.findEntities - queries the
+    live world, unlike a simple tracked-entity list. Live-only (bridge required).
+
+    ## Return Format
+    {"success": bool, "message": str, "data": {"source": str, "items": [...], "count": int}}
+
+    ## Examples
+    overte_nearby_entities()
+    overte_nearby_entities(position=[2000, 1995, 2016], radius=10)
+    """
+    result = await find_nearby_entities_impl(NearbyEntitiesInput(position=position, radius=radius))
+    success = result.get("status") == "success"
+    return {
+        "success": success,
+        "message": result.get("message") or ("Found nearby entities." if success else "Search failed."),
+        "data": {"source": result.get("source"), "items": result.get("items", []), "count": result.get("count", 0)},
+    }
+
+
 # -- Sampling-enabled help --
 @mcp.tool(annotations=_READ_ONLY)
 async def overte_sampling_assist(
@@ -255,9 +416,9 @@ async def overte_sampling_assist(
     plan = (
         f"Goal: {goal}\n\n"
         "Recommended steps:\n"
-        "1. overte_domain_status(host='localhost', port=40100) — verify server is reachable\n"
-        "2. overte_entity_spawn(name='Welcome', type='Web', position=[0, 1, -3]) — create welcome sign\n"
-        "3. overte_script_inject(entity_id='...', script_url='...') — attach behavior"
+        "1. overte_domain_status(host='localhost', port=40100) - verify server is reachable\n"
+        "2. overte_entity_spawn(name='Welcome', type='Web', position=[0, 1, -3]) - create welcome sign\n"
+        "3. overte_script_inject(entity_id='...', script_url='...') - attach behavior"
     )
 
     if ctx and hasattr(ctx, "sample"):
@@ -281,7 +442,7 @@ async def overte_sampling_assist(
 
 
 def main():
-    """Entry point with stdio proxy pattern — probes HTTP daemon first, falls back to direct stdio."""
+    """Entry point with stdio proxy pattern - probes HTTP daemon first, falls back to direct stdio."""
     http_url = os.getenv("SERVER_API_URL", "http://127.0.0.1:11110")
     mcp_url = f"{http_url}/mcp"
 
@@ -308,7 +469,7 @@ def main():
             asyncio.run(proxy.run_stdio_async(show_banner=False))
             return
     except Exception:
-        logger.info("No HTTP daemon at %s — starting direct stdio server.", mcp_url)
+        logger.info("No HTTP daemon at %s - starting direct stdio server.", mcp_url)
 
     mcp.run()
 

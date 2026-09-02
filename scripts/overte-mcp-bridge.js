@@ -108,6 +108,80 @@
                     message: err.toString()
                 }, sock);
             }
+        } else if (action === "update") {
+            try {
+                var updateEntityId = msg.entity_id;
+                var properties = msg.properties || {};
+                Entities.editEntity(updateEntityId, properties);
+                sendResponse({
+                    request_id: reqId,
+                    status: "success"
+                }, sock);
+            } catch (err) {
+                sendResponse({
+                    request_id: reqId,
+                    status: "error",
+                    message: err.toString()
+                }, sock);
+            }
+        } else if (action === "delete") {
+            try {
+                Entities.deleteEntity(msg.entity_id);
+                sendResponse({
+                    request_id: reqId,
+                    status: "success"
+                }, sock);
+            } catch (err) {
+                sendResponse({
+                    request_id: reqId,
+                    status: "error",
+                    message: err.toString()
+                }, sock);
+            }
+        } else if (action === "get_entity") {
+            try {
+                var getProps = Entities.getEntityProperties(msg.entity_id, ["name", "type", "position", "rotation", "dimensions", "parentID", "visible", "intensity", "color"]);
+                sendResponse({
+                    request_id: reqId,
+                    status: "success",
+                    properties: getProps
+                }, sock);
+            } catch (err) {
+                sendResponse({
+                    request_id: reqId,
+                    status: "error",
+                    message: err.toString()
+                }, sock);
+            }
+        } else if (action === "find_nearby") {
+            try {
+                var searchPos = msg.position || (typeof MyAvatar !== "undefined" ? MyAvatar.position : { x: 0, y: 0, z: 0 });
+                var radius = msg.radius || 20;
+                var ids = Entities.findEntities(searchPos, radius);
+                var items = [];
+                for (var i = 0; i < ids.length; i++) {
+                    var props = Entities.getEntityProperties(ids[i], ["name", "type", "position", "dimensions", "modelURL"]);
+                    items.push({
+                        id: ids[i],
+                        name: props.name,
+                        type: props.type,
+                        position: props.position,
+                        dimensions: props.dimensions,
+                        modelURL: props.modelURL
+                    });
+                }
+                sendResponse({
+                    request_id: reqId,
+                    status: "success",
+                    items: items
+                }, sock);
+            } catch (err) {
+                sendResponse({
+                    request_id: reqId,
+                    status: "error",
+                    message: err.toString()
+                }, sock);
+            }
         } else if (action === "inject") {
             try {
                 var entityId = msg.entity_id;

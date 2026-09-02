@@ -5,17 +5,28 @@ import collections
 import datetime
 import json
 import logging
+import math
 import os
 import subprocess
+import time
 import uuid
 from pathlib import Path
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .models import DomainStatusInput, EntitySpawnInput, ScriptInjectInput
+from .models import (
+    DomainStatusInput,
+    EntityAnimateInput,
+    EntityDeleteInput,
+    EntitySpawnInput,
+    EntityUpdateInput,
+    NearbyEntitiesInput,
+    ScriptInjectInput,
+)
 from .tools.domain import get_domain_status_impl
 from .tools.entities import spawn_entity_impl
 from .tools.scripting import inject_script_impl
@@ -111,7 +122,7 @@ async def health_check():
         "git_sha": GIT_SHA,
         "started_at": _STARTED.isoformat(),
         "uptime_seconds": int(uptime),
-        "tool_count": 4,
+        "tool_count": 8,
         "shutting_down": False,
         "transport": "streamable-http",
         "port": BACKEND_PORT,
@@ -154,6 +165,49 @@ async def list_tools():
                     "script_data": {"type": "object"},
                 },
             },
+            {
+                "name": "overte_entity_update",
+                "description": "Move, resize, re-parent, or toggle an existing in-world entity.",
+                "inputSchema": {
+                    "entity_id": {"type": "string", "required": True},
+                    "position": {"type": "array", "items": {"type": "number"}},
+                    "dimensions": {"type": "array", "items": {"type": "number"}},
+                    "parent_id": {"type": "string"},
+                    "visible": {"type": "boolean"},
+                    "intensity": {"type": "number"},
+                    "color": {"type": "array", "items": {"type": "number"}},
+                },
+            },
+            {
+                "name": "overte_entity_delete",
+                "description": "Permanently delete an in-world entity.",
+                "inputSchema": {"entity_id": {"type": "string", "required": True}},
+            },
+            {
+                "name": "overte_entity_animate",
+                "description": "Loop-animate an entity in place (spin or bob) for a fixed duration.",
+                "inputSchema": {
+                    "entity_id": {"type": "string", "required": True},
+                    "mode": {"type": "string", "default": "spin"},
+                    "axis": {"type": "array", "items": {"type": "number"}},
+                    "speed": {"type": "number", "default": 1.0},
+                    "amplitude": {"type": "number", "default": 0.1},
+                    "duration_s": {"type": "number", "default": 5.0},
+                },
+            },
+            {
+                "name": "overte_nearby_entities",
+                "description": "Find real in-world entities near a point (default: the local user).",
+                "inputSchema": {
+                    "position": {"type": "array", "items": {"type": "number"}},
+                    "radius": {"type": "number", "default": 20.0},
+                },
+            },
+            {
+                "name": "overte_sampling_assist",
+                "description": "Get multi-step Overte operation guidance via MCP sampling.",
+                "inputSchema": {"goal": {"type": "string", "required": True}},
+            },
         ]
     }
 
@@ -190,11 +244,15 @@ async def diagnostics():
         "server": "overte-mcp",
         "version": "0.2.0",
         "uptime_seconds": int(uptime),
-        "tool_count": 4,
+        "tool_count": 8,
         "tools": [
             {"name": "overte_domain_status"},
             {"name": "overte_entity_spawn"},
             {"name": "overte_script_inject"},
+            {"name": "overte_entity_update"},
+            {"name": "overte_entity_delete"},
+            {"name": "overte_entity_animate"},
+            {"name": "overte_nearby_entities"},
             {"name": "overte_sampling_assist"},
         ],
         "system": {"windows": True},
@@ -557,34 +615,57 @@ async def clear_tracked_entities():
     return {"status": "success", "message": "Entity list cleared."}
 
 
+def _rgb01_to_overte(rgb: list[float]) -> dict[str, int]:
+    """Overte/HiFi entity `color` is a byte-range {red,green,blue} 0-255, not the 0.0-1.0
+    floats used everywhere else in this API - convert once at the boundary."""
+    r, g, b = rgb
+    return {
+        "red": max(0, min(255, round(r * 255))),
+        "green": max(0, min(255, round(g * 255))),
+        "blue": max(0, min(255, round(b * 255))),
+    }
+
+
 @app.post("/api/overte/spawn")
 async def post_entity_spawn(request: EntitySpawnInput):
     """Spawn an in-world entity (via WebSocket bridge if connected, else falls back to simulated)."""
     try:
         if _active_ws:
-            payload = {
-                "properties": {
-                    "type": request.type,
-                    "name": request.name,
-                    "position": {
-                        "x": request.position[0],
-                        "y": request.position[1],
-                        "z": request.position[2],
-                    }
-                    if (request.position and len(request.position) == 3)
-                    else {"x": 0, "y": 0, "z": 0},
-                    "dimensions": {
-                        "x": request.scale[0],
-                        "y": request.scale[1],
-                        "z": request.scale[2],
-                    }
-                    if (request.scale and len(request.scale) == 3)
-                    else {"x": 1, "y": 1, "z": 1},
-                    "modelURL": request.model_url,
-                    "script": request.script_url,
-                    "lifetime": -1 if request.permanent else None,
+            properties: dict[str, Any] = {
+                "type": request.type,
+                "name": request.name,
+                "position": {
+                    "x": request.position[0],
+                    "y": request.position[1],
+                    "z": request.position[2],
                 }
+                if (request.position and len(request.position) == 3)
+                else {"x": 0, "y": 0, "z": 0},
+                "modelURL": request.model_url,
+                "script": request.script_url,
+                "lifetime": -1 if request.permanent else None,
             }
+            # "dimensions" stretches/squishes the model to fit that exact bounding box - it is
+            # NOT a uniform scale multiplier. Omit it entirely (rather than defaulting to
+            # 1x1x1) so Overte sizes the entity from the model's own natural dimensions
+            # unless the caller explicitly asks for a specific box.
+            if request.scale and len(request.scale) == 3:
+                properties["dimensions"] = {
+                    "x": request.scale[0],
+                    "y": request.scale[1],
+                    "z": request.scale[2],
+                }
+            if request.parent_id:
+                properties["parentID"] = request.parent_id
+            if request.color and len(request.color) == 3:
+                properties["color"] = _rgb01_to_overte(request.color)
+            if request.intensity is not None:
+                properties["intensity"] = request.intensity
+            if request.is_spotlight is not None:
+                properties["isSpotlight"] = request.is_spotlight
+            if request.falloff_radius is not None:
+                properties["falloffRadius"] = request.falloff_radius
+            payload = {"properties": properties}
             res = await _send_ws_command("spawn", payload)
             if res and res.get("status") == "success":
                 entity_id = res.get("entity_id", "")
@@ -593,7 +674,7 @@ async def post_entity_spawn(request: EntitySpawnInput):
                     "name": request.name,
                     "type": request.type,
                     "position": list(request.position),
-                    "scale": list(request.scale),
+                    "scale": list(request.scale) if request.scale else None,
                     "model_url": request.model_url,
                     "script_url": request.script_url,
                     "permanent": request.permanent,
@@ -622,6 +703,170 @@ async def post_entity_spawn(request: EntitySpawnInput):
     except Exception as e:
         logger.error(f"Failed to spawn entity: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/api/overte/update")
+async def post_entity_update(request: EntityUpdateInput):
+    """Move/resize an existing entity in-world (via WebSocket bridge, live-only - no
+    simulated fallback since there's nothing meaningful to simulate for an edit)."""
+    if not _active_ws:
+        raise HTTPException(
+            status_code=400,
+            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
+        )
+    properties: dict[str, Any] = {}
+    if request.position and len(request.position) == 3:
+        properties["position"] = {"x": request.position[0], "y": request.position[1], "z": request.position[2]}
+    if request.dimensions and len(request.dimensions) == 3:
+        properties["dimensions"] = {
+            "x": request.dimensions[0],
+            "y": request.dimensions[1],
+            "z": request.dimensions[2],
+        }
+    if request.parent_id is not None:
+        properties["parentID"] = request.parent_id
+    if request.visible is not None:
+        properties["visible"] = request.visible
+    if request.intensity is not None:
+        properties["intensity"] = request.intensity
+    if request.color and len(request.color) == 3:
+        properties["color"] = _rgb01_to_overte(request.color)
+    if not properties:
+        raise HTTPException(status_code=400, detail="Nothing to update - pass position and/or dimensions.")
+
+    res = await _send_ws_command("update", {"entity_id": request.entity_id, "properties": properties})
+    if not res or res.get("status") != "success":
+        msg = res.get("message", "WebSocket client failed to update entity.") if res else "WebSocket timeout/error."
+        raise HTTPException(status_code=400, detail=msg)
+    if request.entity_id in _tracked_entities:
+        if "position" in properties:
+            _tracked_entities[request.entity_id]["position"] = request.position
+    return {
+        "status": "success",
+        "source": "live",
+        "message": f"Entity {request.entity_id} updated via WebSocket bridge.",
+    }
+
+
+def _quat_mul(a: tuple, b: tuple) -> tuple:
+    """Hamilton product a*b, both (x,y,z,w) - same convention as Overte/HiFi's rotation property."""
+    ax, ay, az, aw = a
+    bx, by, bz, bw = b
+    return (
+        aw * bx + ax * bw + ay * bz - az * by,
+        aw * by - ax * bz + ay * bw + az * bx,
+        aw * bz + ax * by - ay * bx + az * bw,
+        aw * bw - ax * bx - ay * by - az * bz,
+    )
+
+
+def _axis_angle_quat(axis: tuple, angle: float) -> tuple:
+    half = angle / 2.0
+    s = math.sin(half)
+    return (axis[0] * s, axis[1] * s, axis[2] * s, math.cos(half))
+
+
+@app.post("/api/overte/animate")
+async def post_entity_animate(request: EntityAnimateInput):
+    """Loop-animate an entity in place: 'spin' (continuous rotation) or 'bob' (vertical
+    oscillation). Server-driven, same pattern as norirobotics-mcp's Resonite wave-demo
+    script - repeated 'update' calls over the bridge, not a client-side animation clip."""
+    if not _active_ws:
+        raise HTTPException(
+            status_code=400,
+            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
+        )
+    if request.mode not in ("spin", "bob"):
+        raise HTTPException(status_code=400, detail="mode must be 'spin' or 'bob'")
+
+    start_res = await _send_ws_command("get_entity", {"entity_id": request.entity_id})
+    if not start_res or start_res.get("status") != "success":
+        raise HTTPException(status_code=400, detail=f"Could not read entity {request.entity_id} - does it exist?")
+    props = start_res["properties"]
+    rest_rot = props.get("rotation") or {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0}
+    rest_rot_t = (rest_rot["x"], rest_rot["y"], rest_rot["z"], rest_rot["w"])
+    rest_pos = props.get("position") or {"x": 0.0, "y": 0.0, "z": 0.0}
+    axis = tuple(request.axis) if len(request.axis) == 3 else (0.0, 1.0, 0.0)
+
+    start = time.monotonic()
+    tick_interval = 1.0 / max(request.tick_hz, 0.1)
+    ticks = 0
+    while (t := time.monotonic() - start) < request.duration_s:
+        if request.mode == "spin":
+            delta = _axis_angle_quat(axis, request.speed * t)
+            x, y, z, w = _quat_mul(rest_rot_t, delta)
+            properties = {"rotation": {"x": x, "y": y, "z": z, "w": w}}
+        else:  # bob
+            offset = request.amplitude * math.sin(2 * math.pi * request.speed * t)
+            properties = {
+                "position": {"x": rest_pos["x"], "y": rest_pos["y"] + offset, "z": rest_pos["z"]}
+            }
+        res = await _send_ws_command("update", {"entity_id": request.entity_id, "properties": properties})
+        if not res or res.get("status") != "success":
+            raise HTTPException(status_code=400, detail="Bridge update failed mid-animation.")
+        ticks += 1
+        await asyncio.sleep(tick_interval)
+
+    return {
+        "status": "success",
+        "source": "live",
+        "message": f"Animated entity {request.entity_id} ({request.mode}) for {request.duration_s}s, {ticks} ticks.",
+    }
+
+
+@app.post("/api/overte/nearby")
+async def post_nearby_entities(request: NearbyEntitiesInput):
+    """Find real in-world entities near a point (default: the local user) via
+    Entities.findEntities - unlike GET /api/overte/entities, this queries the live world
+    instead of this server's own spawn-tracking memory."""
+    if not _active_ws:
+        raise HTTPException(
+            status_code=400,
+            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
+        )
+    payload: dict[str, Any] = {"radius": request.radius}
+    if request.position and len(request.position) == 3:
+        payload["position"] = {"x": request.position[0], "y": request.position[1], "z": request.position[2]}
+    res = await _send_ws_command("find_nearby", payload)
+    if not res or res.get("status") != "success":
+        msg = res.get("message", "WebSocket client failed to search.") if res else "WebSocket timeout/error."
+        raise HTTPException(status_code=400, detail=msg)
+    return {"status": "success", "source": "live", "items": res.get("items", []), "count": len(res.get("items", []))}
+
+
+@app.get("/api/overte/entity/{entity_id}")
+async def get_entity_properties(entity_id: str):
+    """Read one entity's live properties (position/rotation/dimensions/parent/etc)."""
+    if not _active_ws:
+        raise HTTPException(
+            status_code=400,
+            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
+        )
+    res = await _send_ws_command("get_entity", {"entity_id": entity_id})
+    if not res or res.get("status") != "success":
+        msg = res.get("message", "Entity not found.") if res else "WebSocket timeout/error."
+        raise HTTPException(status_code=400, detail=msg)
+    return {"status": "success", "source": "live", "properties": res["properties"]}
+
+
+@app.post("/api/overte/delete")
+async def post_entity_delete(request: EntityDeleteInput):
+    """Delete an entity from the world (via WebSocket bridge, live-only)."""
+    if not _active_ws:
+        raise HTTPException(
+            status_code=400,
+            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
+        )
+    res = await _send_ws_command("delete", {"entity_id": request.entity_id})
+    if not res or res.get("status") != "success":
+        msg = res.get("message", "WebSocket client failed to delete entity.") if res else "WebSocket timeout/error."
+        raise HTTPException(status_code=400, detail=msg)
+    _tracked_entities.pop(request.entity_id, None)
+    return {
+        "status": "success",
+        "source": "live",
+        "message": f"Entity {request.entity_id} deleted via WebSocket bridge.",
+    }
 
 
 @app.post("/api/overte/inject")

@@ -26,11 +26,19 @@ class DomainStatusInput(BaseModel):
 
 class EntitySpawnInput(BaseModel):
     name: str = Field(..., description="Name of the entity")
-    type: str = Field(default="Box", description="Entity type: Box, Sphere, Web, Model")
+    type: str = Field(default="Box", description="Entity type: Box, Sphere, Web, Model, Light")
     position: list[float] = Field(
         default=[0.0, 0.0, 0.0], description="X, Y, Z translation coordinates"
     )
-    scale: list[float] = Field(default=[1.0, 1.0, 1.0], description="X, Y, Z dimensions")
+    scale: list[float] | None = Field(
+        default=None,
+        description=(
+            "X, Y, Z bounding-box dimensions in meters. Omit/null to let Overte size the "
+            "entity from the model's own natural dimensions - passing e.g. [1,1,1] on a "
+            "non-cubic model non-uniformly stretches/squishes it to fit that box, it is not "
+            "a uniform scale multiplier."
+        ),
+    )
     model_url: str | None = Field(
         default=None, description="GLB/FBX model resource URL if type is Model"
     )
@@ -41,6 +49,60 @@ class EntitySpawnInput(BaseModel):
         default=False,
         description="If True, sets lifetime=-1 so the entity persists across domain-server restarts.",
     )
+    parent_id: str | None = Field(
+        default=None,
+        description=(
+            "Entity/avatar UUID to parent this entity to (Overte's parentID) - position becomes "
+            "relative to the parent. Pass the special ID 'MyAvatar' to attach to the local user "
+            "(e.g. a headlight that follows you)."
+        ),
+    )
+    color: list[float] | None = Field(
+        default=None,
+        description="RGB color as 0.0-1.0 floats (converted to Overte's 0-255 byte range). Used by Light/Box/Sphere.",
+    )
+    intensity: float | None = Field(
+        default=None, description="Light entity brightness. Only meaningful when type='Light'."
+    )
+    is_spotlight: bool | None = Field(
+        default=None, description="True for a directional spotlight cone, False/omitted for an omnidirectional point light."
+    )
+    falloff_radius: float | None = Field(
+        default=None, description="Distance in meters at which a Light entity's intensity falls off."
+    )
+
+
+class EntityUpdateInput(BaseModel):
+    entity_id: str = Field(..., description="Overte target entity UUID")
+    position: list[float] | None = Field(default=None, description="X, Y, Z translation coordinates")
+    dimensions: list[float] | None = Field(
+        default=None, description="X, Y, Z bounding-box dimensions in meters (see spawn's scale note)"
+    )
+    parent_id: str | None = Field(default=None, description="Re-parent to a different entity/avatar UUID")
+    visible: bool | None = Field(default=None, description="Show/hide without deleting - e.g. toggle a light off")
+    intensity: float | None = Field(default=None, description="Light entity brightness")
+    color: list[float] | None = Field(default=None, description="RGB as 0.0-1.0 floats")
+
+
+class EntityDeleteInput(BaseModel):
+    entity_id: str = Field(..., description="Overte target entity UUID")
+
+
+class EntityAnimateInput(BaseModel):
+    entity_id: str = Field(..., description="Overte target entity UUID")
+    mode: str = Field(default="spin", description="'spin' (continuous rotation) or 'bob' (up/down oscillation)")
+    axis: list[float] = Field(default=[0.0, 1.0, 0.0], description="Rotation axis for 'spin' (normalized)")
+    speed: float = Field(default=1.0, description="'spin': radians/second. 'bob': oscillations/second")
+    amplitude: float = Field(default=0.1, description="'bob' only: peak-to-center displacement in meters")
+    duration_s: float = Field(default=5.0, description="How long to animate before stopping")
+    tick_hz: float = Field(default=10.0, description="Update rate - higher is smoother but chattier over the bridge")
+
+
+class NearbyEntitiesInput(BaseModel):
+    position: list[float] | None = Field(
+        default=None, description="Search center. Omit to search around the local user's avatar."
+    )
+    radius: float = Field(default=20.0, description="Search radius in meters")
 
 
 class ScriptInjectInput(BaseModel):
