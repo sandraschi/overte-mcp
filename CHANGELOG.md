@@ -6,6 +6,32 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased] - 2026-09-02
 
+### Added (model + texture depots, backup/restore, entities UI wiring)
+- **Model depot**: `GET/POST /api/overte/models`, `GET/PUT/DELETE /api/overte/models/{name}`,
+  binary upload (glb/gltf/fbx/obj), manifest.json metadata (description/category), static
+  serve at `/models/{name}`. Supersedes the old passive `/models` static-only mount (no
+  manifest, no CRUD) that predated this. One-time reconciliation back-fills manifest entries
+  for the two GLBs that already existed on disk (Nekomimi-chan, the living-room scene) so
+  they show up instead of the depot looking empty.
+- **Texture depot**: same CRUD shape at `/api/overte/textures`, restricted to png/jpg/jpeg
+  (the two formats apidocs.overte.org confirms; KTX unconfirmed, not allowed pending a real
+  test). Static serve at `/textures/{name}`.
+- **Backup/restore**: `POST /api/overte/backup` zips the scripts/models/textures depots +
+  tracked-entities list into `data/backups/<timestamp>.zip`; `GET /api/overte/backups` lists
+  them; `POST /api/overte/backups/{name}/restore` restores (overwrites matching files only,
+  doesn't delete anything the backup doesn't mention). Live round-trip tested: uploaded a
+  texture, backed up, deleted the texture, restored, confirmed it came back with its original
+  metadata intact. Local to this server only - does not touch the Overte domain-server's own
+  world persistence. `data/backups/` gitignored (regenerable, and can get large).
+- **Webapp**: new Model Depot, Texture Depot, and Backups pages (upload/list/delete/copy-URL;
+  texture page shows thumbnails). `entities.tsx` gained the delete/move/animate UI that was
+  missing despite the backend already supporting it, plus a live "Nearby" search panel
+  (queries the real world via `overte_nearby_entities`, not just this backend's own
+  spawn-tracking memory like the existing entity list). Full spawn→move→animate→delete cycle
+  browser-tested end to end, zero console errors, tsc/biome clean.
+- No MCP tool wrappers added for models/textures/backups - matches the existing precedent
+  that the scripts depot is also REST+webapp-only, no `@mcp.tool` equivalents.
+
 ### Added (capability exploration: shapes, particles, textures, real bounce)
 - `extra_properties: dict | None` escape hatch on `EntitySpawnInput`/`EntityUpdateInput` -
   merged into the properties dict verbatim. Needed because Overte has far more entity

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -609,6 +609,261 @@ async def delete_script(name: str):
     return {"status": "success", "name": name}
 
 
+# ---------------------------------------------------------------------------
+# Model + texture depots (binary file CRUD, same manifest-on-disk pattern as
+# the scripts depot above, adapted for uploads instead of inline text content)
+# ---------------------------------------------------------------------------
+
+_MODELS_DEPOT = Path(__file__).resolve().parent.parent.parent / "models"
+_MODELS_MANIFEST_PATH = _MODELS_DEPOT / "manifest.json"
+_MODEL_EXTENSIONS = {".glb", ".gltf", ".fbx", ".obj"}
+
+_TEXTURES_DEPOT = Path(__file__).resolve().parent.parent.parent / "data" / "textures"
+_TEXTURES_MANIFEST_PATH = _TEXTURES_DEPOT / "manifest.json"
+_TEXTURE_EXTENSIONS = {".png", ".jpg", ".jpeg"}  # per apidocs.overte.org - KTX unconfirmed
+
+
+def _load_depot_manifest(path: Path) -> list[dict]:
+    if path.exists():
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+
+def _save_depot_manifest(path: Path, manifest: list[dict]):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(manifest, f, indent=2)
+
+
+def _register_binary_depot(
+    *,
+    api_prefix: str,
+    depot: Path,
+    manifest_path: Path,
+    static_mount: str,
+    allowed_extensions: set[str],
+    kind: str,
+):
+    """Wire up list/get/upload/update-metadata/delete routes plus a static mount for one
+    binary-file depot (models or textures). A function factory rather than a class so each
+    depot still gets normal, individually-named FastAPI route handlers."""
+
+    depot.mkdir(parents=True, exist_ok=True)
+    app.mount(static_mount, StaticFiles(directory=str(depot)), name=f"{kind}_static")
+
+    @app.get(api_prefix, name=f"list_{kind}s")
+    async def list_items():
+        manifest = _load_depot_manifest(manifest_path)
+        result = []
+        for m in manifest:
+            fp = depot / m["name"]
+            entry = dict(m)
+            entry["exists"] = fp.exists()
+            entry["url"] = f"http://localhost:{BACKEND_PORT}{static_mount}/{m['name']}"
+            if fp.exists():
+                entry["size"] = fp.stat().st_size
+            result.append(entry)
+        return {kind + "s": result, "count": len(result)}
+
+    @app.get(api_prefix + "/{name}", name=f"get_{kind}")
+    async def get_item(name: str):
+        fp = depot / name
+        if not fp.exists():
+            raise HTTPException(status_code=404, detail=f"{kind.capitalize()} not found")
+        manifest = _load_depot_manifest(manifest_path)
+        meta = next((m for m in manifest if m["name"] == name), {})
+        return {
+            "name": name,
+            "url": f"http://localhost:{BACKEND_PORT}{static_mount}/{name}",
+            "size": fp.stat().st_size,
+            "description": meta.get("description", ""),
+            "category": meta.get("category", "uncategorized"),
+        }
+
+    @app.post(api_prefix, name=f"upload_{kind}")
+    async def upload_item(
+        file: UploadFile,
+        description: str = "",
+        category: str = "uncategorized",
+    ):
+        ext = Path(file.filename or "").suffix.lower()
+        if ext not in allowed_extensions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported {kind} extension {ext!r}. Allowed: {sorted(allowed_extensions)}",
+            )
+        name = file.filename
+        fp = depot / name
+        if fp.exists():
+            raise HTTPException(status_code=409, detail=f"{kind.capitalize()} {name!r} already exists")
+        depot.mkdir(parents=True, exist_ok=True)
+        content = await file.read()
+        fp.write_bytes(content)
+        manifest = _load_depot_manifest(manifest_path)
+        manifest.append({"name": name, "description": description, "category": category})
+        _save_depot_manifest(manifest_path, manifest)
+        _log(kind + "s", "INFO", f"Uploaded {kind}: {name} ({len(content)} bytes)")
+        return {
+            "status": "success",
+            "name": name,
+            "url": f"http://localhost:{BACKEND_PORT}{static_mount}/{name}",
+            "size": len(content),
+        }
+
+    @app.put(api_prefix + "/{name}", name=f"update_{kind}_metadata")
+    async def update_item_metadata(name: str, description: str | None = None, category: str | None = None):
+        fp = depot / name
+        if not fp.exists():
+            raise HTTPException(status_code=404, detail=f"{kind.capitalize()} not found")
+        manifest = _load_depot_manifest(manifest_path)
+        found = False
+        for m in manifest:
+            if m["name"] == name:
+                if description is not None:
+                    m["description"] = description
+                if category is not None:
+                    m["category"] = category
+                found = True
+                break
+        if not found:
+            manifest.append({"name": name, "description": description or "", "category": category or "uncategorized"})
+        _save_depot_manifest(manifest_path, manifest)
+        _log(kind + "s", "INFO", f"Updated {kind} metadata: {name}")
+        return {"status": "success", "name": name}
+
+    @app.delete(api_prefix + "/{name}", name=f"delete_{kind}")
+    async def delete_item(name: str):
+        fp = depot / name
+        if fp.exists():
+            fp.unlink()
+        manifest = _load_depot_manifest(manifest_path)
+        manifest = [m for m in manifest if m["name"] != name]
+        _save_depot_manifest(manifest_path, manifest)
+        _log(kind + "s", "INFO", f"Deleted {kind}: {name}")
+        return {"status": "success", "name": name}
+
+
+def _reconcile_manifest_with_disk(depot: Path, manifest_path: Path, allowed_extensions: set[str]) -> None:
+    """models/ predates this manifest system (Nekomimi-chan.glb, a living-room GLB, ... were
+    already sitting there) - back-fill manifest entries for any recognized-extension file on
+    disk that isn't tracked yet, so the depot listing reflects what's actually there instead
+    of appearing empty. One-way (adds missing entries only, never removes)."""
+    if not depot.exists():
+        return
+    manifest = _load_depot_manifest(manifest_path)
+    known = {m["name"] for m in manifest}
+    changed = False
+    for fp in sorted(depot.iterdir()):
+        if fp.is_file() and fp.suffix.lower() in allowed_extensions and fp.name not in known:
+            manifest.append({"name": fp.name, "description": "", "category": "uncategorized"})
+            changed = True
+    if changed:
+        _save_depot_manifest(manifest_path, manifest)
+
+
+_register_binary_depot(
+    api_prefix="/api/overte/models",
+    depot=_MODELS_DEPOT,
+    manifest_path=_MODELS_MANIFEST_PATH,
+    static_mount="/models",
+    allowed_extensions=_MODEL_EXTENSIONS,
+    kind="model",
+)
+_reconcile_manifest_with_disk(_MODELS_DEPOT, _MODELS_MANIFEST_PATH, _MODEL_EXTENSIONS)
+_register_binary_depot(
+    api_prefix="/api/overte/textures",
+    depot=_TEXTURES_DEPOT,
+    manifest_path=_TEXTURES_MANIFEST_PATH,
+    static_mount="/textures",
+    allowed_extensions=_TEXTURE_EXTENSIONS,
+    kind="texture",
+)
+
+
+# ---------------------------------------------------------------------------
+# Backup: zip snapshots of the scripts/models/textures depots + tracked entities.
+# ---------------------------------------------------------------------------
+
+_BACKUPS_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "backups"
+
+
+@app.post("/api/overte/backup")
+async def create_backup():
+    """Zip-snapshot the scripts/models/textures depots and the tracked-entities list into
+    data/backups/<timestamp>.zip. Does not touch the live Overte world - this backs up what
+    this server manages locally, not the domain-server's own entity-tree persistence."""
+    import zipfile
+
+    _BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+    ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    backup_path = _BACKUPS_DIR / f"overte-mcp-backup-{ts}.zip"
+
+    with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for depot, arc_prefix in [(_SCRIPTS_DEPOT, "scripts"), (_MODELS_DEPOT, "models"), (_TEXTURES_DEPOT, "textures")]:
+            if not depot.exists():
+                continue
+            for fp in depot.rglob("*"):
+                if fp.is_file():
+                    zf.write(fp, arcname=f"{arc_prefix}/{fp.relative_to(depot)}")
+        zf.writestr("tracked_entities.json", json.dumps(_tracked_entities, indent=2))
+
+    size = backup_path.stat().st_size
+    _log("backup", "INFO", f"Created backup: {backup_path.name} ({size} bytes)")
+    return {"status": "success", "name": backup_path.name, "size": size}
+
+
+@app.get("/api/overte/backups")
+async def list_backups():
+    """List available backup archives, newest first."""
+    if not _BACKUPS_DIR.exists():
+        return {"backups": [], "count": 0}
+    items = sorted(
+        (
+            {"name": p.name, "size": p.stat().st_size, "created_at": datetime.datetime.fromtimestamp(p.stat().st_mtime, tz=datetime.timezone.utc).isoformat()}
+            for p in _BACKUPS_DIR.glob("*.zip")
+        ),
+        key=lambda x: x["created_at"],
+        reverse=True,
+    )
+    return {"backups": items, "count": len(items)}
+
+
+@app.post("/api/overte/backups/{name}/restore")
+async def restore_backup(name: str):
+    """Restore a backup archive, OVERWRITING current files in the scripts/models/textures
+    depots (matching names only - does not delete files the backup doesn't mention) and the
+    tracked-entities list. Does not touch the live Overte world."""
+    import zipfile
+
+    backup_path = _BACKUPS_DIR / name
+    if not backup_path.exists() or backup_path.suffix != ".zip":
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    depot_by_prefix = {"scripts": _SCRIPTS_DEPOT, "models": _MODELS_DEPOT, "textures": _TEXTURES_DEPOT}
+    restored = 0
+    with zipfile.ZipFile(backup_path, "r") as zf:
+        for member in zf.namelist():
+            if member == "tracked_entities.json":
+                global _tracked_entities
+                _tracked_entities = json.loads(zf.read(member))
+                continue
+            prefix, _, rel = member.partition("/")
+            target_depot = depot_by_prefix.get(prefix)
+            if not target_depot or not rel:
+                continue
+            target_path = target_depot / rel
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.write_bytes(zf.read(member))
+            restored += 1
+
+    _log("backup", "INFO", f"Restored backup: {name} ({restored} files)")
+    return {"status": "success", "name": name, "files_restored": restored}
+
+
 @app.get("/api/overte/entities")
 async def list_tracked_entities():
     """Return all entities tracked by this server (spawned via bridge)."""
@@ -1068,13 +1323,9 @@ async def post_script_inject(request: ScriptInjectInput):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-# Serve model files (FBX/GLB) for Overte entity loading
-_models_dir = Path(__file__).resolve().parent.parent.parent / "models"
-if _models_dir.exists():
-    app.mount("/models", StaticFiles(directory=str(_models_dir)), name="models")
-    _log("http_server", "INFO", f"Model files served from {_models_dir}")
-else:
-    _log("http_server", "WARNING", f"Models directory not found: {_models_dir}")
+# Model files (FBX/GLB) are now served via the models depot's own static mount, registered
+# by _register_binary_depot() above (also handles textures) - this used to be a standalone
+# passive mount with no manifest/CRUD; superseded, not duplicated.
 
 # Serve entity scripts from the depot
 _SCRIPTS_DEPOT.mkdir(parents=True, exist_ok=True)

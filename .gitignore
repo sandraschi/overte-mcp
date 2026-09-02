@@ -40,6 +40,10 @@ OverteInstaller.exe
 reports/
 *.bak-*
 
+# Generated backup archives (data/scripts, data/textures, models/ are tracked; the zip
+# snapshots of them are regenerable runtime artifacts, not source)
+data/backups/
+
 # Tauri
 native/target/
 native/resources/*.exe
