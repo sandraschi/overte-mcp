@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased] - 2026-09-02
 
+### Added (fixture spawner)
+- `overte_fixture_spawn` + `POST /api/overte/fixture` — one-call preset test fixtures for
+  gripper/manipulation testing: `box`, `cup`, `ball`, `table`, `chair`. Box/Sphere primitive
+  approximations sized for realistic grip-testing dimensions - Overte has no cylinder
+  primitive and this doesn't fabricate fake model URLs for objects no GLB actually exists
+  for. `table`/`chair` spawn as several independent Box parts (not parented - static
+  set-dressing that never needs to move as a unit). No bridge-script change needed - reuses
+  the existing `spawn` command. Omit `position` to place it in front of the local user's
+  current facing direction (reuses the same avatar-relative math added for `get_avatar`).
+  Live-verified: spawned `cup` and `table` successfully.
+
 ### Added
 - `GET /api/overte/avatar` + a matching `get_avatar` bridge command in
   `scripts/overte-mcp-bridge.js` — queries the local user's real `MyAvatar.position`/

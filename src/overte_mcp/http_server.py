@@ -24,6 +24,7 @@ from .models import (
     EntityDeleteInput,
     EntitySpawnInput,
     EntityUpdateInput,
+    FixtureSpawnInput,
     NearbyEntitiesInput,
     ScriptInjectInput,
 )
@@ -122,7 +123,7 @@ async def health_check():
         "git_sha": GIT_SHA,
         "started_at": _STARTED.isoformat(),
         "uptime_seconds": int(uptime),
-        "tool_count": 8,
+        "tool_count": 9,
         "shutting_down": False,
         "transport": "streamable-http",
         "port": BACKEND_PORT,
@@ -204,6 +205,16 @@ async def list_tools():
                 },
             },
             {
+                "name": "overte_fixture_spawn",
+                "description": "Spawn a preset test fixture (box, cup, ball, table, chair) for gripper/manipulation testing.",
+                "inputSchema": {
+                    "fixture": {"type": "string", "required": True},
+                    "position": {"type": "array", "items": {"type": "number"}},
+                    "forward_distance": {"type": "number", "default": 1.5},
+                    "name": {"type": "string"},
+                },
+            },
+            {
                 "name": "overte_sampling_assist",
                 "description": "Get multi-step Overte operation guidance via MCP sampling.",
                 "inputSchema": {"goal": {"type": "string", "required": True}},
@@ -244,7 +255,7 @@ async def diagnostics():
         "server": "overte-mcp",
         "version": "0.2.0",
         "uptime_seconds": int(uptime),
-        "tool_count": 8,
+        "tool_count": 9,
         "tools": [
             {"name": "overte_domain_status"},
             {"name": "overte_entity_spawn"},
@@ -253,6 +264,7 @@ async def diagnostics():
             {"name": "overte_entity_delete"},
             {"name": "overte_entity_animate"},
             {"name": "overte_nearby_entities"},
+            {"name": "overte_fixture_spawn"},
             {"name": "overte_sampling_assist"},
         ],
         "system": {"windows": True},
@@ -764,6 +776,114 @@ def _axis_angle_quat(axis: tuple, angle: float) -> tuple:
     half = angle / 2.0
     s = math.sin(half)
     return (axis[0] * s, axis[1] * s, axis[2] * s, math.cos(half))
+
+
+def _rotate_vector(quat_xyzw: tuple, v: tuple) -> tuple:
+    """Rotate vector v by quaternion q (x,y,z,w): v' = v + 2*w*(qxyz x v) + 2*(qxyz x (qxyz x v))."""
+    qx, qy, qz, qw = quat_xyzw
+    vx, vy, vz = v
+    tx = 2 * (qy * vz - qz * vy)
+    ty = 2 * (qz * vx - qx * vz)
+    tz = 2 * (qx * vy - qy * vx)
+    cx = qy * tz - qz * ty
+    cy = qz * tx - qx * tz
+    cz = qx * ty - qy * tx
+    return (vx + qw * tx + cx, vy + qw * ty + cy, vz + qw * tz + cz)
+
+
+# Box/Sphere primitive approximations, sized for realistic grip-testing dimensions - Overte
+# has no native cylinder/mesh-library primitive and this doesn't fabricate fake model URLs
+# for objects no GLB actually exists for. Each preset is one or more parts with an offset
+# from the fixture's placement point (its base, roughly floor-of-object level).
+FIXTURE_PRESETS: dict[str, list[dict[str, Any]]] = {
+    "box": [
+        {"type": "Box", "offset": (0, 0.05, 0), "dimensions": (0.1, 0.1, 0.1), "color": (0.6, 0.45, 0.3)},
+    ],
+    "cup": [
+        {"type": "Box", "offset": (0, 0.05, 0), "dimensions": (0.08, 0.10, 0.08), "color": (0.95, 0.95, 0.98)},
+    ],
+    "ball": [
+        {"type": "Sphere", "offset": (0, 0.035, 0), "dimensions": (0.07, 0.07, 0.07), "color": (0.9, 0.35, 0.1)},
+    ],
+    "table": [
+        {"type": "Box", "offset": (0, 0.715, 0), "dimensions": (1.2, 0.05, 0.6), "color": (0.45, 0.30, 0.18)},
+        {"type": "Box", "offset": (0, 0.35, 0), "dimensions": (0.08, 0.70, 0.08), "color": (0.35, 0.22, 0.12)},
+    ],
+    "chair": [
+        {"type": "Box", "offset": (0, 0.45, 0), "dimensions": (0.4, 0.05, 0.4), "color": (0.4, 0.25, 0.15)},
+        {"type": "Box", "offset": (0, 0.70, -0.18), "dimensions": (0.4, 0.5, 0.05), "color": (0.4, 0.25, 0.15)},
+        {"type": "Box", "offset": (0, 0.225, 0), "dimensions": (0.35, 0.45, 0.35), "color": (0.35, 0.22, 0.12)},
+    ],
+}
+
+
+@app.post("/api/overte/fixture")
+async def post_fixture_spawn(request: FixtureSpawnInput):
+    """Spawn a preset test fixture (box/cup/ball/table/chair) for gripper testing. Multi-part
+    fixtures (table, chair) spawn as several independent Box entities near each other - not
+    parented, since they're static set-dressing that never needs to move as a unit."""
+    if not _active_ws:
+        raise HTTPException(
+            status_code=400,
+            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
+        )
+    parts = FIXTURE_PRESETS.get(request.fixture)
+    if not parts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown fixture {request.fixture!r}. Known: {sorted(FIXTURE_PRESETS)}",
+        )
+
+    if request.position and len(request.position) == 3:
+        base = tuple(request.position)
+    else:
+        avatar_res = await _send_ws_command("get_avatar", {})
+        if not avatar_res or avatar_res.get("status") != "success":
+            raise HTTPException(status_code=400, detail="Could not read avatar position to place the fixture.")
+        pos = avatar_res["position"]
+        rot = avatar_res["orientation"]
+        forward = _rotate_vector((rot["x"], rot["y"], rot["z"], rot["w"]), (0.0, 0.0, -1.0))
+        base = (
+            pos["x"] + forward[0] * request.forward_distance,
+            pos["y"],
+            pos["z"] + forward[2] * request.forward_distance,
+        )
+
+    base_name = request.name or request.fixture
+    entity_ids = []
+    for i, part in enumerate(parts):
+        ox, oy, oz = part["offset"]
+        dx, dy, dz = part["dimensions"]
+        cr, cg, cb = part["color"]
+        properties = {
+            "type": part["type"],
+            "name": f"{base_name}_{i}" if len(parts) > 1 else base_name,
+            "position": {"x": base[0] + ox, "y": base[1] + oy, "z": base[2] + oz},
+            "dimensions": {"x": dx, "y": dy, "z": dz},
+            "color": _rgb01_to_overte([cr, cg, cb]),
+        }
+        res = await _send_ws_command("spawn", {"properties": properties})
+        if not res or res.get("status") != "success":
+            msg = res.get("message", "spawn failed") if res else "WebSocket timeout/error."
+            raise HTTPException(status_code=400, detail=f"Fixture part {i} failed: {msg}")
+        entity_id = res.get("entity_id", "")
+        entity_ids.append(entity_id)
+        _tracked_entities[entity_id] = {
+            "id": entity_id,
+            "name": properties["name"],
+            "type": part["type"],
+            "position": list(properties["position"].values()),
+            "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        }
+
+    return {
+        "status": "success",
+        "source": "live",
+        "fixture": request.fixture,
+        "entity_ids": entity_ids,
+        "position": {"x": base[0], "y": base[1], "z": base[2]},
+        "message": f"Spawned {request.fixture} ({len(parts)} part{'s' if len(parts) != 1 else ''}).",
+    }
 
 
 @app.post("/api/overte/animate")

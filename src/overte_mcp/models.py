@@ -98,6 +98,20 @@ class EntityAnimateInput(BaseModel):
     tick_hz: float = Field(default=10.0, description="Update rate - higher is smoother but chattier over the bridge")
 
 
+class FixtureSpawnInput(BaseModel):
+    fixture: str = Field(
+        ..., description="Preset name: box, cup, ball, table, or chair"
+    )
+    position: list[float] | None = Field(
+        default=None,
+        description="Where to place it. Omit to spawn ~1.5m in front of the local user's current facing direction.",
+    )
+    forward_distance: float = Field(
+        default=1.5, description="Meters in front of the user when position is omitted"
+    )
+    name: str | None = Field(default=None, description="Override the entity name (defaults to the fixture name)")
+
+
 class NearbyEntitiesInput(BaseModel):
     position: list[float] | None = Field(
         default=None, description="Search center. Omit to search around the local user's avatar."

@@ -17,6 +17,7 @@ from .models import (
     EntityDeleteInput,
     EntitySpawnInput,
     EntityUpdateInput,
+    FixtureSpawnInput,
     NearbyEntitiesInput,
     ScriptInjectInput,
 )
@@ -26,6 +27,7 @@ from .tools.entities import (
     delete_entity_impl,
     find_nearby_entities_impl,
     spawn_entity_impl,
+    spawn_fixture_impl,
     update_entity_impl,
 )
 from .tools.scripting import inject_script_impl
@@ -393,6 +395,45 @@ async def overte_nearby_entities(
         "success": success,
         "message": result.get("message") or ("Found nearby entities." if success else "Search failed."),
         "data": {"source": result.get("source"), "items": result.get("items", []), "count": result.get("count", 0)},
+    }
+
+
+@mcp.tool(annotations=_MUTATING)
+async def overte_fixture_spawn(
+    fixture: Annotated[str, Field(description="Preset name: box, cup, ball, table, or chair.")],
+    position: Annotated[
+        list[float] | None,
+        Field(description="Where to place it. Omit to spawn in front of the local user's current facing direction."),
+    ] = None,
+    forward_distance: Annotated[float, Field(description="Meters in front of the user when position is omitted.")] = 1.5,
+    name: Annotated[str | None, Field(description="Override the entity name (defaults to the fixture name).")] = None,
+    ctx: Any = None,
+) -> dict:
+    """Spawn a preset test fixture for gripper/manipulation testing: box, cup, ball, table,
+    or chair. Box/Sphere primitive approximations sized for realistic grip-testing
+    dimensions - Overte has no cylinder primitive and this doesn't fabricate fake model URLs
+    for objects no GLB actually exists for. table/chair spawn as several Box parts. Live-only
+    (bridge required).
+
+    ## Return Format
+    {"success": bool, "message": str, "data": {"source": str, "entity_ids": [...], "position": {...}}}
+
+    ## Examples
+    overte_fixture_spawn(fixture="cup")
+    overte_fixture_spawn(fixture="table", position=[2000, 1995, 2015])
+    """
+    result = await spawn_fixture_impl(
+        FixtureSpawnInput(fixture=fixture, position=position, forward_distance=forward_distance, name=name)
+    )
+    success = result.get("status") == "success"
+    return {
+        "success": success,
+        "message": result.get("message") or ("Fixture spawned." if success else "Failed to spawn fixture."),
+        "data": {
+            "source": result.get("source"),
+            "entity_ids": result.get("entity_ids", []),
+            "position": result.get("position"),
+        },
     }
 
 

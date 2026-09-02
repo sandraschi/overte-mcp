@@ -20,6 +20,7 @@ from ..models import (
     EntityDeleteInput,
     EntitySpawnInput,
     EntityUpdateInput,
+    FixtureSpawnInput,
     NearbyEntitiesInput,
 )
 
@@ -142,3 +143,16 @@ async def animate_entity_impl(input_data: EntityAnimateInput) -> dict[str, Any]:
 async def find_nearby_entities_impl(input_data: NearbyEntitiesInput) -> dict[str, Any]:
     """Search real in-world entities near a point (default: the local user)."""
     return await _post("/nearby", {"position": input_data.position, "radius": input_data.radius})
+
+
+async def spawn_fixture_impl(input_data: FixtureSpawnInput) -> dict[str, Any]:
+    """Spawn a preset test fixture (box/cup/ball/table/chair) for gripper testing."""
+    return await _post(
+        "/fixture",
+        {
+            "fixture": input_data.fixture,
+            "position": input_data.position,
+            "forward_distance": input_data.forward_distance,
+            "name": input_data.name,
+        },
+    )
