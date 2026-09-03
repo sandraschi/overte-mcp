@@ -67,11 +67,21 @@ if (-not (Test-Path $mcpbManifest)) {
     exit 1
 }
 
+# mcpb pack reads .mcpbignore from the PACK ROOT (mcpb/), not the repo root
+# (MCPB_PACKAGING_STANDARDS.md section "Pack-root .mcpbignore gotcha") - a repo-root-only
+# .mcpbignore is silently ignored by the packer, and .ruff_cache/__pycache__/etc dragged in
+# by the fresh copy ships in the bundle. Copy it in rather than just warn - this was actually
+# happening (verified 2026-09-03: a build with this check only warning shipped .ruff_cache
+# files in the archive).
 $mcpbIgnore = Join-Path $RepoRoot "mcpb\.mcpbignore"
+$repoIgnore = Join-Path $RepoRoot ".mcpbignore"
 if (Test-Path $mcpbIgnore) {
     Write-Ok "Ignore file: mcpb\.mcpbignore"
+} elseif (Test-Path $repoIgnore) {
+    Copy-Item $repoIgnore $mcpbIgnore -Force
+    Write-Ok "Copied repo-root .mcpbignore -> mcpb\.mcpbignore"
 } else {
-    Write-Host "[WARN] mcpb\.mcpbignore missing" -ForegroundColor Yellow
+    Write-Host "[WARN] mcpb\.mcpbignore missing (and no repo-root .mcpbignore to copy)" -ForegroundColor Yellow
 }
 
 Write-Step "Validating mcpb\manifest.json..."
