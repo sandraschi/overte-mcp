@@ -72,14 +72,16 @@ if (-not (Test-Path $mcpbManifest)) {
 # .mcpbignore is silently ignored by the packer, and .ruff_cache/__pycache__/etc dragged in
 # by the fresh copy ships in the bundle. Copy it in rather than just warn - this was actually
 # happening (verified 2026-09-03: a build with this check only warning shipped .ruff_cache
-# files in the archive).
+# files in the archive). ALWAYS overwrite from repo-root (never copy-if-missing) - a
+# copy-if-missing check syncs once then goes stale forever after mcpb/.mcpbignore first
+# exists (found the same day: a repo-root .mcpbignore edit had zero effect on a rebuild).
 $mcpbIgnore = Join-Path $RepoRoot "mcpb\.mcpbignore"
 $repoIgnore = Join-Path $RepoRoot ".mcpbignore"
-if (Test-Path $mcpbIgnore) {
-    Write-Ok "Ignore file: mcpb\.mcpbignore"
-} elseif (Test-Path $repoIgnore) {
+if (Test-Path $repoIgnore) {
     Copy-Item $repoIgnore $mcpbIgnore -Force
-    Write-Ok "Copied repo-root .mcpbignore -> mcpb\.mcpbignore"
+    Write-Ok "Synced repo-root .mcpbignore -> mcpb\.mcpbignore"
+} elseif (Test-Path $mcpbIgnore) {
+    Write-Ok "Ignore file: mcpb\.mcpbignore (no repo-root .mcpbignore to sync from)"
 } else {
     Write-Host "[WARN] mcpb\.mcpbignore missing (and no repo-root .mcpbignore to copy)" -ForegroundColor Yellow
 }
