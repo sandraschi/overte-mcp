@@ -1,1 +1,0 @@
-"""Vircadia MCP tools packages."""
