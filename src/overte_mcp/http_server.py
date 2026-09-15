@@ -442,7 +442,8 @@ async def stop_app(data: dict):
         )
     exe = _OVERTE_BINS[target]
     try:
-        subprocess.run(
+        await asyncio.to_thread(
+            subprocess.run,
             ["taskkill", "/F", "/IM", exe, "/T"],
             capture_output=True,
             timeout=10,
