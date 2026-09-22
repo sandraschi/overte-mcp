@@ -3,8 +3,10 @@ New-Item -ItemType Directory -Force -Path "$PSScriptRoot\resources","$PSScriptRo
 foreach($f in @("webapp\src\lib\api.ts","web_sota\src\lib\api.ts")){$p = Join-Path $R $f;if(Test-Path $p){$c = Get-Content $p -Raw
     if($c -match "127.0.0.1:(\d+)" -and [int]$Matches[1] -ne 11110){throw "API port mismatch in $p"};break}}
 foreach($d in @("web_sota","webapp\frontend","webapp")){$f = Join-Path $R $d;if(Test-Path "$f\package.json"){Push-Location $f
-    bun install;if(Get-Command npx -EA 0){npx tsc --noEmit 2>&1;if($LASTEXITCODE -ne 0){throw "TS FAILED"}}
-    bun run build;if($LASTEXITCODE -ne 0){throw "Frontend FAILED"};Pop-Location;break}}
+    $bunExe = Join-Path $env:USERPROFILE ".bun\bin\bun.exe";if(-not(Test-Path $bunExe)){$bunExe = (Get-Command bun -EA 0).Source}
+    if(-not $bunExe){throw "bun not found"}
+    & $bunExe install;if(Get-Command npx -EA 0){npx tsc --noEmit 2>&1;if($LASTEXITCODE -ne 0){throw "TS FAILED"}}
+    & $bunExe run build;if($LASTEXITCODE -ne 0){throw "Frontend FAILED"};Pop-Location;break}}
 $s = "$R\overte-mcp-backend.spec";if(-not(Test-Path $s)){throw "No spec at $s"}
 $pyi = "$R\.venv\Scripts\pyinstaller.exe";if(-not(Test-Path $pyi)){uv add --dev pyinstaller}
 Push-Location $R;Remove-Item "dist\overte-mcp-backend.exe" -Force -EA 0
