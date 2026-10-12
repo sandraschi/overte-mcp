@@ -393,7 +393,7 @@ def _check_overte_processes() -> dict[str, bool]:
 async def detect_app():
     """Detect Overte installation and running processes."""
     installed = _find_overte_install()
-    running = _check_overte_processes()
+    running = await asyncio.to_thread(_check_overte_processes)
     any_installed = any(v is not None for v in installed.values())
     return {
         "installed": any_installed,
