@@ -1,29 +1,49 @@
 # overte-mcp (MCPB Bundle)
 
-Claude Desktop pack root for the Overte domain-server MCP. Targets **Overte** (classic High Fidelity / early Vircadia lineage). Current **Vircadia World** is a different stack.
+Overte (open-source Vircadia-lineage metaverse) Model Context Protocol server for domain administration and in-world entity orchestration
 
-## Install
+## Usage
 
-1. From the git repo: `just mcpb-pack` → `dist/overte-mcp.mcpb`
-2. Drag `overte-mcp.mcpb` into Claude Desktop (needs **Python 3.12+** and **[uv](https://docs.astral.sh/uv/)** on PATH).
-
-Or point a host at `run_server.py` with `PYTHONPATH=src` after unpacking this folder.
+Add to \claude_desktop_config.json\:
+\\\json
+{
+  "mcpServers": {
+    "overte-mcp": {
+      "command": "uv",
+      "args": ["run", "--directory", "\D:\Dev\repos", "python", "-m", "overte_mcp"],
+      "env": { "PYTHONPATH": "\D:\Dev\repos/src" }
+    }
+  }
+}
+\\\
 
 ## Tools
 
-| Tool | Reality |
-|------|---------|
-| `overte_domain_status` | Live `/nodes.json` + `/settings.json`; simulated fallback if unreachable |
-| `overte_entity_spawn` | Live when `scripts/overte-mcp-bridge.js` is connected to backend WS; else simulated |
-| `overte_script_inject` | Same bridge contract as spawn |
+- **health_check**: Retrieve SOTA standard health telemetry.
+- **list_tools**: List MCP tools with descriptions and input schemas.
+- **list_skills**: List available Overte skills.
+- **get_overte_skill**: Return the overte-admin skill content.
+- **diagnostics**: CUA smoke-test required endpoint: tool list + system info.
+- **get_logs**: Query the ring-buffer log.
+- **get_domain_status**: Query domain-server status telemetry.
+- **detect_app**: Detect Overte installation and running processes.
+- **start_app**: Launch an Overte binary (domain-server or interface).
+- **stop_app**: Kill an Overte binary (domain-server or interface).
+- **list_scripts**: List all entity scripts with descriptions and metadata.
+- **get_script**: Get a script's content by name.
+- **create_script**: Create a new entity script.
+- **update_script**: Update a script's content and/or metadata.
+- **delete_script**: Delete a script and remove it from the manifest.
+- **list_tracked_entities**: Return all entities tracked by this server (spawned via bridge).
+- **clear_tracked_entities**: Clear the tracked entity list.
+- **post_entity_spawn**: Spawn an in-world entity (via WebSocket bridge if connected, else falls back to simulated).
+- **post_script_inject**: Inject a JavaScript entity script (via WebSocket bridge if connected, else falls back to simulated).
+- **overte_domain_status**: overte_domain_status
+- **overte_entity_spawn**: overte_entity_spawn
+- **overte_script_inject**: overte_script_inject
+- **overte_sampling_assist**: overte_sampling_assist
 
-## Layout (fleet standard)
+## Requirements
 
-- `manifest.json` v0.2 — `uv run --directory ${PWD} run_server.py`
-- `.mcpbignore` — exclude venv, webapp, glama, llms, tests, etc.
-- `assets/prompts/` — 3-4-100: `system.md`, `user.md`, `examples.json` (not `usage.json`)
-- `src/overte_mcp/` — **synced** from repo `src/overte_mcp/` by `scripts/build-mcpb-package.ps1`
-
-Edit canonical code under repo `src/overte_mcp/`, then re-pack. Do not long-term-edit only the mcpb copy.
-
-Homepage: https://github.com/sandraschi/overte-mcp
+- Python 3.12+
+- uv

@@ -2,14 +2,9 @@
 .venv/
 node_modules/
 __pycache__/
-*.pyc
 .ruff_cache/
 .pytest_cache/
-.coverage
 tests/
-.windsurf/
-.cursor/
-.cursorrules
 
 # Discovery & Fleet Metadata
 glama.json
@@ -18,19 +13,13 @@ llms-full.txt
 .git/
 .github/
 .vscode/
-.mcpb/
 
 # Build Artifacts
 dist/
 build/
 *.mcpb
-uv.lock
 
-# Non-MCP components
-webapp/
+# Non-MCP components (webapp, native, scripts)
 native/
+web_sota/
 scripts/
-*.exe
-*.msi
-*.bak
-*.bak.*
