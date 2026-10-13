@@ -21,10 +21,19 @@ Write-Host "=== Bridge Stress-Test ===" -ForegroundColor Cyan
 Write-Host "Testing $TotalCycles backend restart cycles on port $BackendPort`n" -ForegroundColor Yellow
 
 function Stop-Backend {
+    # HARDENED 2026-09-17: was Stop-Process + blind Start-Sleep -Seconds 2, no
+    # check the port actually freed - directly matters in THIS script since it's
+    # testing restart/reconnect behavior and a not-actually-dead old backend would
+    # invalidate the stress-test cycle silently (TRAPS_AND_PITFALLS.md #36). Poll.
     Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue | ForEach-Object {
         Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
     }
-    Start-Sleep -Seconds 2
+    $waitSec = 10
+    $elapsed = 0
+    while ($elapsed -lt $waitSec -and (Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue)) {
+        Start-Sleep -Milliseconds 500
+        $elapsed += 0.5
+    }
 }
 
 function Start-Backend {
@@ -94,8 +103,14 @@ for ($i = 0; $i -lt $TotalCycles; $i++) {
 Write-Host "`n=== Final: restart and leave running ===" -ForegroundColor Green
 Stop-Backend
 $BackendProc = Start-Backend
-Start-Sleep -Seconds 3
-if (Test-Backend-Healthy) {
+# HARDENED 2026-09-17: was a blind Start-Sleep -Seconds 3 then a single health
+# check (TRAPS_AND_PITFALLS.md #36) - poll like the main cycle above does.
+$finalHealthy = $false
+for ($k = 0; $k -lt 15; $k++) {
+    if (Test-Backend-Healthy) { $finalHealthy = $true; break }
+    Start-Sleep -Seconds 1
+}
+if ($finalHealthy) {
     Write-Host "  [PASS] Backend running after stress test" -ForegroundColor Green
 } else {
     Write-Host "  [FAIL] Backend did not recover" -ForegroundColor Red
