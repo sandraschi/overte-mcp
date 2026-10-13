@@ -19,7 +19,7 @@ fn free(p:u16)->bool{
         let _=Command::new("powershell.exe").args(["-NoProfile","-Command",&k]).stdout(Stdio::null()).stderr(Stdio::null()).status();
         let kp=format!("Get-NetTCPConnection -LocalPort {p} -EA 0 | %{{ taskkill /F /PID $_.OwningProcess /T 2>$null }}");
         let _=Command::new("powershell.exe").args(["-NoProfile","-Command",&kp]).stdout(Stdio::null()).stderr(Stdio::null()).status();
-        for i in 0..240{
+        for i in 0..10{
             let cmd=format!("if(Get-NetTCPConnection -LocalPort {p} -EA 0){{1}}else{{0}}");
             let o=Command::new("powershell.exe").args(["-NoProfile","-Command",&cmd]).stdout(Stdio::piped()).stderr(Stdio::null()).output();
             if o.ok().and_then(|x|String::from_utf8(x.stdout).ok().and_then(|s|s.trim().parse::<u32>().ok())).unwrap_or(1)==0{return true;}
