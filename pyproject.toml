@@ -44,4 +44,10 @@ select = ["E", "F", "W", "I"]
 ignore = ["E501"]
 
 [dependency-groups]
-dev = ["pyinstaller>=6.21.0", "ruff>=0.16.0,<0.17"]
+dev = [
+    "pillow>=12.3.0",
+    "pyinstaller>=6.21.0",
+    "pytesseract>=0.3.13",
+    "pywinauto>=0.6.9",
+    "ruff>=0.16.0,<0.17",
+]
