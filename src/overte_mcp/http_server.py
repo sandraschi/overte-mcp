@@ -16,6 +16,7 @@ from typing import Any
 import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from .models import (
@@ -1344,6 +1345,15 @@ async def post_script_inject(request: ScriptInjectInput):
 _SCRIPTS_DEPOT.mkdir(parents=True, exist_ok=True)
 app.mount("/scripts", StaticFiles(directory=str(_SCRIPTS_DEPOT)), name="scripts")
 _log("http_server", "INFO", f"Scripts served from {_SCRIPTS_DEPOT}")
+
+
+@app.get("/embed/saschirob-pendant", response_class=HTMLResponse)
+async def get_saschirob_pendant():
+    """In-world 3D Teach Pendant for Saschirob robot control in Overte Web entities."""
+    from .teach_pendant import get_teach_pendant_html
+
+    return HTMLResponse(content=get_teach_pendant_html(), status_code=200)
+
 
 # Mount MCP streamable HTTP protocol at /mcp for stdio proxy pattern
 try:
