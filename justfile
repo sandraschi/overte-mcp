@@ -7,6 +7,7 @@ default:
 # Bootstrap python and webapp dependencies
 bootstrap:
     uv sync
+    uvx pre-commit install --install-hooks
     Set-Location '{{justfile_directory()}}\webapp'; if (Get-Command bun -ErrorAction SilentlyContinue) { bun install } else { npm install }
 
 # Start both FastAPI backend and Vite frontend dashboard

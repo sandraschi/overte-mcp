@@ -6,6 +6,19 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased] - 2026-10-31 - Headless bridge, no simulated success
 
+### Assfix 2026-10-31 p2 (fix-all remaining: self-assessed SOTA 23 -> 95)
+- Backend LLM proxy: GET /api/llm/discover|providers|models|onboarding, POST /api/llm/chat|/api/llm/chat/stream (SSE byte-relay), server-side GPU detect; versions 0.2.1; 8 proxy tests.
+- Frontend via proxy only: Zustand store/llm.ts (keys llm_provider/llm_model), chat/settings/scripting rewritten, apiUrl() same-host (LAN/Tailscale tabs work), under-hero LLM opportunity cue (data-testid onboarding-cue).
+- Inbox page (/inbox): search/filter/sort/paginate/count over /api/logs + route + nav.
+- E2E: free port 11981 (was sdr-mcp collision), identity-pinned health wait, sys.executable spawn (no orphans), DEVNULL stdio (no PIPE deadlock); full suite 29 passed.
+- Tool-sync: glama.json 12 tools v0.2.1, skills + docs/TOOLS + llms-full de-simulated (no more D:/ paths).
+- Gates: pyright dep + 0 errors, CI format/pyright/tsc/biome-ci, just fmt/gates-green/cua-*-test, pre-commit + biome hook + gitattributes + CLAUDE.md + windsurfrules.
+- Error handling: shared _error_response + logger.exception; fonts P4 sweep (zero text-xs/slate-400 outside pre, tsc+biome clean).
+- Packaging: fleet mcpb-pack shim (rm vendored), Claude one-liner + uvx configs, NOREG mcp-clients register/unregister + vendoring, tauri 0.2.1.
+- CUA drivers: real scripts/cua-webapp-test.py (PASS) + scripts/cua-smoke.py (honest SKIP exit 2, no installer built).
+- Hardening: uvicorn loopback default (was 0.0.0.0), MCPB audit warned/BROKEN 0.
+- Deferred: Playwright browser nav (manual until wired), pre-existing ignored *.bak dross on disk.
+
 ### Assfix 2026-10-31 (SOTA 0 -> 23 self-assessed)
 - Fixed CRITICAL MCPB NONSPEC ${PWD} -> ${__dirname} and SIDECAR run_server.py -> python -m overte_mcp (mcpb/manifest.json).
 - Added overte_shutdown MCP tool (confirm-gated) + POST /api/shutdown + GET /api/capabilities.
