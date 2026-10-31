@@ -22,6 +22,7 @@ from ..models import (
     FixtureSpawnInput,
     NearbyEntitiesInput,
 )
+from . import _error_response
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +61,14 @@ async def _post(path: str, json_body: dict[str, Any], timeout: float = 6.0) -> d
             r = await client.post(f"{_LOCAL_API}{path}", json=json_body)
             if r.status_code == 200:
                 return r.json()
-            return {"status": "error", "message": r.json().get("detail", r.text)}
+            detail = r.json().get("detail", r.text)
+            logger.warning(
+                "Backend %s%s returned HTTP %s: %s", _LOCAL_API, path, r.status_code, detail
+            )
+            return _error_response("backend", detail)
     except Exception as e:
-        return {"status": "error", "message": f"overte-mcp backend unreachable: {e}"}
+        logger.exception("Backend POST %s%s failed", _LOCAL_API, path)
+        return _error_response("backend_unreachable", f"overte-mcp backend unreachable: {e}")
 
 
 async def update_entity_impl(input_data: EntityUpdateInput) -> dict[str, Any]:

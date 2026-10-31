@@ -189,6 +189,7 @@ async def overte_bridge_status(ctx: Any = None) -> dict:
             r.raise_for_status()
             data = r.json()
     except Exception as e:
+        logger.exception("Backend GET /api/overte/bridge failed at %s.", _BACKEND)
         return {
             "success": False,
             "message": f"overte-mcp backend unreachable at {_BACKEND}: {e}",
@@ -234,6 +235,7 @@ async def overte_bridge_install(
             )
             body = r.json()
     except Exception as e:
+        logger.exception("Backend POST /api/overte/bridge/install failed at %s.", _BACKEND)
         return {
             "success": False,
             "message": f"overte-mcp backend unreachable at {_BACKEND}: {e}",

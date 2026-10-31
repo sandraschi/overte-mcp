@@ -21,6 +21,7 @@ from typing import Any
 import httpx
 
 from ..models import DomainStatusInput
+from . import _error_response
 
 logger = logging.getLogger(__name__)
 
@@ -44,15 +45,12 @@ async def get_domain_status_impl(input_data: DomainStatusInput) -> dict[str, Any
         async with httpx.AsyncClient(timeout=3.0, auth=auth) as client:
             nodes_resp = await client.get(nodes_url)
             if nodes_resp.status_code == 401:
-                return {
-                    "status": "error",
-                    "source": "live",
-                    "message": (
-                        "Domain-server returned 401 Unauthorized. Pass username/password "
-                        "(fleet default: admin/admin) matching the credentials set at "
-                        f"http://{host}:{port}/settings."
-                    ),
-                }
+                return _error_response(
+                    "live",
+                    "Domain-server returned 401 Unauthorized. Pass username/password "
+                    "(fleet default: admin/admin) matching the credentials set at "
+                    f"http://{host}:{port}/settings.",
+                )
             if nodes_resp.status_code == 200:
                 nodes_data = nodes_resp.json()
                 settings_data: dict[str, Any] = {}
@@ -70,20 +68,13 @@ async def get_domain_status_impl(input_data: DomainStatusInput) -> dict[str, Any
                         "settings": settings_data,
                     },
                 }
-            return {
-                "status": "error",
-                "source": "live",
-                "message": f"nodes.json returned HTTP {nodes_resp.status_code}",
-            }
+            return _error_response("live", f"nodes.json returned HTTP {nodes_resp.status_code}")
 
     except (httpx.ConnectError, httpx.TimeoutException):
-        logger.info(f"Could not connect to domain-server at {nodes_url}.")
+        logger.exception("Could not connect to domain-server at %s.", nodes_url)
 
-    return {
-        "status": "error",
-        "source": "unreachable",
-        "message": (
-            f"domain_unreachable: no Overte domain-server answered at {nodes_url}. "
-            "Start domain-server.exe (and an assignment-client) first."
-        ),
-    }
+    return _error_response(
+        "unreachable",
+        f"domain_unreachable: no Overte domain-server answered at {nodes_url}. "
+        "Start domain-server.exe (and an assignment-client) first.",
+    )
