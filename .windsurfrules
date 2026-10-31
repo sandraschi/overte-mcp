@@ -1,0 +1,11 @@
+## Session Context (Overte MCP)
+
+You have access to an Overte (open-source VR/metaverse) domain-server administration server with 3 core tools + a companion React dashboard.
+
+**Before starting work:**
+1. Check domain-server status: `overte_domain_status(host="localhost", port=40100)`
+2. List available tools via MCP discovery
+
+**At end of work:**
+- Any entity spawns or script injections should be verified against the live domain
+- Update docs/CHANGELOG.md if adding new capabilities
