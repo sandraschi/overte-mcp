@@ -12,6 +12,7 @@ import {
   Sparkles,
   Square,
   Users,
+  Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -75,6 +76,8 @@ export function Dashboard() {
   const [port, setPort] = useState(40100);
   const [appDetect, setAppDetect] = useState<AppDetect | null>(null);
   const [appLoading, setAppLoading] = useState<Record<string, boolean>>({});
+  const [bridgeBusy, setBridgeBusy] = useState(false);
+  const [bridgeNote, setBridgeNote] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(apiUrl("/api/overte/app/detect"))
@@ -124,6 +127,39 @@ export function Dashboard() {
       return res.json();
     },
   });
+
+  const domainInstalled = !!appDetect?.paths["domain-server"];
+  const domainRunning = !!appDetect?.running["domain-server"];
+  const domainBusy = !!appLoading["domain-server"];
+  const interfaceInstalled = !!appDetect?.paths.interface;
+  const interfaceRunning = !!appDetect?.running.interface;
+  const interfaceBusy = !!appLoading.interface;
+
+  const installBridge = useCallback(async () => {
+    setBridgeBusy(true);
+    setBridgeNote(null);
+    try {
+      const res = await fetch(apiUrl("/api/overte/bridge/install"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBridgeNote(body.detail || `Install failed (HTTP ${res.status})`);
+      } else {
+        setBridgeNote(
+          body.changed
+            ? "Bridge registered — domain restarting, then check Entities."
+            : "Bridge already registered.",
+        );
+      }
+    } catch {
+      setBridgeNote("Backend unreachable — is the stack running?");
+    } finally {
+      setBridgeBusy(false);
+    }
+  }, []);
 
   const domain = data?.domain;
   const avatarNodes = (domain?.nodes || []).filter((n) =>
@@ -217,6 +253,100 @@ export function Dashboard() {
                 .
               </li>
             </ol>
+            <div className="flex flex-wrap items-center gap-2 pt-1" data-testid="hero-actions">
+              <button
+                data-testid="hero-domain-toggle"
+                onClick={() => appAction("domain-server", domainRunning ? "stop" : "start")}
+                disabled={!appDetect || !domainInstalled || domainBusy}
+                style={{
+                  background: domainRunning ? "none" : "#10b981",
+                  border: `1px solid ${domainRunning ? "#ef4444" : "#10b981"}`,
+                  borderRadius: "8px",
+                  padding: "8px 14px",
+                  cursor: !appDetect || !domainInstalled || domainBusy ? "default" : "pointer",
+                  opacity: !appDetect || !domainInstalled || domainBusy ? 0.4 : 1,
+                  color: domainRunning ? "#f87171" : "white",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                }}
+                className="flex items-center gap-2 transition-all hover:brightness-110 active:scale-95"
+                title={
+                  domainInstalled ? "Start/stop the domain server" : "Domain server not installed"
+                }
+              >
+                {domainBusy ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : domainRunning ? (
+                  <Square className="w-4 h-4" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+                {!appDetect
+                  ? "Detecting..."
+                  : domainRunning
+                    ? "Stop domain"
+                    : "Start domain server"}
+              </button>
+              {interfaceInstalled && (
+                <button
+                  data-testid="hero-interface-toggle"
+                  onClick={() => appAction("interface", interfaceRunning ? "stop" : "start")}
+                  disabled={interfaceBusy}
+                  style={{
+                    background: "none",
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "8px",
+                    padding: "8px 14px",
+                    cursor: interfaceBusy ? "default" : "pointer",
+                    opacity: interfaceBusy ? 0.4 : 1,
+                    color: "white",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                  }}
+                  className="flex items-center gap-2 transition-all hover:bg-white/5 active:scale-95"
+                  title="Start/stop the Interface client"
+                >
+                  {interfaceBusy ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : interfaceRunning ? (
+                    <Square className="w-4 h-4" />
+                  ) : (
+                    <Play className="w-4 h-4" />
+                  )}
+                  {interfaceRunning ? "Stop Interface" : "Start Interface"}
+                </button>
+              )}
+              <button
+                data-testid="hero-bridge-install"
+                onClick={installBridge}
+                disabled={bridgeBusy}
+                style={{
+                  background: "rgba(245, 158, 11, 0.08)",
+                  border: "1px solid rgba(245, 158, 11, 0.25)",
+                  borderRadius: "8px",
+                  padding: "8px 14px",
+                  cursor: bridgeBusy ? "default" : "pointer",
+                  opacity: bridgeBusy ? 0.4 : 1,
+                  color: "#f59e0b",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                }}
+                className="flex items-center gap-2 transition-all hover:bg-amber-500/15 active:scale-95"
+                title="Register the headless bridge on the domain"
+              >
+                {bridgeBusy ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4" />
+                )}
+                Install bridge
+              </button>
+              {bridgeNote && (
+                <span data-testid="hero-bridge-note" className="text-sm text-slate-300">
+                  {bridgeNote}
+                </span>
+              )}
+            </div>
             <a
               href="https://overte.org"
               target="_blank"
