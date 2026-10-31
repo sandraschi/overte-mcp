@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import sys
 import time
 
 import httpx
@@ -10,25 +11,35 @@ import pytest
 
 @pytest.fixture(scope="module")
 def api_server():
-    """Start the FastAPI HTTP server on an isolated test port."""
-    env = os.environ.copy()
-    env["PORT"] = "11119"  # isolated from fleet 11110
+    """Start the FastAPI HTTP server on an isolated test port.
 
+    Port 11981 is verified free in mcp-central-docs/operations/WEBAPP_PORTS.md
+    (11119 belongs to sdr-mcp - a previous run failed by polling the wrong server).
+    The wait loop additionally pins the server identity before yielding.
+    """
+    env = os.environ.copy()
+    env["PORT"] = "11981"  # isolated from fleet 11110 and sdr-mcp 11119
+
+    # sys.executable (not `uv run`): the server is a direct child, so
+    # proc.terminate() actually kills it - `uv run` orphans the grandchild
+    # python and leaves stale servers holding the port (observed 2026-10-31).
+    # stdout/stderr go to DEVNULL: nobody drains PIPEs here, and a full pipe
+    # blocks the server mid-request (observed as test ReadTimeouts).
     proc = subprocess.Popen(
-        ["uv", "run", "python", "-m", "overte_mcp.http_server"],
+        [sys.executable, "-m", "overte_mcp.http_server"],
         env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
         cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
     )
 
-    # Wait for server to boot (poll health)
-    base = "http://127.0.0.1:11119"
+    # Wait for server boot (poll health + pin identity)
+    base = "http://127.0.0.1:11981"
     deadline = time.time() + 15.0
     while time.time() < deadline:
         try:
             r = httpx.get(f"{base}/api/health", timeout=0.5)
-            if r.status_code == 200:
+            if r.status_code == 200 and r.json().get("server") == "overte-mcp":
                 break
         except Exception:
             time.sleep(0.25)
@@ -78,7 +89,8 @@ def test_inject_without_bridge_is_503(api_server):
 def test_bridge_script_served(api_server):
     response = httpx.get(f"{api_server}/bridge/overte-mcp-bridge.js", timeout=10.0)
     assert response.status_code == 200
-    assert "ws://127.0.0.1:11119/api/overte/ws" in response.text
+    host = api_server.split("://")[1]
+    assert f"ws://{host}/api/overte/ws" in response.text
 
 
 def test_health_endpoints(api_server):

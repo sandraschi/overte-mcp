@@ -1841,11 +1841,13 @@ except Exception as e:
     _log("http_server", "WARNING", f"Could not mount MCP app at /mcp: {e}")
 
 
-def start_server(port: int | None = None):
-    """Start the uvicorn REST server."""
+def start_server(port: int | None = None, host: str | None = None):
+    """Start the uvicorn REST server (loopback only unless MCP_HOST says otherwise)."""
     if port is None:
         port = int(os.environ.get("PORT", BACKEND_PORT))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    if host is None:
+        host = os.environ.get("MCP_HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=port)
 
 
 if __name__ == "__main__":
