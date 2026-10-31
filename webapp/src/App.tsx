@@ -7,6 +7,7 @@ import { ChatPage } from "./pages/chat";
 import { Dashboard } from "./pages/dashboard";
 import { EntitiesPage } from "./pages/entities";
 import { HelpPage } from "./pages/help";
+import { InboxPage } from "./pages/inbox";
 import { LogsPage } from "./pages/logs";
 import { ModelsPage } from "./pages/models";
 import { ScriptingPage } from "./pages/scripting";
@@ -38,6 +39,7 @@ function App() {
             <Route path="/textures" element={<TexturesPage />} />
             <Route path="/backups" element={<BackupsPage />} />
             <Route path="/help" element={<HelpPage />} />
+            <Route path="/inbox" element={<InboxPage />} />
             <Route path="/logs" element={<LogsPage />} />
             <Route path="/scripting" element={<ScriptingPage />} />
             <Route path="/settings" element={<SettingsPage />} />
