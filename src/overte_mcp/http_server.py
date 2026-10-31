@@ -101,15 +101,15 @@ GIT_SHA = _git_sha()
 
 
 @asynccontextmanager
-async def _lifespan(parent_app):
+async def _lifespan(_app):
     """Compose the FastMCP session manager so /mcp does not 404/terminate (BUG-038)."""
     try:
         from .server import mcp as _mcp
 
-        async with _mcp.lifespan(parent_app):
-            yield
+        async with _mcp.lifespan():
+            yield {}
     except Exception:
-        yield
+        yield {}
 
 
 app = FastAPI(
@@ -789,6 +789,8 @@ def _register_binary_depot(
                 detail=f"Unsupported {kind} extension {ext!r}. Allowed: {sorted(allowed_extensions)}",
             )
         name = file.filename
+        if not name:
+            raise HTTPException(status_code=400, detail=f"Missing {kind} filename.")
         fp = depot / name
         if fp.exists():
             raise HTTPException(

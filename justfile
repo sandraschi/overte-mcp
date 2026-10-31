@@ -11,7 +11,7 @@ bootstrap:
 
 # Start both FastAPI backend and Vite frontend dashboard
 serve:
-    Set-Location '{{justfile_directory()}}'; pwsh -File .\start.ps1
+    Set-Location '{{justfile_directory()}}'; powershell.exe -NoProfile -File .\start.ps1
 
 # Unit + e2e tests
 test:
@@ -31,8 +31,20 @@ test-unit:
 
 # Ruff + Biome lint
 lint:
-    Set-Location '{{justfile_directory()}}'; uv run ruff check .
+    Set-Location '{{justfile_directory()}}'; uv run ruff check src/
     Set-Location '{{justfile_directory()}}\webapp'; bunx biome check src
+
+# Ruff format + Biome write (applies fixes)
+fmt:
+    Set-Location '{{justfile_directory()}}'; uv run ruff format src/
+    Set-Location '{{justfile_directory()}}\webapp'; bunx biome check --write src
+
+# All gates in one go (lint + format-check + typecheck + tests)
+gates-green:
+    Set-Location '{{justfile_directory()}}'; uv run ruff check src/
+    Set-Location '{{justfile_directory()}}'; uv run ruff format src/ --check
+    Set-Location '{{justfile_directory()}}'; uv run pyright src/
+    Set-Location '{{justfile_directory()}}'; uv run pytest -q
 
 # Bundle for Claude Desktop (pack from mcpb/)
 mcpb-pack:

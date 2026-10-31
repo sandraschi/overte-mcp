@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -40,15 +41,16 @@ _DESTRUCTIVE: dict[str, bool] = {}
 
 _STARTED = datetime.datetime.now(datetime.timezone.utc)
 
-mcp = FastMCP("overte-mcp")
 
-
-# -- Lifespan --
-@mcp.lifespan()
-def lifespan():
+# -- Lifespan (constructor-injected: this FastMCP version has no mcp.lifespan() decorator) --
+@asynccontextmanager
+async def _lifespan(server):
     logger.info("overte-mcp server starting")
     yield
     logger.info("overte-mcp server stopping")
+
+
+mcp = FastMCP("overte-mcp", lifespan=_lifespan)
 
 
 # -- Resources --

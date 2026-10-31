@@ -34,7 +34,13 @@ jobs:
       run: uv sync
 
     - name: Run Ruff Lint Check
-      run: uv run ruff check
+      run: uv run ruff check src/
+
+    - name: Run Ruff Format Check
+      run: uv run ruff format src/ --check
+
+    - name: Run Pyright Typecheck
+      run: uv run pyright src/
 
     - name: Run Pytest (Unit & E2E)
       run: uv run pytest
@@ -46,7 +52,11 @@ jobs:
 
     - name: Run Biome Lint Check
       working-directory: ./webapp
-      run: bunx biome check src
+      run: bun run biome:ci
+
+    - name: Run TypeScript Check
+      working-directory: ./webapp
+      run: bun run check
 
     - name: Build Webapp Dashboard
       working-directory: ./webapp

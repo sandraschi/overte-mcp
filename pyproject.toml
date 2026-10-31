@@ -51,6 +51,7 @@ ignore = ["E501"]
 dev = [
     "pillow>=12.3.0",
     "pyinstaller>=6.21.0",
+    "pyright>=1.1.414",
     "pytesseract>=0.3.13",
     "pywinauto>=0.6.9",
     "ruff>=0.16.0,<0.17",
