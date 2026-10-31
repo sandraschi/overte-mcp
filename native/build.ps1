@@ -1,6 +1,10 @@
 $ErrorActionPreference="Stop";$R = Split-Path -Parent $PSScriptRoot;$N = Split-Path -Leaf $R;$T = "x86_64-pc-windows-msvc"
 New-Item -ItemType Directory -Force -Path "$PSScriptRoot\resources","$PSScriptRoot\binaries"|Out-Null
-foreach($f in @("webapp\src\lib\api.ts","web_sota\src\lib\api.ts")){$p = Join-Path $R $f;if(Test-Path $p){$c = Get-Content $p -Raw
+$Central = Join-Path (Split-Path -Parent $R) 'mcp-central-docs\scripts'
+if(Test-Path "$Central\nsis\mcp-clients.nsh"){Copy-Item "$Central\nsis\mcp-clients.nsh" "$PSScriptRoot\windows\mcp-clients.nsh" -Force}
+else{Write-Warning "mcp-central-docs not found - using vendored native/windows/mcp-clients.nsh"}
+if(Test-Path "$Central\install-mcp-clients.ps1"){Copy-Item "$Central\install-mcp-clients.ps1" "$PSScriptRoot\resources\install-mcp-clients.ps1" -Force}
+foreach($f in @("webapp\src\lib\api.ts","webapp\src\lib\api-base.ts","web_sota\src\lib\api.ts")){$p = Join-Path $R $f;if(Test-Path $p){$c = Get-Content $p -Raw
     if($c -match "127.0.0.1:(\d+)" -and [int]$Matches[1] -ne 11110){throw "API port mismatch in $p"};break}}
 foreach($d in @("web_sota","webapp\frontend","webapp")){$f = Join-Path $R $d;if(Test-Path "$f\package.json"){Push-Location $f
     $bunExe = Join-Path $env:USERPROFILE ".bun\bin\bun.exe";if(-not(Test-Path $bunExe)){$bunExe = (Get-Command bun -EA 0).Source}
