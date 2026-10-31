@@ -13,12 +13,23 @@ tools that exist today.
 ### overte_domain_status (READ_ONLY)
 Query an Overte Domain Server for connected-node telemetry and settings.
 - Calls `/nodes.json` and `/settings.json` via the HTTP admin API.
-- Falls back to clearly labeled simulated data if no domain-server is reachable.
+- Fails with `domain_unreachable` if no domain-server answers (no placeholder data).
 - Parameters: `host` (default localhost), `port` (default 40100), optional `username`/`password` for Basic Auth.
+
+### overte_bridge_status (READ_ONLY)
+Is a bridge connected; `mode` is `agent` (headless) or `interface`; `can_rez` says whether it
+may create entities.
+
+### overte_bridge_install (MUTATING)
+Registers the bridge as a domain persistent script (idempotent). Admin credentials from
+`OVERTE_ADMIN_USER` / `OVERTE_ADMIN_PASSWORD`, default admin/admin. The domain-server
+restarts to apply it.
 
 ### overte_entity_spawn (MUTATING)
 Spawn a virtual object, 3D GLB model, or Light in-world at specified coordinates.
-- Live when `scripts/overte-mcp-bridge.js` is connected via WebSocket.
+- Needs a connected bridge (headless agent or Interface); fails with `bridge_not_connected`
+  otherwise. Headless has no avatar: always pass `position`, and `"MyAvatar"` parenting
+  only works with an Interface bridge.
 - Parameters: `name` (required), `entity_type` (Box/Sphere/Web/Model/Light, default Box),
   `position`, `scale` (bounding-box dimensions, not a scale multiplier - stretches a model to
   fit), `model_url`, `script_url`, `permanent` (survive domain-server restart), `parent_id`
@@ -26,8 +37,7 @@ Spawn a virtual object, 3D GLB model, or Light in-world at specified coordinates
   white), and Light-only `intensity`/`is_spotlight`/`falloff_radius`.
 
 ### overte_entity_update (MUTATING)
-Move, resize, re-parent, or toggle an existing entity. Live-only - nothing meaningful to
-simulate for an edit to something that may not exist in the simulated world.
+Move, resize, re-parent, or toggle an existing entity. Needs a connected bridge.
 - Parameters: `entity_id` (required), `position`, `dimensions`, `parent_id`, `visible`
   (show/hide without deleting), `intensity`, `color`.
 
@@ -88,23 +98,20 @@ human user there over walking them through raw REST calls.
 
 ## Best Practices
 1. Start by checking domain status to verify the server is reachable.
-2. Load `scripts/overte-mcp-bridge.js` in Overte Interface (Developer -> Script Manager).
-   `overte_entity_spawn` and `overte_script_inject` fall back to a clearly-labeled
-   (`"source": "simulated"`) result when the bridge isn't connected - useful for dry-running a
-   plan, but not a real spawn. `overte_entity_update`/`_delete`/`_animate`/
-   `overte_nearby_entities`/`overte_fixture_spawn` are live-only: they return a clear
-   "not connected" error instead, since there's nothing meaningful to simulate for an edit to
-   something that may not exist in a simulated world. `overte_domain_status` has its own,
-   separate simulated fallback if the domain-server's HTTP admin API (port 40100) isn't
-   reachable - unrelated to whether the WebSocket bridge is connected.
+2. Get a bridge connected. Headless (preferred): domain-server + `assignment-client -n 9`
+   running, then `overte_bridge_install` once, then `overte_bridge_status` until
+   `connected` with `mode: "agent"`. Desktop alternative: load
+   `http://127.0.0.1:11110/bridge/overte-mcp-bridge.js` in Interface. Without a bridge every
+   in-world tool fails with `bridge_not_connected`; there is no simulated mode any more.
 3. Set admin credentials in the domain-server control panel (`http://localhost:40100/settings`).
 4. Use the Overte MCP dashboard (`http://localhost:11111`) for visual entity, model, texture,
    and backup management - it's the only UI for the REST-only depot/backup endpoints above.
 
 ## Architecture
 - Domain Server (port 40100) serves `/nodes.json` and `/settings.json`.
-- WebSocket bridge (`scripts/overte-mcp-bridge.js`, running inside the Overte Interface
-  client) provides every live in-world operation - spawn, update, delete, animate, nearby
+- Bridge (`scripts/overte-mcp-bridge.js`, served at `/bridge/overte-mcp-bridge.js`, running
+  headless as a domain persistent script on an assignment-client, or inside Interface)
+  provides every live in-world operation - spawn, update, delete, animate, nearby
   search, fixture spawn, script inject, avatar read.
 - FastAPI gateway (port 11110) exposes REST + MCP protocol + the models/textures/scripts
   depots + backup/restore, none of which go through the WebSocket bridge (they're local

@@ -3,14 +3,13 @@
 Entity creation normally happens through the Interface client's JavaScript
 API or a headless Assignment Client - not a plain domain-admin HTTP POST.
 
-Live path: FastAPI `/api/overte/ws` + `scripts/overte-mcp-bridge.js`.
-When no bridge client is connected, this module returns labeled simulated
-results. See ARCHITECTURE.md.
+Live path: FastAPI `/api/overte/ws` + `scripts/overte-mcp-bridge.js`, running headless
+as a domain persistent script (agent mode) or inside Interface. When no bridge is
+connected every tool here returns status "error" (bridge_not_connected). There is no
+simulated mode. See docs/ARCHITECTURE.md.
 """
 
 import logging
-import uuid
-from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -30,68 +29,32 @@ _LOCAL_API = "http://127.0.0.1:11110/api/overte"
 
 
 async def spawn_entity_impl(input_data: EntitySpawnInput) -> dict[str, Any]:
-    """Spawn an entity in Overte. Attempts to use the local WebSocket bridge via REST.
+    """Spawn an entity in Overte through the overte-mcp backend and its bridge.
 
-    Args:
-        input_data: Configuration details (name, type, position, scale, URLs)
-
-    Returns:
-        The result payload (either live via WebSocket bridge or simulated fallback).
+    There is no simulated mode: if the backend is down or no bridge is connected this
+    returns status "error" with the reason, never a made-up entity.
     """
-    try:
-        async with httpx.AsyncClient(timeout=6.0) as client:
-            payload = {
-                "name": input_data.name,
-                "type": input_data.type,
-                "position": input_data.position,
-                "scale": input_data.scale,
-                "model_url": input_data.model_url,
-                "script_url": input_data.script_url,
-                "permanent": input_data.permanent,
-            }
-            # Try to delegate to local running uvicorn REST server
-            r = await client.post("http://127.0.0.1:11110/api/overte/spawn", json=payload)
-            if r.status_code == 200:
-                logger.info("Successfully spawned entity via local REST API bridge")
-                return r.json()
-            elif r.status_code == 400:
-                logger.error(f"Failed to spawn entity via REST API: {r.text}")
-                return {
-                    "status": "error",
-                    "message": r.json().get("detail", "Failed to spawn entity."),
-                }
-    except Exception as e:
-        logger.debug(
-            f"HTTP request to local spawn REST server failed: {e}. Falling back to simulation."
-        )
-
-    logger.info("vircadia/overte-mcp: entity spawn falling back to simulated result")
-    return {
-        "status": "success",
-        "source": "simulated",
-        "warning": (
-            "No active WebSocket bridge client connected to the MCP dashboard. "
-            "Using simulated fallback. Connect scripts/overte-mcp-bridge.js inside Overte."
-        ),
-        "message": f"Simulated spawn of entity '{input_data.name}'",
-        "entity": {
-            "id": str(uuid.uuid4()),
-            "name": input_data.name,
-            "type": input_data.type,
-            "position": input_data.position,
-            "scale": input_data.scale,
-            "model_url": input_data.model_url,
-            "script_url": input_data.script_url,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
+    payload = {
+        "name": input_data.name,
+        "type": input_data.type,
+        "position": input_data.position,
+        "scale": input_data.scale,
+        "model_url": input_data.model_url,
+        "script_url": input_data.script_url,
+        "permanent": input_data.permanent,
+        "parent_id": input_data.parent_id,
+        "color": input_data.color,
+        "intensity": input_data.intensity,
+        "is_spotlight": input_data.is_spotlight,
+        "falloff_radius": input_data.falloff_radius,
+        "extra_properties": input_data.extra_properties,
     }
+    return await _post("/spawn", payload)
 
 
 async def _post(path: str, json_body: dict[str, Any], timeout: float = 6.0) -> dict[str, Any]:
-    """Thin POST to this server's own REST API - these tools have no meaningful "simulated"
-    mode of their own (unlike spawn's placeholder object): a failure here means either the
-    backend isn't running or the bridge isn't connected, and the REST endpoint already
-    reports which honestly via its own error detail."""
+    """Thin POST to this server's own REST API. A failure means the backend is not running
+    or no bridge is connected; the REST endpoint reports which in its error detail."""
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             r = await client.post(f"{_LOCAL_API}{path}", json=json_body)

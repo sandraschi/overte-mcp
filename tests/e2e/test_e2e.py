@@ -47,48 +47,38 @@ def api_server():
 
 
 def test_status_endpoint(api_server):
-    """Verify status endpoint is up and returns a simulated payload when no domain is running."""
+    """Status is live if a domain-server runs here, otherwise an honest domain_unreachable."""
     url = f"{api_server}/api/overte/status"
     response = httpx.get(url, params={"host": "localhost", "port": 40100}, timeout=10.0)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "success"
-    assert data["source"] in ("simulated", "live")
-    assert "domain" in data
+    if response.status_code == 200:
+        data = response.json()
+        assert data["source"] == "live"
+        assert "domain" in data
+    else:
+        assert response.status_code == 502
+        assert "domain_unreachable" in response.json()["detail"]
 
 
-def test_spawn_endpoint(api_server):
-    """Verify spawn endpoint accepts post requests and returns a labeled-simulated response."""
+def test_spawn_without_bridge_is_503(api_server):
+    """No bridge connected to this isolated server: spawn must refuse, not simulate."""
     url = f"{api_server}/api/overte/spawn"
-    payload = {
-        "name": "E2E Test Model",
-        "type": "Model",
-        "position": [0.0, 1.0, 0.0],
-        "scale": [1.0, 1.0, 1.0],
-        "model_url": "http://assets/model.glb",
-    }
+    payload = {"name": "E2E Test Model", "type": "Model", "position": [0.0, 1.0, 0.0]}
     response = httpx.post(url, json=payload, timeout=10.0)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "success"
-    assert data["source"] == "simulated"
-    assert data["entity"]["name"] == "E2E Test Model"
+    assert response.status_code == 503
+    assert "bridge_not_connected" in response.json()["detail"]
 
 
-def test_inject_endpoint(api_server):
-    """Verify script injection endpoint returns a labeled-simulated response."""
+def test_inject_without_bridge_is_503(api_server):
     url = f"{api_server}/api/overte/inject"
-    payload = {
-        "entity_id": "eeb24f2a-c602-4bf1-a8e9-42b78b09c12b",
-        "script_url": "http://goliath/scripts/spin.js",
-        "script_data": {"speed": 60.0},
-    }
+    payload = {"entity_id": "eeb24f2a-c602-4bf1-a8e9-42b78b09c12b", "script_url": "http://goliath/scripts/spin.js"}
     response = httpx.post(url, json=payload, timeout=10.0)
+    assert response.status_code == 503
+
+
+def test_bridge_script_served(api_server):
+    response = httpx.get(f"{api_server}/bridge/overte-mcp-bridge.js", timeout=10.0)
     assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "success"
-    assert data["source"] == "simulated"
-    assert data["script"]["entity_id"] == "eeb24f2a-c602-4bf1-a8e9-42b78b09c12b"
+    assert "ws://127.0.0.1:11119/api/overte/ws" in response.text
 
 
 def test_health_endpoints(api_server):

@@ -8,18 +8,20 @@ New 2026-09-02, alongside the `overte-admin` refresh.
 
 ## Before anything live: is the bridge connected?
 
-Every tool below except `overte_domain_status` needs `scripts/overte-mcp-bridge.js` loaded
-inside the running Overte Interface client (Developer -> Script Manager -> load the script).
-If it isn't, `overte_entity_spawn`/`overte_script_inject` quietly return a
-`"source": "simulated"` result instead of erroring - check the `source` field in the response
-before assuming something actually appeared in-world. Everything else (update/delete/animate/
-nearby/fixture) fails cleanly instead.
+Call `overte_bridge_status` first. Every tool below except `overte_domain_status` needs a
+connected bridge. If none is connected, run `overte_bridge_install` (headless, needs the
+domain-server and an assignment-client running) and poll `overte_bridge_status` until
+`connected`. Without a bridge every tool fails with `bridge_not_connected`; nothing is ever
+simulated.
+
+In headless (`agent`) mode there is no avatar: always pass `position` to spawn and
+fixture calls, and do not parent to `"MyAvatar"`.
 
 ## Recipe: spawn and light a scene
 
 1. `overte_entity_spawn(name="Table", entity_type="Box", position=[0,0,-3], scale=[1.2,0.05,0.6], color=[0.4,0.25,0.1])`
 2. `overte_entity_spawn(name="Lamp", entity_type="Light", position=[0,1.2,-3], color=[1,0.9,0.7], intensity=2.0, is_spotlight=False)`
-3. Read back the entity_id from each response's `data.entity` field for use in later steps.
+3. Read back each response's `data.entity_id` for use in later steps.
 
 ## Recipe: animate something
 
