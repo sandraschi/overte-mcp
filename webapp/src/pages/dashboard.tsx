@@ -78,13 +78,18 @@ export function Dashboard() {
   }, []);
 
   const { data, isLoading, refetch, isRefetching } = useQuery<{
-    domain: DomainInfo;
-    source: "live" | "simulated";
+    domain?: DomainInfo;
+    source: "live" | "unreachable";
     warning?: string;
   }>({
     queryKey: ["domainStatus", host, port],
     queryFn: async () => {
       const res = await fetch(apiUrl(`/api/overte/status?host=${host}&port=${port}`));
+      if (res.status === 502) {
+        // No domain-server answered: say so, never show placeholder nodes.
+        const body = await res.json().catch(() => ({}));
+        return { source: "unreachable" as const, warning: body.detail };
+      }
       if (!res.ok) throw new Error("Server connection offline");
       return res.json();
     },
@@ -257,12 +262,10 @@ export function Dashboard() {
         )}
       </div>
 
-      {data?.source === "simulated" && (
+      {data?.source === "unreachable" && (
         <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-xs">
           <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>
-            {data.warning ?? "Showing simulated data -- no live domain-server reachable."}
-          </span>
+          <span>{data.warning ?? "No domain-server reachable."}</span>
         </div>
       )}
 

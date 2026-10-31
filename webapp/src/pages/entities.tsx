@@ -52,7 +52,11 @@ export function EntitiesPage() {
   );
 
   // Server-tracked entities (spawned by this backend process since it last restarted)
-  const { data, isLoading, refetch } = useQuery<{ items: Entity[]; source: string }>({
+  const { data, isLoading, refetch } = useQuery<{
+    items: Entity[];
+    source: string;
+    bridge_connected?: boolean;
+  }>({
     queryKey: ["entitiesList"],
     queryFn: async () => {
       const res = await fetch(apiUrl("/api/overte/entities"));
@@ -63,7 +67,6 @@ export function EntitiesPage() {
   });
 
   const entities = data?.items || [];
-  const source = data?.source;
 
   // Live nearby search - queries the actual world, including things this backend never spawned
   const {
@@ -321,12 +324,12 @@ export function EntitiesPage() {
         </div>
       </div>
 
-      {source === "simulated" && (
+      {data?.bridge_connected === false && (
         <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-xs px-4 py-2">
           <ShieldAlert className="w-4 h-4 shrink-0" />
           <span>
-            Bridge disconnected — showing only server-tracked entities. Load overte-mcp-bridge.js in
-            Interface for live operations.
+            Bridge disconnected: showing only server-tracked entities. Run overte_bridge_install
+            (headless) or load the bridge in Interface for live operations.
           </span>
         </div>
       )}

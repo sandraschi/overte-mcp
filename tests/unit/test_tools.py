@@ -12,15 +12,13 @@ from overte_mcp.tools.scripting import inject_script_impl
 
 
 @pytest.mark.asyncio
-async def test_domain_status_simulated_when_offline():
-    """Test get_domain_status_impl falls back to clearly-labeled simulated data offline."""
-    # We do not mock httpx here, so it will raise a connection error and trigger the
-    # simulated fallback path.
+async def test_domain_status_error_when_offline():
+    """No domain-server: an honest error, never placeholder nodes."""
     result = await get_domain_status_impl(DomainStatusInput(host="localhost", port=9999))
-    assert result["status"] == "success"
-    assert result["source"] == "simulated"
-    assert "warning" in result
-    assert len(result["domain"]["nodes"]) == 2
+    assert result["status"] == "error"
+    assert result["source"] == "unreachable"
+    assert "domain_unreachable" in result["message"]
+    assert "domain" not in result
 
 
 @pytest.mark.asyncio
@@ -58,25 +56,43 @@ async def test_domain_status_unauthorized():
 
 
 @pytest.mark.asyncio
-async def test_entity_spawn_is_simulated():
-    """spawn_entity_impl has no live bridge yet -- it must say so, not claim success silently."""
+async def test_entity_spawn_errors_without_backend():
+    """No backend/bridge: spawn must fail, not invent an entity."""
     input_data = EntitySpawnInput(name="Test Box", type="Box", position=[0, 0, 0], scale=[1, 1, 1])
-    result = await spawn_entity_impl(input_data)
-    assert result["status"] == "success"
-    assert result["source"] == "simulated"
-    assert "warning" in result
-    assert result["entity"]["name"] == "Test Box"
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.side_effect = httpx.ConnectError("refused")
+        result = await spawn_entity_impl(input_data)
+    assert result["status"] == "error"
+    assert "entity" not in result
+    assert "unreachable" in result["message"]
 
 
 @pytest.mark.asyncio
-async def test_script_inject_is_simulated():
-    """inject_script_impl has no live bridge yet -- it must say so, not claim success silently."""
+async def test_entity_spawn_forwards_all_fields():
+    """parent_id/color/light fields used to be dropped on the way to the backend."""
+    input_data = EntitySpawnInput(
+        name="Lamp", type="Light", position=[1, 2, 3], color=[1, 0.5, 0], intensity=2.0, parent_id="p-1"
+    )
+    ok = httpx.Response(200, json={"status": "success", "source": "live", "entity_id": "e-1"})
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value = ok
+        result = await spawn_entity_impl(input_data)
+        sent = mock_post.call_args.kwargs["json"]
+    assert result["entity_id"] == "e-1"
+    assert sent["parent_id"] == "p-1"
+    assert sent["intensity"] == 2.0
+    assert sent["color"] == [1, 0.5, 0]
+
+
+@pytest.mark.asyncio
+async def test_script_inject_errors_without_bridge():
+    """Backend up but no bridge: the 503 detail is passed through as an error."""
     input_data = ScriptInjectInput(
         entity_id="test-uuid", script_url="http://scripts/spin.js", script_data={"speed": 5.0}
     )
-    result = await inject_script_impl(input_data)
-    assert result["status"] == "success"
-    assert result["source"] == "simulated"
-    assert "warning" in result
-    assert result["script"]["entity_id"] == "test-uuid"
-    assert result["script"]["scope"]["speed"] == 5.0
+    resp = httpx.Response(503, json={"detail": "bridge_not_connected: no Overte bridge is connected."})
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value = resp
+        result = await inject_script_impl(input_data)
+    assert result["status"] == "error"
+    assert "bridge_not_connected" in result["message"]
