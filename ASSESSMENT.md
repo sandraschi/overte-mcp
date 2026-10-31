@@ -28,6 +28,26 @@ rather than left to compound (see Audit findings below).
 
 ---
 
+## 2026-10-31: headless bridge and no more simulated success
+
+Assessed from gamecraft (docs/LLM_AS_GAME_DESIGNER.md 6.1) and fixed the same night.
+
+- **Main limitation:** live control required the desktop Interface client with the bridge
+  loaded. That ruled out headless use and automated testing. The fix was already named
+  in this repo's own ARCHITECTURE.md ("Headless Assignment Client script - same API, no
+  GUI") but listed as out of scope. Now implemented: the bridge runs as a domain
+  persistent script on an assignment-client. See STATUS.md "Headless bridge".
+- **Honesty bug:** spawn, inject, avatar and domain status returned `status: "success"`
+  with invented data when nothing was connected (`source: "simulated"` was the only
+  hint). Same class as resonite-mcp's ProtoFlux finding. Removed; errors now say why.
+- **Two latent bugs found by the new tests:** MCP spawn dropped light/colour/parent
+  fields; filtered entity reads without `type` were reported as not found.
+- **Verification level:** unit tests (16) and a protocol harness running the real bridge
+  script in a fake agent engine (14/14). **Not yet run against real Overte**: Goliath was
+  overloaded (about 95% CPU, 92% RAM) and Python needed minutes to start, so the live
+  `just e2e-headless` run is the next step. Do not mark the headless path "verified" until
+  it passes.
+
 ## 2026-07-30 audit findings
 
 ### Fixed this pass
@@ -89,6 +109,7 @@ GitHub repo and README.
 
 | Priority | Item | Effort (AI-assisted) |
 |----------|------|----------------------|
+| **P0** | `just e2e-headless` on Goliath: live verification of the headless bridge (can_rez for agents, settings POST restarts the domain and starts the agent, persistence) | an hour once the machine has headroom |
 | **P1** | Confirm `nianticlabs/spz` builds on Goliath (C++ toolchain + libz), decode the Marble `.spz` end to end into `ply_to_glb.py` | half day |
 | **P1** | End-to-end: spawn Nekomimi-chan GLB with dance script in Overte, verify joints/textures live | half day |
 | **P2** | End-to-end: spawn contemporary-living-room panorama skybox + collider mesh | half day |

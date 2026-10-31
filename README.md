@@ -18,24 +18,24 @@ Plus a companion React web dashboard.
 
 ## What You Can Do
 
-**How it runs**: Overte (domain-server + Interface) is a separate
-application you install yourself — never bundled. `overte_domain_status`
-works against just the domain-server (no GUI needed). `overte_entity_spawn`
-and `overte_script_inject` need a running Interface client with
-`scripts/overte-mcp-bridge.js` loaded, because Overte's entity-server has no
-plain HTTP "create entity" endpoint — only Interface's JavaScript API can do
-that. See [docs/ONBOARDING.md](docs/ONBOARDING.md) for first-time setup.
+**How it runs**: Overte (domain-server + assignment-client, optionally Interface) is a
+separate application you install yourself, never bundled. Entity work runs through a
+bridge script inside Overte's script engine. Since 2026-10-31 the bridge runs **headless**
+as a domain persistent script on an assignment-client: no GUI, no logged-in user
+(`overte_bridge_install` sets it up). Loading it in the desktop Interface client still
+works when you want to watch. See [docs/ONBOARDING.md](docs/ONBOARDING.md).
 
 | Direction | Artifacts | Notes |
 |-----------|-----------|-------|
 | **Hands-in** | Entity properties (position, scale, type), JS behavior scripts, GLB/FBX/OBJ model URLs | Via MCP tool calls or the dashboard's Entities/Scripting pages |
-| **Hands-out** | Live domain-server telemetry, spawned in-world entities, animated/scripted entities | Every response labeled `source: "live"` or `source: "simulated"` — never a silent fake success |
+| **Hands-out** | Live domain-server telemetry, spawned in-world entities, animated/scripted entities | Real result or an error saying why (`bridge_not_connected`, `domain_unreachable`, ...); no simulated mode |
 
 **Tools** — all three core tools verified live against Overte 2026.04.1 (2026-07-30):
 
 | Tool | Status |
 |------|--------|
-| `overte_domain_status` | **Verified live** — real domain-server `/nodes.json` + `/settings.json` admin API on port `40100` |
+| `overte_domain_status` | **Verified live** (2026-07-30): domain-server `/nodes.json` + `/settings.json` on port `40100` |
+| `overte_bridge_status` / `overte_bridge_install` | New 2026-10-31: bridge mode (agent/interface) and headless install as a persistent script. See STATUS.md for live verification state. |
 | `overte_entity_spawn` | **Verified live** — in-world entity spawning via WebSocket bridge; `permanent=True` for cross-restart persistence |
 | `overte_script_inject` | **Verified live** — in-world JS behavior injection via WebSocket bridge |
 | `overte_sampling_assist` | Multi-step planning via `ctx.sample()` when host supports it |
@@ -68,8 +68,9 @@ Stdio without MCPB: `uv run overte-mcp`. Full install paths: [INSTALL.md](INSTAL
 ./start.ps1
 ```
 Syncs deps, starts FastAPI backend (`11110`) and Vite dashboard (`11111`),
-opens the browser. Then start Overte `domain-server.exe`, open Interface,
-load `scripts/overte-mcp-bridge.js` for live spawn/inject — see
+opens the browser. Then start Overte `domain-server.exe` and
+`assignment-client.exe -n 9`, and run `overte_bridge_install` once. Or let
+`just e2e-headless` do it all and report pass/fail. See
 [docs/ONBOARDING.md](docs/ONBOARDING.md).
 
 ## Example Prompts

@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file. The format 
 
 ---
 
+## [Unreleased] - 2026-10-31 - Headless bridge, no simulated success
+
+### Assfix 2026-10-31 (SOTA 0 -> 23 self-assessed)
+- Fixed CRITICAL MCPB NONSPEC ${PWD} -> ${__dirname} and SIDECAR run_server.py -> python -m overte_mcp (mcpb/manifest.json).
+- Added overte_shutdown MCP tool (confirm-gated) + POST /api/shutdown + GET /api/capabilities.
+- Fixed /mcp double-prefix (http_app(path="/")) + composed FastMCP lifespan (BUG-008/038).
+- Added .pre-commit-config.yaml, scripts/pre-commit-biome.ps1, .gitattributes, CLAUDE.md, .windsurfrules.
+- webapp/package.json: added @tauri-apps/api, biome:ci + check scripts.
+- pyproject.toml: added T20 + per-file-ignores; ruff format applied (4 files).
+- Deferred (no fix this run): backend LLM proxy (direct 11434 fetch), Inbox page, 5 e2e failures, glama tool list, fonts, skill drift.
+
+### Added
+- Headless bridge: `scripts/overte-mcp-bridge.js` v2.0.0 runs as a domain persistent
+  script on an assignment-client (agent mode, no GUI) as well as in Interface. Sends a
+  `hello` (mode, version, can_rez), waits for the entity server, keeps a standing
+  `EntityViewer` query and re-queries before searches and reads, adds a `ping` action
+  and error `code`s (`position_required`, `cannot_rez`, `not_found`, `no_avatar`).
+- `GET /bridge/overte-mcp-bridge.js` serves the bridge with its WebSocket URL rewritten
+  to the serving host. `data/scripts/overte-mcp-bridge.js` is now a stub that includes it.
+- `GET /api/overte/bridge`, `POST /api/overte/bridge/install`, `POST
+  /api/overte/bridge/uninstall`; MCP tools `overte_bridge_status`, `overte_bridge_install`.
+  Admin credentials from `OVERTE_ADMIN_USER` / `OVERTE_ADMIN_PASSWORD` (default
+  admin/admin), script URL override `OVERTE_BRIDGE_PUBLIC_URL`.
+- `scripts/headless_e2e.py` (`just e2e-headless`): live end-to-end check against a real
+  domain with no GUI, including persistence across a domain restart; JSON report.
+- `tests/bridge_harness/` (`just test-bridge-protocol`): the real bridge script under Node
+  in a fake agent engine, driven through the REST API. 14 checks.
+- `tests/unit/test_bridge.py`.
+
+### Changed
+- **Removed every simulated-success path.** No bridge: 503 `bridge_not_connected` (REST)
+  or `success: false` (MCP). No domain-server: 502 `domain_unreachable`. Previously
+  spawn, inject, avatar and domain status returned `status: "success"` with invented
+  entities/nodes. Dashboard and entities page updated accordingly.
+- Fixtures in agent mode require a position (400 `position_required`).
+- Docs: ARCHITECTURE, TOOLS, ONBOARDING, TROUBLESHOOTING, DEVELOPMENT, README, both
+  skills, STATUS, ASSESSMENT. "Headless Assignment Client bridge" removed from
+  out-of-scope.
+
+### Fixed
+- MCP `overte_entity_spawn` silently dropped `parent_id`, `color`, `intensity`,
+  `is_spotlight`, `falloff_radius` on the way to the backend.
+- Bridge `get_entity` with a property filter that omitted `type` reported existing
+  entities as not found (found by the protocol harness).
+- `/api/overte/status` wrapped its own HTTP errors into a 500.
+
+### Verification
+- Linux VM: unit tests 16 passed, protocol harness 14/14, ruff clean, webapp `tsc --noEmit` clean.
+- **Not yet run:** live `just e2e-headless` on Goliath (machine overloaded at the time),
+  Windows `just test`, webapp Biome.
+
 ## [Unreleased] - 2026-09-03
 
 ### Added (overte-user skill; overte-admin refresh; skill endpoints deduplicated)

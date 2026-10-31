@@ -17,6 +17,14 @@ serve:
 test:
     Set-Location '{{justfile_directory()}}'; uv run pytest -q
 
+# Bridge protocol test without Overte (real bridge script in a fake agent engine under Node)
+test-bridge-protocol:
+    Set-Location '{{justfile_directory()}}'; uv run python tests/bridge_harness/run_harness.py
+
+# Live headless end-to-end check against a real Overte domain (no Interface/GUI)
+e2e-headless *ARGS:
+    Set-Location '{{justfile_directory()}}'; uv run python scripts/headless_e2e.py {{ARGS}}
+
 # Unit tests only (no subprocess server)
 test-unit:
     Set-Location '{{justfile_directory()}}'; uv run pytest -q tests/unit
