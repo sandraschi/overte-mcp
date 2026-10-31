@@ -1,1 +1,1 @@
-{"timestamp": "2026-07-30T22:00:00Z", "repo": "overte-mcp", "scope": "standards-gaps", "note": "Initial standards compliance sweep — STATUS.md, .cursorrules, .claude-plugin, oxlint removal, glama fix, reports dir"}
+{"timestamp": "2026-10-31T22:59:43.7070627+01:00", "commit": "cd9095fb1fea9f5ac16b2e2e74714dc19dc87169", "host": "Goliath", "score_before": 0, "score_after": 23, "report": "docs/assess-reports/2026-10-31.md"}
