@@ -171,21 +171,52 @@ export function Dashboard() {
       {/* Hero */}
       <div
         className="glass-panel border border-amber-500/10"
+        data-testid="dashboard-hero"
         style={{
           background: "linear-gradient(135deg, rgba(245,158,11,0.06) 0%, transparent 60%)",
           padding: "24px",
         }}
       >
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
+          <div className="space-y-3 max-w-2xl">
+            <p className="text-sm font-bold uppercase tracking-widest text-amber-500">
+              overte-mcp — MCP server + control panel
+            </p>
             <h1 className="text-2xl font-bold text-white tracking-tight">
               Overte Open-Source Social VR
             </h1>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Self-hosted virtual worlds platform. Run your own domain server, spawn entities,
-              inject JavaScript behaviours, and host multi-user VR spaces &mdash; all from this
-              dashboard.
+              Overte is the open-source VR/metaverse platform descended from High Fidelity: you run
+              your own domain server and step inside with the Interface client. This app is its
+              control panel — and an MCP server, so AI agents can administer the domain, spawn
+              entities, and inject scripts through the same backend this dashboard talks to.
             </p>
+            <ol data-testid="hero-quickstart" className="space-y-1.5 text-sm text-slate-300">
+              <li>
+                <span className="font-bold text-white">1.</span> Start the domain server (plus an
+                assignment client for headless mode) — see App Status below.
+              </li>
+              <li>
+                <span className="font-bold text-white">2.</span> Connect the bridge: run{" "}
+                <span className="font-mono">overte_bridge_install</span> from any MCP client, or
+                load <span className="font-mono">/bridge/overte-mcp-bridge.js</span> in Interface.
+              </li>
+              <li>
+                <span className="font-bold text-white">3.</span> Build:{" "}
+                <Link to="/entities" className="text-amber-500 hover:text-amber-400 font-bold">
+                  spawn entities
+                </Link>
+                ,{" "}
+                <Link to="/scripting" className="text-amber-500 hover:text-amber-400 font-bold">
+                  inject scripts
+                </Link>{" "}
+                — or ask an agent. New here? Start at the{" "}
+                <Link to="/help" className="text-amber-500 hover:text-amber-400 font-bold">
+                  Help Hub
+                </Link>
+                .
+              </li>
+            </ol>
             <a
               href="https://overte.org"
               target="_blank"
