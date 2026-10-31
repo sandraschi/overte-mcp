@@ -167,3 +167,14 @@ class ScriptInjectInput(BaseModel):
     script_data: dict[str, Any] = Field(
         default_factory=dict, description="Metadata parameters to inject into the script scope"
     )
+
+
+class LlmChatInput(BaseModel):
+    provider: str = Field(default="ollama", description="LLM provider: ollama, lmstudio, vllm")
+    model: str = Field(..., description="Model id as listed by GET /api/llm/models")
+    messages: list[dict[str, str]] = Field(
+        ..., description="Chat history: [{role: user|assistant|system, content}]"
+    )
+    system: str | None = Field(
+        default=None, description="System prompt prepended when the provider honors it"
+    )

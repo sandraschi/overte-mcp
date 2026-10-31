@@ -7,6 +7,7 @@ import json
 import logging
 import math
 import os
+import shutil
 import subprocess
 import time
 import uuid
@@ -18,7 +19,7 @@ import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .models import (
@@ -28,6 +29,7 @@ from .models import (
     EntitySpawnInput,
     EntityUpdateInput,
     FixtureSpawnInput,
+    LlmChatInput,
     NearbyEntitiesInput,
     ScriptInjectInput,
 )
@@ -115,8 +117,7 @@ async def _lifespan(_app):
 app = FastAPI(
     title="Overte MCP REST Server",
     description="HTTP REST interface complementing standard Stdio MCP",
-    version="0.2.0",
-    lifespan=_lifespan,
+    version="0.2.1",
 )
 
 # Enable CORS for frontend dashboard connection per CORS_STANDARD.md
@@ -150,11 +151,11 @@ async def health_check():
     return {
         "status": "ok",
         "server": "overte-mcp",
-        "version": "0.2.0",
+        "version": "0.2.1",
         "git_sha": GIT_SHA,
         "started_at": _STARTED.isoformat(),
         "uptime_seconds": int(uptime),
-        "tool_count": 9,
+        "tool_count": 12,
         "shutting_down": False,
         "transport": "streamable-http",
         "port": BACKEND_PORT,
@@ -260,6 +261,11 @@ async def list_tools():
                 "description": "Get multi-step Overte operation guidance via MCP sampling.",
                 "inputSchema": {"goal": {"type": "string", "required": True}},
             },
+            {
+                "name": "overte_shutdown",
+                "description": "Orderly self-termination of the server process.",
+                "inputSchema": {"confirm": {"type": "boolean", "required": False}},
+            },
         ]
     }
 
@@ -308,9 +314,9 @@ async def diagnostics():
     return {
         "status": "ok",
         "server": "overte-mcp",
-        "version": "0.2.0",
+        "version": "0.2.1",
         "uptime_seconds": int(uptime),
-        "tool_count": 9,
+        "tool_count": 12,
         "tools": [
             {"name": "overte_domain_status"},
             {"name": "overte_bridge_status"},
@@ -323,6 +329,7 @@ async def diagnostics():
             {"name": "overte_nearby_entities"},
             {"name": "overte_fixture_spawn"},
             {"name": "overte_sampling_assist"},
+            {"name": "overte_shutdown"},
         ],
         "system": {"windows": True},
         "errors": [],
@@ -334,7 +341,7 @@ async def capabilities():
     """Standard fleet capabilities shape for webapp discovery."""
     return {
         "server": "overte-mcp",
-        "version": "0.2.0",
+        "version": "0.2.1",
         "tools": [
             "overte_domain_status",
             "overte_bridge_status",
@@ -351,6 +358,7 @@ async def capabilities():
         ],
         "transports": ["stdio", "http", "mcp"],
         "health_path": "/api/health",
+        "llm_proxy": True,
     }
 
 
@@ -361,6 +369,208 @@ async def api_shutdown():
 
     threading.Timer(0.5, lambda: os._exit(0)).start()
     return {"status": "shutting_down"}
+
+
+# -- Local LLM proxy (backend-for-frontend: browser tabs never touch providers directly) --
+_LLM_PROVIDERS: dict[str, dict[str, Any]] = {
+    "ollama": {
+        "port": 11434,
+        "models_path": "/api/tags",
+        "chat_path": "/api/chat",
+        "openai_compatible": False,
+        "label": "Ollama",
+    },
+    "lmstudio": {
+        "port": 1234,
+        "models_path": "/v1/models",
+        "chat_path": "/v1/chat/completions",
+        "openai_compatible": True,
+        "label": "LM Studio",
+    },
+    "vllm": {
+        "port": 8000,
+        "models_path": "/v1/models",
+        "chat_path": "/v1/chat/completions",
+        "openai_compatible": True,
+        "label": "vLLM",
+    },
+}
+
+_LLM_FALLBACK_MODELS: dict[str, list[str]] = {
+    "ollama": ["qwen3:8b", "llama3.1:8b", "mistral:7b"],
+    "lmstudio": ["local-model"],
+    "vllm": ["local-model"],
+}
+
+
+async def _probe_llm_provider(name: str, timeout: float = 2.0) -> dict[str, Any]:
+    """Server-side liveness probe for one local LLM provider (loopback only)."""
+    cfg = _LLM_PROVIDERS[name]
+    base = f"http://127.0.0.1:{cfg['port']}"
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            r = await client.get(base + cfg["models_path"])
+            if r.status_code == 200:
+                return {"name": name, "available": True, "base": base}
+    except Exception as e:
+        logger.debug("LLM provider %s probe failed: %s", name, e)
+    return {"name": name, "available": False, "base": base}
+
+
+def _gpu_info() -> dict[str, Any]:
+    """Best-effort local GPU inventory for the dashboard opportunity prompt (fail-soft)."""
+    if not shutil.which("nvidia-smi"):
+        return {"available": False, "gpus": []}
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        gpus = [line.strip() for line in (out.stdout or "").splitlines() if line.strip()]
+        return {"available": bool(gpus), "gpus": gpus}
+    except Exception as e:
+        logger.debug("nvidia-smi probe failed: %s", e)
+        return {"available": False, "gpus": []}
+
+
+@app.get("/api/llm/discover")
+async def llm_discover():
+    """Probe loopback LLM providers server-side; dashboard calls this, never providers directly."""
+    providers = [await _probe_llm_provider(name) for name in _LLM_PROVIDERS]
+    live = [p["name"] for p in providers if p["available"]]
+    return {
+        "providers": providers,
+        "default_provider": live[0] if live else None,
+        "chat_proxy": True,
+        "gpu": _gpu_info(),
+    }
+
+
+@app.get("/api/llm/providers")
+async def llm_providers():
+    """Provider registry: local loopback providers plus cloud-configured flags (no keys exposed)."""
+    return {
+        "local": [
+            {
+                "name": name,
+                "label": cfg["label"],
+                "port": cfg["port"],
+                "openai_compatible": cfg["openai_compatible"],
+            }
+            for name, cfg in _LLM_PROVIDERS.items()
+        ],
+        "cloud_configured": {
+            "openai": bool(os.environ.get("OPENAI_API_KEY")),
+            "anthropic": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        },
+    }
+
+
+@app.get("/api/llm/models")
+async def llm_models(provider: str = "ollama"):
+    """Model list per provider: live when reachable, curated fallback otherwise."""
+    if provider not in _LLM_PROVIDERS:
+        raise HTTPException(status_code=400, detail=f"Unknown provider {provider!r}.")
+    cfg = _LLM_PROVIDERS[provider]
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            r = await client.get(f"http://127.0.0.1:{cfg['port']}{cfg['models_path']}")
+            if r.status_code == 200:
+                data = r.json()
+                if provider == "ollama":
+                    models = [m.get("name") for m in data.get("models", []) if m.get("name")]
+                else:
+                    models = [m.get("id") for m in data.get("data", []) if m.get("id")]
+                return {"provider": provider, "models": models, "live": True}
+    except Exception as e:
+        logger.debug("LLM models list for %s failed: %s", provider, e)
+    return {"provider": provider, "models": _LLM_FALLBACK_MODELS[provider], "live": False}
+
+
+@app.get("/api/llm/onboarding")
+async def llm_onboarding():
+    """Fail-open LLM setup state for the dashboard opportunity prompt."""
+    providers = [await _probe_llm_provider(name) for name in _LLM_PROVIDERS]
+    live = [p["name"] for p in providers if p["available"]]
+    return {
+        "required": not live,
+        "detected": live,
+        "steps": [
+            "Install Ollama (https://ollama.com) or start LM Studio with a local server.",
+            "Pull a model, e.g. `ollama pull qwen3:8b`.",
+            "Reload this page - the dashboard detects the provider automatically.",
+        ],
+        "note": "Chat works without an LLM for tool-driven answers; free-form chat needs one.",
+    }
+
+
+async def _forward_chat(provider: str, model: str, messages: list[dict[str, str]]) -> str:
+    """Forward one chat completion to the local provider; raises HTTPException on failure."""
+    if provider not in _LLM_PROVIDERS:
+        raise HTTPException(status_code=400, detail=f"Unknown provider {provider!r}.")
+    cfg = _LLM_PROVIDERS[provider]
+    url = f"http://127.0.0.1:{cfg['port']}{cfg['chat_path']}"
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            if cfg["openai_compatible"]:
+                r = await client.post(url, json={"model": model, "messages": messages})
+                r.raise_for_status()
+                return str(r.json()["choices"][0]["message"]["content"] or "")
+            r = await client.post(url, json={"model": model, "messages": messages, "stream": False})
+            r.raise_for_status()
+            return str(r.json().get("message", {}).get("content", "") or "")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning("LLM chat forward to %s failed: %s", provider, e)
+        raise HTTPException(status_code=502, detail=f"LLM provider {provider!r} unreachable: {e}")
+
+
+@app.post("/api/llm/chat")
+async def llm_chat(payload: LlmChatInput):
+    """Chat completion via the backend proxy. Never returns invented text on failure."""
+    reply = await _forward_chat(payload.provider, payload.model, list(payload.messages))
+    return {"reply": reply, "provider": payload.provider, "model": payload.model, "live": True}
+
+
+@app.post("/api/llm/chat/stream")
+async def llm_chat_stream(payload: LlmChatInput):
+    """SSE byte-relay of the provider stream (Ollama NDJSON and OpenAI SSE both pass through)."""
+
+    async def _relay():
+        if payload.provider not in _LLM_PROVIDERS:
+            yield 'data: {"error": "unknown provider"}\n\n'
+            return
+        cfg = _LLM_PROVIDERS[payload.provider]
+        url = f"http://127.0.0.1:{cfg['port']}{cfg['chat_path']}"
+        body: dict[str, Any] = {"model": payload.model, "messages": list(payload.messages)}
+        if payload.system and not cfg["openai_compatible"]:
+            body["system"] = payload.system
+        if cfg["openai_compatible"]:
+            body["stream"] = True
+            if payload.system:
+                body["messages"] = [
+                    {"role": "system", "content": payload.system},
+                    *body["messages"],
+                ]
+        else:
+            body["stream"] = True
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                async with client.stream("POST", url, json=body) as r:
+                    if r.status_code != 200:
+                        yield f"data: {json.dumps({'error': f'provider HTTP {r.status_code}'})}\n\n"
+                        return
+                    async for chunk in r.aiter_bytes():
+                        if chunk:
+                            yield chunk
+        except Exception as e:
+            logger.warning("LLM stream relay to %s failed: %s", payload.provider, e)
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(_relay(), media_type="text/event-stream")
 
 
 @app.get("/api/logs")
