@@ -70,28 +70,20 @@ async def get_domain_status_impl(input_data: DomainStatusInput) -> dict[str, Any
                         "settings": settings_data,
                     },
                 }
-            logger.warning(
-                f"nodes.json returned code {nodes_resp.status_code}, falling back to simulated data"
-            )
+            return {
+                "status": "error",
+                "source": "live",
+                "message": f"nodes.json returned HTTP {nodes_resp.status_code}",
+            }
 
     except (httpx.ConnectError, httpx.TimeoutException):
         logger.info(f"Could not connect to domain-server at {nodes_url}.")
 
-    # Simulated payload -- NOT live data. No domain-server has been reachable.
     return {
-        "status": "success",
-        "source": "simulated",
-        "warning": (
-            "No Overte domain-server reachable at this host/port. This is placeholder "
-            "data for UI/tool-shape testing only, not a real domain."
+        "status": "error",
+        "source": "unreachable",
+        "message": (
+            f"domain_unreachable: no Overte domain-server answered at {nodes_url}. "
+            "Start domain-server.exe (and an assignment-client) first."
         ),
-        "domain": {
-            "host": host,
-            "port": port,
-            "nodes": [
-                {"type": "avatar-mixer", "uuid": "sim-0001", "public": {"ip": host}},
-                {"type": "entity-server", "uuid": "sim-0002", "public": {"ip": host}},
-            ],
-            "settings": {},
-        },
     }

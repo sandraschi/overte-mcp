@@ -5,6 +5,7 @@ designed specifically for Overte 3D Web entities (QtWebEngine) and VR laser poin
 Zero external CDN dependencies (works air-gapped in local domain).
 """
 
+
 def get_teach_pendant_html() -> str:
     return """<!DOCTYPE html>
 <html lang="en">
