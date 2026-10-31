@@ -1,6 +1,6 @@
 # Overte MCP — System Architecture & Protocols
 
-Maps architecture, ports, data flow, and the live-vs-simulated contract for the
+Maps architecture, ports, data flow, and the headless bridge contract for the
 overte-mcp server. See [STATUS.md](../STATUS.md) for current verification status and
 remaining work.
 
@@ -13,7 +13,7 @@ remaining work.
    ┌─────────────────────────────────────────────────────┐
    │  Cursor / Claude Desktop / opencode (Stdio MCP)     │
    │  React SPA Dashboard (REST / WebSocket)             │
-   │  Overte Interface Client (in-world bridge script)    │
+   │  Bridge script: headless agent (primary) or Interface │
    └──────────────────────┬──────────────────────────────┘
                           │
           Stdio MCP ──────┤       HTTP REST + WS (port 11110)
@@ -35,13 +35,16 @@ remaining work.
    │      ├── /api/overte/spawn        — Entity spawn     │
    │      ├── /api/overte/inject       — Script inject    │
    │      ├── /api/overte/ws           — Bridge hub (WS)  │
+   │      ├── /api/overte/bridge[...]  - status/install   │
+   │      ├── /bridge/overte-mcp-bridge.js - script served │
    │      └── /mcp                     — FastMCP HTTP     │
    └──────┬───────────────────────────────────────────────┘
           │                              │
           ▼                              ▼
    ┌──────────────┐          ┌──────────────────────────┐
-   │ Overte       │          │ Overte Interface Client  │
-   │ Domain       │          │ (port 11110 WebSocket)   │
+   │ Overte       │          │ assignment-client agent  │
+   │ Domain       │          │ (persistent script, no   │
+   │              │          │  GUI) or Interface       │
    │ Server       │          │                          │
    │ (port 40100) │          │ overte-mcp-bridge.js     │
    │              │          │  ├── Entities.addEntity  │
@@ -67,46 +70,87 @@ remaining work.
 |----------|--------|-------------|------|--------|
 | Stdio MCP | MCP client | Python FastMCP | N/A | Real |
 | HTTP REST | React webapp / MCP tools | FastAPI backend | 11110 | Real |
-| WebSocket | `overte-mcp-bridge.js` in Interface | FastAPI `/api/overte/ws` | 11110 | Real when bridge connected |
+| WebSocket | `overte-mcp-bridge.js` as agent (persistent script) or in Interface | FastAPI `/api/overte/ws` | 11110 | Real when bridge connected |
+| HTTP | assignment-client agent | FastAPI `/bridge/overte-mcp-bridge.js` | 11110 | Script fetch at agent start |
 | HTTP | Python backend | Overte domain-server admin API | 40100 | Real (verified) |
-| Entity octree | Bridge JS inside Interface | Overte entity-server | (internal) | Real when bridge active |
+| Entity octree | Bridge JS (agent or Interface) | Overte entity-server | (internal) | Real when bridge active |
 
 ## Tool Surface
 
-| Tool | Annotations | Source | Verified | Description |
-|------|-------------|--------|----------|-------------|
-| `overte_domain_status` | READ_ONLY | Live via :40100 HTTP | ✅ 2026-07-30 | Queries `/nodes.json` + `/settings.json`. Labeled simulated fallback if unreachable. |
-| `overte_entity_spawn` | MUTATING | Live via WS bridge | ✅ 2026-07-30 | Spawns Box/Sphere/Web/Model entities via bridge. Labeled simulated fallback. |
-| `overte_script_inject` | MUTATING | Live via WS bridge | ✅ 2026-07-30 | Attaches JS behavior to entity via bridge. Labeled simulated fallback. |
-| `overte_sampling_assist` | READ_ONLY | Static plan | — | Multi-step guidance via `ctx.sample()` when host supports it. |
+| Tool | Annotations | Needs | Description |
+|------|-------------|-------|-------------|
+| `overte_domain_status` | READ_ONLY | domain-server | `/nodes.json` + `/settings.json`. Error `domain_unreachable` if nothing answers. |
+| `overte_bridge_status` | READ_ONLY | backend | Bridge connected? mode `agent` (headless) or `interface`, `can_rez`. |
+| `overte_bridge_install` | MUTATING | domain-server admin API | Registers the bridge as a domain persistent script. Idempotent. |
+| `overte_entity_spawn` | MUTATING | bridge | Box/Sphere/Web/Model/Light. Headless: pass a position. |
+| `overte_script_inject` | MUTATING | bridge | Sets an entity's `script` + `userData`. |
+| `overte_entity_update` / `_delete` / `_animate` | MUTATING | bridge | Edit, remove, loop-animate. |
+| `overte_nearby_entities` | READ_ONLY | bridge | `Entities.findEntities` around a point. |
+| `overte_fixture_spawn` | MUTATING | bridge | Preset props. Headless: pass a position. |
+| `overte_sampling_assist` | READ_ONLY | none | Multi-step guidance via `ctx.sample()`. |
 
-Every tool response includes a `"source": "live"` or `"source": "simulated"` field.
-No fake green — simulated data is always clearly labeled with warnings.
+## Honest Contract (no simulated mode)
 
-## Honest Contract (Simulated vs Live)
+Until 2026-10-31 spawn, inject, avatar and domain status returned `status: "success"`
+with `source: "simulated"` and invented data when nothing was connected. A caller that
+only checked `status` believed an entity existed. That mode is gone:
 
-The server follows a strict honesty policy:
+- No bridge: REST returns **503** with detail starting `bridge_not_connected`; MCP tools
+  return `success: false` with that message.
+- No domain-server: `/api/overte/status` returns **502** `domain_unreachable`.
+- Agent mode without a position: **400** `position_required` (there is no avatar).
+- Bridge connected but not allowed to create entities: the bridge answers `cannot_rez`.
+- 401 from the domain-server stays a clear auth error.
 
-- `source: "live"` — data comes from a real Overte domain-server or WebSocket bridge
-- `source: "simulated"` — no domain-server / bridge was reachable; returning placeholder data for UI/tool-shape testing
-- Simulated responses always include a `warning` field explaining what's needed for live operation
-- 401 errors from the domain-server are propagated as clear auth errors (not silent simulated fallback)
+`source: "live"` is still present on successful responses.
 
 ## Why Entity Spawn / Script Inject Need a Bridge
 
-Overte's entity-server communicates via an internal octree protocol — there is no
-equivalent of "POST an entity" on the domain-server admin HTTP API. The two paths to
-create/modify in-world entities are:
+Overte's entity-server talks an internal octree protocol; the domain-server admin HTTP
+API cannot create entities. Entity work has to run in an Overte script engine. Two
+contexts can host `scripts/overte-mcp-bridge.js`:
 
-1. **Interface client JavaScript API** — `Entities.addEntity()`, `Entities.editEntity()`
-2. **Headless Assignment Client script** — same API, no GUI
+1. **Agent (primary, headless).** The bridge is registered as a domain *persistent
+   script* (`scripts.persistent_scripts` in the domain settings). The domain-server hands
+   it to an `assignment-client` as an agent assignment; no GUI, no logged-in user. Per
+   the Overte API docs, `Entities` and `WebSocket` are both available to Assignment
+   Client scripts.
+2. **Interface (optional).** Loaded in the desktop client via Edit > Running Scripts.
+   Useful to watch, and the only mode with `MyAvatar` (avatar position, spawning in
+   front of the user, parenting to the avatar).
 
-This server implements path 1 via the WebSocket bridge:
+The bridge detects its context (`Agent` defined and no `MyAvatar` means agent) and says
+so in a `hello` message on connect: `{"type":"hello","mode":"agent","version":"2.0.0",
+"can_rez":true,...}`. `GET /api/overte/bridge` reports it.
 
-1. FastAPI exposes `/api/overte/ws` (WebSocket) and REST endpoints that proxy through it
-2. `scripts/overte-mcp-bridge.js` runs inside Overte Interface, connects to the WS, and
-   calls real entity/script APIs when a command arrives
-3. If no bridge client is connected, all entity/script tools return `source: "simulated"`
+Agent-mode differences the bridge handles:
+
+- It waits for `Entities.serversExist()` (up to 30 s) before connecting.
+- Agents only *see* entities inside the `EntityViewer` query volume. The bridge keeps a
+  standing query (centre 0,0,0, radius 2000 m, refreshed every 5 s) and, for
+  `find_nearby` and `get_entity`, re-queries and waits 1 s before reading.
+- `get_avatar` returns `no_avatar`; spawn without a position returns `position_required`.
+
+Only one bridge is active at a time: the most recent WebSocket connection wins.
+
+## Headless setup
+
+1. Run `domain-server.exe` and `assignment-client.exe -n 9` (six static assignments
+   plus one agent, with headroom).
+2. Start the backend (`just serve` or `uv run python run_server.py`).
+3. `overte_bridge_install` (or `POST /api/overte/bridge/install`). This reads
+   `/settings.json` and posts `{"scripts":{"persistent_scripts":[...]}}` back, adding
+   `http://127.0.0.1:11110/bridge/overte-mcp-bridge.js` once. Credentials:
+   `OVERTE_ADMIN_USER` / `OVERTE_ADMIN_PASSWORD` (default admin/admin). Override the
+   script URL with `OVERTE_BRIDGE_PUBLIC_URL` if the domain runs on another host.
+4. Poll `overte_bridge_status` until `connected` and `mode: "agent"`.
+
+Manual alternative: domain admin panel > Content > Scripts > Persistent Scripts > `+`,
+paste the URL, Save and restart.
+
+`scripts/headless_e2e.py` does all of this and then checks spawn, read-back, edit,
+search, inject, delete and persistence across a domain restart; see
+[DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Dual-Transport Stdio Proxy Pattern
 
@@ -134,14 +178,14 @@ Overte's entity-server has built-in persistence:
 | `maxTmpLifetime` | `3600` | Temp entities expire after 1 hour |
 | `backupDirectoryPath` | `""` | Backup dir (default = app data) |
 
-**Critical note:** Only entities with `lifetime: -1` (permanent) are persisted.
-Entities created by the current bridge without an explicit lifetime default to
-temporary and will NOT survive a domain-server restart. To persist entities,
-set `lifetime: -1` in the spawn request or edit the entity after creation.
+**Critical note:** pass `permanent=True` (sets `lifetime: -1`) for anything that must
+survive a domain-server restart. Without it the bridge sends no lifetime and Overte's
+default applies; the 2026-07-30 investigation found such entities were not persisted.
 
 The current domain-server at `localhost:40100` (Overte 2026.04.1) confirms:
 - HTTP Basic Auth enabled (default: admin/admin)
-- Empty node list when no Interface clients are connected
+- Node list shows the assignment-client nodes (agent, mixers, entity server) once an
+  assignment-client is running; no Interface client is needed
 - Full settings schema available at `/settings.json`
 
 ## VRM / Model Entity Joint Animation
@@ -170,7 +214,7 @@ over a single WebSocket connection at `ws://localhost:11110/api/overte/ws`.
 
 ```json
 {
-  "action": "spawn | inject",
+  "action": "ping | spawn | update | delete | inject | get_entity | find_nearby | get_avatar",
   "request_id": "uuid",
   "properties": { ... }  // spawn: entity properties
   "entity_id": "...",     // inject: target entity UUID
@@ -186,15 +230,18 @@ over a single WebSocket connection at `ws://localhost:11110/api/overte/ws`.
   "request_id": "uuid",
   "status": "success | error",
   "entity_id": "uuid",   // spawn only
-  "message": "..."        // error only
+  "message": "...",       // error only
+  "code": "bridge_error | position_required | cannot_rez | not_found | no_avatar | unknown_action"
 }
 ```
+
+On connect the bridge also sends an unsolicited `{"type": "hello", "mode": ..., "version":
+..., "can_rez": ...}`; the backend stores it and does not treat it as a response.
 
 ### Reconnect Behaviour
 
 - Exponential backoff: 1s → 2s → 4s → ... → 30s max
 - Uses `Script.setTimeout` (QtScript-compatible) for reconnect scheduling
-- Falls through to poll-based reconnect if `Script.setTimeout` unavailable
 - Resets to 1s on successful connection
 - Cleanup on `Script.scriptEnding` closes socket and clears timeout
 
@@ -248,7 +295,8 @@ overte-mcp/
 │   └── skills/overte-admin/
 │       └── SKILL.md           # Domain administration skill
 ├── scripts/
-│   ├── overte-mcp-bridge.js   # In-world WS client (Interface)
+│   ├── overte-mcp-bridge.js   # Bridge: headless agent or Interface (served at /bridge/...)
+│   ├── headless_e2e.py        # Live headless end-to-end check (no GUI)
 │   ├── dance-script.js        # VRM skeletal dance animation
 │   ├── build-mcpb-package.ps1 # MCPB pack builder
 │   ├── cua-nsis-config.json   # CUA smoke test config
@@ -260,8 +308,9 @@ overte-mcp/
 │                               # ARCHITECTURE (this file), TOOLS, WRAPPEE,
 │                               # TROUBLESHOOTING
 ├── tests/
-│   ├── unit/test_tools.py     # 6 unit tests
-│   └── e2e/test_e2e.py        # 4 e2e tests
+│   ├── unit/test_tools.py     # tool impls: honest errors, field forwarding
+│   ├── unit/test_bridge.py    # bridge route, 503s, install, WS round trip
+│   └── e2e/test_e2e.py        # backend subprocess, no Overte needed
 ├── justfile                   # 10+ build recipes
 ├── start.ps1 / start.bat      # Full stack launcher
 ├── llms.txt / llms-full.txt   # LLM discovery corpus

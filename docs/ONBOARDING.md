@@ -10,12 +10,12 @@ Two separate pieces:
 1. **Overte** itself — the domain-server (world host) and Interface (viewer/
    client). Neither ships with this repo; you download them from the
    official project.
-2. **overte-mcp** — this repo. It talks to Overte over two channels: the
-   domain-server's HTTP admin API, and a WebSocket bridge script loaded
-   inside Interface.
+2. **overte-mcp** - this repo. It talks to Overte over two channels: the
+   domain-server's HTTP admin API, and a bridge script that runs inside Overte's
+   script engine (headless on an assignment-client, or in Interface).
 
-Until both pieces are running, every tool call here returns clearly-labeled
-`source: "simulated"` placeholder data — never a silent fake success.
+Until both pieces are running, tools fail with a clear reason
+(`domain_unreachable`, `bridge_not_connected`); nothing is simulated.
 
 ## Step 1 — Get Overte
 
@@ -30,20 +30,29 @@ Until both pieces are running, every tool call here returns clearly-labeled
 At this point `overte_domain_status` will already return live data — no
 Interface client needed for that one tool.
 
-## Step 2 — Get the entity/scripting tools live
+## Step 2 - Get the entity/scripting tools live (headless, no GUI)
 
-Entity spawning and script injection need a running **Interface** client
-with a bridge script loaded, because Overte's entity-server has no plain
-HTTP "create entity" endpoint — only Interface's JavaScript API can do it.
+Overte's entity-server has no HTTP "create entity" endpoint; entity work has to run in an
+Overte script engine. The bridge runs there as a domain *persistent script*, executed by an
+assignment-client. No Interface client and no logged-in user are needed.
 
-1. Start Interface, log into your local domain (`localhost`).
-2. Developer → Script Manager → Load Script → From Disk → select
-   `scripts/overte-mcp-bridge.js` from this repo.
-3. Keep the overte-mcp backend running (`./start.ps1`, port `11110`) so the
-   bridge's WebSocket has something to connect to at `/api/overte/ws`.
+1. Start an assignment-client with enough children for the static assignments plus the
+   bridge agent: `"C:\Program Files\Overte\assignment-client.exe" -n 9`.
+2. Start the overte-mcp backend (`./start.ps1`, port `11110`).
+3. Call `overte_bridge_install` (or `POST /api/overte/bridge/install`). It registers
+   `http://127.0.0.1:11110/bridge/overte-mcp-bridge.js` as a persistent script; the
+   domain-server restarts to apply it.
+4. Poll `overte_bridge_status` until it reports `connected` and `mode: "agent"`.
 
-Once connected, `overte_entity_spawn` and `overte_script_inject` switch from
-`source: "simulated"` to `source: "live"`.
+Or run everything in one go and get a pass/fail report:
+`uv run python scripts/headless_e2e.py` (see [DEVELOPMENT.md](DEVELOPMENT.md)).
+
+### Optional: the desktop client
+
+To watch, or to use avatar-relative features (spawn in front of you, parent to
+`MyAvatar`), load `http://127.0.0.1:11110/bridge/overte-mcp-bridge.js` in Interface
+(Edit > Running Scripts > Load from URL). The newest bridge connection wins, so an
+Interface bridge replaces the headless one until it disconnects.
 
 ## Common first-run pitfalls
 
@@ -53,10 +62,10 @@ Once connected, `overte_entity_spawn` and `overte_script_inject` switch from
 - **401 from `overte_domain_status`** — your admin credentials don't match
   what's set at `http://localhost:40100/settings`. Pass `username`/`password`
   to the tool, or reset the domain-server's admin account.
-- **Entity spawns but nothing appears in Interface** — check the backend log
-  for a bridge WebSocket connection; if none shows up, the script wasn't
-  loaded, or Interface lost connection and hasn't reconnected yet (bridge
-  retries with exponential backoff up to 30s).
+- **`bridge_not_connected` after install** - too few assignment-client children
+  (use `-n 9`), or the domain-server has not finished restarting. See
+  [Troubleshooting](TROUBLESHOOTING.md).
+- **`position_required`** - the headless bridge has no avatar; pass a position.
 
 ## Next
 - [Configuration](CONFIGURATION.md) for env vars and ports

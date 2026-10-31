@@ -1,12 +1,39 @@
 # Troubleshooting
 
-## Every tool returns `source: "simulated"`
-**Cause**: No Overte domain-server and/or Interface bridge is reachable.
-**Fix**: For `overte_domain_status`, confirm `domain-server.exe` is running
-and reachable at the host/port you passed. For `overte_entity_spawn` /
-`overte_script_inject`, confirm `scripts/overte-mcp-bridge.js` is loaded in
-a running Interface client (Developer → Script Manager → Load Script → From
-Disk) and the overte-mcp backend is running on port `11110`.
+## Tools fail with `bridge_not_connected`
+**Cause**: no bridge is connected to the backend.
+**Fix (headless)**: `domain-server.exe` and `assignment-client.exe -n 9` running, backend
+running on 11110, then `overte_bridge_install` once and poll `overte_bridge_status`.
+If it never connects: check the domain admin panel > Content > Scripts lists
+`http://127.0.0.1:11110/bridge/overte-mcp-bridge.js`; check the assignment-client log for
+`[overte-mcp-bridge agent]` lines; make sure there are enough assignment-client children
+(`-n 9`): with fewer, the static assignments take them all and the agent never starts.
+**Fix (desktop)**: load `http://127.0.0.1:11110/bridge/overte-mcp-bridge.js` in Interface
+(Edit > Running Scripts > Load from URL).
+
+## `overte_domain_status` fails with `domain_unreachable`
+**Cause**: nothing answers on the admin port (default 40100).
+**Fix**: start `domain-server.exe`. (Before 2026-10-31 this returned fake nodes labeled
+`simulated`.)
+
+## Bridge connected but spawn fails with `cannot_rez`
+**Cause**: `Entities.canRez()` is false for the bridge's node. `overte_bridge_status`
+shows `can_rez: false`.
+**Fix**: in the domain admin panel > Security, grant rez rights to the role the bridge
+connects as. For the Interface bridge that is your user (`localhost` or a named
+user). Agents run by the domain's own assignment-client should have full rights; if
+not, record what you changed in STATUS.md.
+
+## `position_required`
+**Cause**: the bridge runs headless (agent mode) and has no avatar to place things in
+front of. **Fix**: pass `position`.
+
+## `overte_bridge_install` returns 401
+**Cause**: admin credentials differ from `OVERTE_ADMIN_USER` / `OVERTE_ADMIN_PASSWORD`
+(default admin/admin). **Fix**: set them, or add the script URL by hand in the admin
+panel. `scripts/headless_e2e.py` falls back to editing the domain-server's
+`config.json` while the domain-server is stopped (backup kept), only when it started
+the domain-server itself.
 
 ## `overte_domain_status` returns a 401 error
 **Cause**: Basic Auth credentials don't match what's set on the
@@ -25,7 +52,7 @@ restart. If it recurs, check `webapp/package.json` devDependencies,
 `webapp/vite.config.ts`'s plugin list, and `webapp/src/index.css`'s
 `@import "tailwindcss";` line.
 
-## Entity spawns (`source: "live"`) but I don't see it in Interface
+## Entity spawns but I don't see it in Interface
 **Cause**: Spawned entities default to `Box` at `[0,0,0]` — you may be
 looking somewhere else, or the entity is small/far from your avatar's spawn
 point. Also check the entity isn't temporary and already expired (see next
