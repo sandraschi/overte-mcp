@@ -89,7 +89,7 @@ Canonical code: `src/overte_mcp/`. Pack sync copies into `mcpb/src/overte_mcp`.
 | Ignore | `mcpb/.mcpbignore` (and root `.mcpbignore`) |
 | Prompts | `mcpb/assets/prompts/{system,user}.md`, `examples.json` |
 | Icon | `mcpb/assets/icon.png` |
-| Builder | `scripts/build-mcpb-package.ps1` / `just mcpb-pack` |
+| Builder | fleet shim `scripts/mcpb-pack.ps1` -> `mcp-central-docs/scripts/fleet-mcpb-pack.ps1` / `just mcpb-pack` |
 | Output | `dist/overte-mcp.mcpb` |
 
 Fleet names: **`.mcpbignore`** (not `.mcpignore`), **`examples.json`** (not `usage.json`). Exclude `glama.json` and `llms*.txt` from the bundle.

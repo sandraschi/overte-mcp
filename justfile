@@ -46,16 +46,21 @@ gates-green:
     Set-Location '{{justfile_directory()}}'; uv run pyright src/
     Set-Location '{{justfile_directory()}}'; uv run pytest -q
 
-# Bundle for Claude Desktop (pack from mcpb/)
+# Bundle for Claude Desktop (pack from mcpb/ via fleet shim)
 mcpb-pack:
-    powershell.exe -NoProfile -File "{{justfile_directory()}}/scripts/build-mcpb-package.ps1" -OutputDir dist
+    powershell.exe -NoProfile -File "{{justfile_directory()}}/scripts/mcpb-pack.ps1" -OutputDir dist
 
 # -- Tauri Native ---
 build-native:
-    Set-Location '{{justfile_directory()}}\native'; $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"; pwsh -NoProfile -File '{{justfile_directory()}}\native\build.ps1'
+    Set-Location '{{justfile_directory()}}\native'; $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"; powershell.exe -NoProfile -File '{{justfile_directory()}}\native\build.ps1'
 
+# CUA NSIS smoke (install -> launch -> checks -> uninstall; exit 2 = SKIP when no installer built)
 cua-nsis-test:
-    uv run python scripts/cua-smoke.py
+    powershell.exe -NoProfile -File "{{justfile_directory()}}/scripts/just/cua-nsis-test.ps1"
+
+# CUA webapp smoke (isolated backend + REST walk + dist bundle check)
+cua-webapp-test:
+    powershell.exe -NoProfile -File "{{justfile_directory()}}/scripts/just/cua-webapp-test.ps1"
 
 
 # Pre-commit hook (ruff + biome)

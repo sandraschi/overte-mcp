@@ -59,28 +59,46 @@ Or: `just bootstrap` (uv sync + webapp install).
 
 Starts FastAPI (`11110`), Vite dashboard (`11111`), prerequisite checks, health poll, browser open.
 
-### Stdio MCP (Cursor / Claude config without MCPB)
-
-```powershell
-uv run overte-mcp
-```
-
-### Claude Desktop config (repo path)
+### Stdio MCP (Cursor / VS Code / Codex / Opencode — no bundle needed)
 
 ```json
-"mcpServers": {
-  "overte-mcp": {
-    "command": "uv",
-    "args": ["--directory", "D:/Dev/repos/overte-mcp", "run", "overte-mcp"],
-    "env": {
-      "PYTHONPATH": "D:/Dev/repos/overte-mcp/src",
-      "PYTHONUNBUFFERED": "1"
+{
+  "mcpServers": {
+    "overte-mcp": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/sandraschi/overte-mcp.git", "overte-mcp"]
     }
   }
 }
 ```
 
+### Claude Desktop config (repo path — development only)
+
+```json
+{
+  "mcpServers": {
+    "overte-mcp": {
+      "command": "python",
+      "args": ["-m", "overte_mcp"],
+      "env": {
+        "PYTHONPATH": "<checkout>/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+Replace `<checkout>` with the repo location. End users should use the one-liner above, never hand-wire this.
+
 ### Claude Desktop via `.mcpb` (fleet packaging)
+
+Claude-only one-liner (installs Python/`uv` if missing, registers the bundle):
+
+```powershell
+irm https://github.com/sandraschi/overte-mcp/releases/latest/download/install.ps1 | iex
+```
+
+From source:
 
 ```powershell
 just mcpb-pack
@@ -88,7 +106,7 @@ just mcpb-pack
 
 Output: `dist/overte-mcp.mcpb`. Drag into Claude Desktop.
 
-- Pack **from** `mcpb/` (not repo root) — `scripts/build-mcpb-package.ps1` syncs `src/overte_mcp` → `mcpb/src/overte_mcp`, validates `manifest.json`, applies `.mcpbignore`.
+- Pack **from** `mcpb/` (not repo root) — `scripts/mcpb-pack.ps1` is a thin shim over the canonical `mcp-central-docs/scripts/fleet-mcpb-pack.ps1`: it syncs `src/overte_mcp` → `mcpb/src/overte_mcp`, validates `manifest.json`, applies `.mcpbignore`, and generates `install.ps1`.
 - Prompts (3-4-100): `mcpb/assets/prompts/system.md`, `user.md`, `examples.json`.
 - Ignore file name is **`.mcpbignore`** (not `.mcpignore`). Examples file is **`examples.json`** (not `usage.json`).
 - `glama.json` stays in the repo root and is excluded from the bundle.

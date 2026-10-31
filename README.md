@@ -57,11 +57,25 @@ works when you want to watch. See [docs/ONBOARDING.md](docs/ONBOARDING.md).
 
 ## Quick Install
 
-### Claude Desktop (`.mcpb`)
-1. Build: `just mcpb-pack` → `dist/overte-mcp.mcpb`
-2. Drag the `.mcpb` into Claude Desktop (needs Python 3.12+ and `uv` on PATH).
+### Claude Desktop (`.mcpb`) — Claude-only one-liner
+```powershell
+irm https://github.com/sandraschi/overte-mcp/releases/latest/download/install.ps1 | iex
+```
+One command: downloads the latest `.mcpb`, installs Python/`uv` if missing, and registers the bundle. Claude Desktop only.
 
-Stdio without MCPB: `uv run overte-mcp`. Full install paths: [INSTALL.md](INSTALL.md).
+Other clients (Cursor / VS Code / Codex / Opencode) — no bundle needed:
+```json
+{
+  "mcpServers": {
+    "overte-mcp": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/sandraschi/overte-mcp.git", "overte-mcp"]
+    }
+  }
+}
+```
+
+From source: `just mcpb-pack` → `dist/overte-mcp.mcpb`, then drag the `.mcpb` into Claude Desktop. Full install paths: [INSTALL.md](INSTALL.md).
 
 ### Full stack (dashboard + bridge)
 ```powershell
