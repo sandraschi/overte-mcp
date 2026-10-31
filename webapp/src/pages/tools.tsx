@@ -53,14 +53,14 @@ export function ToolsPage() {
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Tools</h2>
-          <p className="text-xs text-slate-400">Discover available MCP tools and their schemas</p>
+          <p className="text-sm text-slate-300">Discover available MCP tools and their schemas</p>
         </div>
       </div>
 
       {/* Search */}
       <div className="glass-panel" style={{ padding: "12px" }}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
           <input
             data-testid="tools-search"
             type="text"
@@ -74,7 +74,7 @@ export function ToolsPage() {
               borderRadius: "8px",
               padding: "10px 14px 10px 36px",
               color: "white",
-              fontSize: "13px",
+              fontSize: "14px",
             }}
             className="focus:outline-none focus:border-amber-500/50"
           />
@@ -84,15 +84,15 @@ export function ToolsPage() {
       {/* Tool list */}
       {isLoading ? (
         <div className="glass-panel">
-          <p className="text-xs text-slate-500 animate-pulse">Loading tools...</p>
+          <p className="text-sm text-slate-300 animate-pulse">Loading tools...</p>
         </div>
       ) : error ? (
         <div className="glass-panel">
-          <p className="text-xs text-rose-400">Failed to load tools. Is the backend running?</p>
+          <p className="text-sm text-rose-400">Failed to load tools. Is the backend running?</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="glass-panel">
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-300">
             {search ? "No tools match your search." : "No tools discovered."}
           </p>
         </div>
@@ -110,13 +110,13 @@ export function ToolsPage() {
                         {tool.name}
                       </span>
                       {isPortmanteau && (
-                        <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider border border-indigo-500/30 rounded px-1.5 py-0.5 shrink-0">
+                        <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider border border-indigo-500/30 rounded px-1.5 py-0.5 shrink-0">
                           Portmanteau
                         </span>
                       )}
                     </div>
                     {tool.description && (
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">{tool.description}</p>
+                      <p className="text-sm text-slate-300 mt-1 line-clamp-2">{tool.description}</p>
                     )}
                   </div>
                   {tool.inputSchema && (
@@ -129,7 +129,7 @@ export function ToolsPage() {
                         padding: "4px",
                         cursor: "pointer",
                       }}
-                      className="text-slate-500 hover:text-white hover:bg-white/5 transition-all shrink-0"
+                      className="text-slate-300 hover:text-white hover:bg-white/5 transition-all shrink-0"
                     >
                       {isExpanded ? (
                         <ChevronDown className="w-3.5 h-3.5" />
@@ -149,7 +149,7 @@ export function ToolsPage() {
                       padding: "12px",
                     }}
                   >
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    <p className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-2">
                       Input Schema
                     </p>
                     <pre className="text-[10px] text-slate-400 font-mono whitespace-pre-wrap overflow-x-auto">
@@ -164,7 +164,7 @@ export function ToolsPage() {
       )}
 
       {tools && (
-        <p className="text-[10px] text-slate-600 text-center">
+        <p className="text-sm text-slate-300 text-center">
           {tools.length} tool{tools.length !== 1 ? "s" : ""} discovered
           {search ? ` · ${filtered.length} match${filtered.length !== 1 ? "es" : ""}` : ""}
         </p>

@@ -78,7 +78,7 @@ export function ModelsPage() {
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Model Depot</h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-slate-300">
             GLB/glTF/FBX/OBJ files stored locally and served for spawn's model_url — includes files
             that predate this depot (Nekomimi-chan, the living-room scene)
           </p>
@@ -105,7 +105,7 @@ export function ModelsPage() {
                 padding: "8px",
                 color: "white",
                 width: "100%",
-                fontSize: "11px",
+                fontSize: "14px",
               }}
             />
             <input
@@ -121,7 +121,7 @@ export function ModelsPage() {
                 color: "white",
                 width: "100%",
               }}
-              className="text-xs"
+              className="text-sm"
             />
             <input
               type="text"
@@ -136,10 +136,10 @@ export function ModelsPage() {
                 color: "white",
                 width: "100%",
               }}
-              className="text-xs"
+              className="text-sm"
             />
             {uploadMutation.isError && (
-              <p className="text-[10px] text-red-400">{(uploadMutation.error as Error).message}</p>
+              <p className="text-sm text-red-400">{(uploadMutation.error as Error).message}</p>
             )}
             <button
               onClick={() => uploadMutation.mutate()}
@@ -151,7 +151,7 @@ export function ModelsPage() {
                 padding: "10px 14px",
                 color: "white",
                 cursor: "pointer",
-                fontSize: "12px",
+                fontSize: "14px",
                 width: "100%",
               }}
               className="font-bold hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all active:scale-95"
@@ -165,22 +165,22 @@ export function ModelsPage() {
           <div className="glass-panel space-y-4">
             <div className="flex items-center justify-between border-b border-white/[0.05] pb-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Models</h3>
-              <span className="text-[10px] bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2 py-0.5 rounded-full">
+              <span className="text-sm bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2 py-0.5 rounded-full">
                 {models.length} items
               </span>
             </div>
             {isLoading ? (
-              <p className="text-xs text-slate-400 animate-pulse">Loading...</p>
+              <p className="text-sm text-slate-300 animate-pulse">Loading...</p>
             ) : (
               <div className="space-y-2">
                 {models.map((m) => (
                   <div
                     key={m.name}
-                    className="flex items-center justify-between text-[11px] bg-black/20 px-3 py-2.5 rounded-lg border border-white/[0.03]"
+                    className="flex items-center justify-between text-sm bg-black/20 px-3 py-2.5 rounded-lg border border-white/[0.03]"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-white font-bold truncate">{m.name}</p>
-                      <p className="text-slate-500 truncate">
+                      <p className="text-slate-300 truncate">
                         {m.description || <span className="italic">no description</span>} ·{" "}
                         {m.category} · {formatBytes(m.size)}
                       </p>
@@ -194,7 +194,7 @@ export function ModelsPage() {
                           border: "1px solid var(--border-color)",
                           borderRadius: "6px",
                         }}
-                        className="p-1.5 text-slate-400 hover:text-white cursor-pointer transition-all"
+                        className="p-1.5 text-slate-300 hover:text-white cursor-pointer transition-all"
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </button>
@@ -206,7 +206,7 @@ export function ModelsPage() {
                           border: "1px solid transparent",
                           borderRadius: "6px",
                         }}
-                        className="p-1.5 text-slate-500 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 cursor-pointer transition-all"
+                        className="p-1.5 text-slate-300 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 cursor-pointer transition-all"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -214,7 +214,7 @@ export function ModelsPage() {
                   </div>
                 ))}
                 {models.length === 0 && (
-                  <p className="text-xs text-slate-500 text-center py-4">No models uploaded yet.</p>
+                  <p className="text-sm text-slate-300 text-center py-4">No models uploaded yet.</p>
                 )}
               </div>
             )}

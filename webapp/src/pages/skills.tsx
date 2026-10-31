@@ -45,7 +45,7 @@ export function SkillsPage() {
             </div>
             <div>
               <h2 className="text-xl font-bold tracking-tight text-white">{selectedSkill}</h2>
-              <p className="text-xs text-slate-400">Skill documentation</p>
+              <p className="text-sm text-slate-300">Skill documentation</p>
             </div>
           </div>
           <button
@@ -57,7 +57,7 @@ export function SkillsPage() {
               padding: "8px 12px",
               cursor: "pointer",
             }}
-            className="text-xs text-slate-400 hover:text-white hover:bg-white/5 flex items-center gap-1.5 transition-all"
+            className="text-sm text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5 transition-all"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             Back to list
@@ -66,7 +66,7 @@ export function SkillsPage() {
 
         <div data-testid="skill-content" className="glass-panel">
           {contentLoading ? (
-            <p className="text-xs text-slate-500 animate-pulse">Loading skill content...</p>
+            <p className="text-sm text-slate-300 animate-pulse">Loading skill content...</p>
           ) : (
             <div className="prose prose-invert prose-xs max-w-none">
               <ReactMarkdown
@@ -104,7 +104,7 @@ export function SkillsPage() {
                     <h3
                       style={{
                         color: "#cbd5e1",
-                        fontSize: "13px",
+                        fontSize: "14px",
                         fontWeight: "600",
                         marginTop: "14px",
                         marginBottom: "4px",
@@ -118,7 +118,7 @@ export function SkillsPage() {
                     <p
                       style={{
                         color: "#94a3b8",
-                        fontSize: "12px",
+                        fontSize: "14px",
                         lineHeight: "1.6",
                         marginBottom: "8px",
                       }}
@@ -133,7 +133,7 @@ export function SkillsPage() {
                         background: "rgba(0,0,0,0.3)",
                         borderRadius: "4px",
                         padding: "2px 6px",
-                        fontSize: "11px",
+                        fontSize: "14px",
                         color: "#f59e0b",
                       }}
                       {...props}
@@ -160,7 +160,7 @@ export function SkillsPage() {
                     <ul
                       style={{
                         color: "#94a3b8",
-                        fontSize: "12px",
+                        fontSize: "14px",
                         paddingLeft: "20px",
                         marginBottom: "8px",
                       }}
@@ -211,17 +211,17 @@ export function SkillsPage() {
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Skills</h2>
-          <p className="text-xs text-slate-400">Available skill definitions</p>
+          <p className="text-sm text-slate-300">Available skill definitions</p>
         </div>
       </div>
 
       {skillsLoading ? (
         <div className="glass-panel">
-          <p className="text-xs text-slate-500 animate-pulse">Loading skills...</p>
+          <p className="text-sm text-slate-300 animate-pulse">Loading skills...</p>
         </div>
       ) : !skills || skills.length === 0 ? (
         <div className="glass-panel">
-          <p className="text-xs text-slate-500">No skills found.</p>
+          <p className="text-sm text-slate-300">No skills found.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -253,7 +253,7 @@ export function SkillsPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white">{skill.name}</p>
                   {skill.description && (
-                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">
+                    <p className="text-sm text-slate-300 mt-0.5 line-clamp-2">
                       {skill.description}
                     </p>
                   )}

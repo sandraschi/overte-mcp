@@ -44,7 +44,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <button
             type="button"
             onClick={toggle}
-            className="p-2 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="p-2 rounded-md text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
             title={
               light
                 ? "Switch to dark (experimental light mode)"

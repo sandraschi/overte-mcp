@@ -78,7 +78,7 @@ export function TexturesPage() {
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Texture Depot</h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-slate-300">
             PNG/JPG files for a Model entity's `textures` override (material-name → URL JSON) —
             confirmed KTX support unverified, PNG/JPG are the safe baseline
           </p>
@@ -105,7 +105,7 @@ export function TexturesPage() {
                 padding: "8px",
                 color: "white",
                 width: "100%",
-                fontSize: "11px",
+                fontSize: "14px",
               }}
             />
             <input
@@ -121,7 +121,7 @@ export function TexturesPage() {
                 color: "white",
                 width: "100%",
               }}
-              className="text-xs"
+              className="text-sm"
             />
             <input
               type="text"
@@ -136,10 +136,10 @@ export function TexturesPage() {
                 color: "white",
                 width: "100%",
               }}
-              className="text-xs"
+              className="text-sm"
             />
             {uploadMutation.isError && (
-              <p className="text-[10px] text-red-400">{(uploadMutation.error as Error).message}</p>
+              <p className="text-sm text-red-400">{(uploadMutation.error as Error).message}</p>
             )}
             <button
               onClick={() => uploadMutation.mutate()}
@@ -151,7 +151,7 @@ export function TexturesPage() {
                 padding: "10px 14px",
                 color: "white",
                 cursor: "pointer",
-                fontSize: "12px",
+                fontSize: "14px",
                 width: "100%",
               }}
               className="font-bold hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all active:scale-95"
@@ -165,12 +165,12 @@ export function TexturesPage() {
           <div className="glass-panel space-y-4">
             <div className="flex items-center justify-between border-b border-white/[0.05] pb-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Textures</h3>
-              <span className="text-[10px] bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2 py-0.5 rounded-full">
+              <span className="text-sm bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2 py-0.5 rounded-full">
                 {textures.length} items
               </span>
             </div>
             {isLoading ? (
-              <p className="text-xs text-slate-400 animate-pulse">Loading...</p>
+              <p className="text-sm text-slate-300 animate-pulse">Loading...</p>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {textures.map((t) => (
@@ -185,8 +185,8 @@ export function TexturesPage() {
                       style={{ background: "rgba(0,0,0,0.4)" }}
                     />
                     <div className="p-2 space-y-0.5">
-                      <p className="text-[10px] text-white font-bold truncate">{t.name}</p>
-                      <p className="text-[9px] text-slate-500 truncate">
+                      <p className="text-sm text-white font-bold truncate">{t.name}</p>
+                      <p className="text-sm text-slate-300 truncate">
                         {t.category} · {formatBytes(t.size)}
                       </p>
                     </div>
@@ -219,7 +219,7 @@ export function TexturesPage() {
                   </div>
                 ))}
                 {textures.length === 0 && (
-                  <p className="text-xs text-slate-500 text-center py-4 col-span-full">
+                  <p className="text-sm text-slate-300 text-center py-4 col-span-full">
                     No textures uploaded yet.
                   </p>
                 )}

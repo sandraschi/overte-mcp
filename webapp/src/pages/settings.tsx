@@ -150,7 +150,7 @@ export function SettingsPage() {
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Settings</h2>
-          <p className="text-xs text-slate-400">Backend health and LLM provider configuration</p>
+          <p className="text-sm text-slate-300">Backend health and LLM provider configuration</p>
         </div>
       </div>
 
@@ -171,11 +171,11 @@ export function SettingsPage() {
           />
         </div>
         {healthLoading ? (
-          <p className="text-xs text-slate-500 animate-pulse">Checking backend...</p>
+          <p className="text-sm text-slate-300 animate-pulse">Checking backend...</p>
         ) : health ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+              <span className="text-sm text-slate-300 uppercase font-bold tracking-wider">
                 Server
               </span>
               <p data-testid="kpi-server" className="text-sm font-bold text-white">
@@ -183,13 +183,13 @@ export function SettingsPage() {
               </p>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+              <span className="text-sm text-slate-300 uppercase font-bold tracking-wider">
                 Version
               </span>
               <p className="text-sm font-bold text-white font-mono">{health.version || "—"}</p>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+              <span className="text-sm text-slate-300 uppercase font-bold tracking-wider">
                 Tools
               </span>
               <p data-testid="kpi-tools" className="text-sm font-bold text-white">
@@ -197,7 +197,7 @@ export function SettingsPage() {
               </p>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+              <span className="text-sm text-slate-300 uppercase font-bold tracking-wider">
                 Uptime
               </span>
               <p className="text-sm font-bold text-white">
@@ -206,7 +206,7 @@ export function SettingsPage() {
             </div>
           </div>
         ) : (
-          <p className="text-xs text-rose-400">Backend unreachable</p>
+          <p className="text-sm text-rose-400">Backend unreachable</p>
         )}
       </div>
 
@@ -234,16 +234,16 @@ export function SettingsPage() {
                           : "bg-gray-600"
                     }`}
                   />
-                  <span className="text-xs font-semibold text-white">{p.name}</span>
-                  <span className="text-[10px] text-slate-500 font-mono">:{p.port}</span>
+                  <span className="text-sm font-semibold text-white">{p.name}</span>
+                  <span className="text-sm text-slate-300 font-mono">:{p.port}</span>
                 </div>
                 <span
-                  className={`text-[10px] font-bold ${
+                  className={`text-sm font-bold ${
                     status === "probing"
-                      ? "text-slate-500"
+                      ? "text-slate-300"
                       : status === "detected"
                         ? "text-green-400"
-                        : "text-slate-500"
+                        : "text-slate-300"
                   }`}
                 >
                   {status === "probing"
@@ -258,7 +258,7 @@ export function SettingsPage() {
         </div>
 
         {detectedProviders.length === 0 && (
-          <div className="glass-card border border-amber-500/20 text-xs text-amber-400 flex items-center gap-2">
+          <div className="glass-card border border-amber-500/20 text-sm text-amber-400 flex items-center gap-2">
             <Gpu className="w-4 h-4 shrink-0" />
             <span>Install Ollama or LM Studio to enable AI features.</span>
           </div>
@@ -267,7 +267,7 @@ export function SettingsPage() {
         {detectedProviders.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div className="space-y-2">
-              <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+              <label className="text-sm uppercase font-bold text-slate-300 tracking-wider">
                 Provider
               </label>
               <select
@@ -284,7 +284,7 @@ export function SettingsPage() {
                   borderRadius: "8px",
                   padding: "8px 12px",
                   color: "white",
-                  fontSize: "12px",
+                  fontSize: "14px",
                 }}
                 className="focus:outline-none focus:border-amber-500/50"
               >
@@ -298,7 +298,7 @@ export function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+              <label className="text-sm uppercase font-bold text-slate-300 tracking-wider">
                 Model
               </label>
               <select
@@ -313,7 +313,7 @@ export function SettingsPage() {
                   borderRadius: "8px",
                   padding: "8px 12px",
                   color: "white",
-                  fontSize: "12px",
+                  fontSize: "14px",
                 }}
                 className="focus:outline-none focus:border-amber-500/50 disabled:opacity-40"
               >
@@ -340,23 +340,23 @@ export function SettingsPage() {
             Port Information
           </h3>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
           <div className="glass-card">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">
+            <span className="text-sm text-slate-300 uppercase font-bold tracking-wider block mb-1">
               <Wifi className="w-3 h-3 inline mr-1" />
               Backend API
             </span>
             <span className="text-sm font-bold text-white font-mono">11110</span>
           </div>
           <div className="glass-card">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">
+            <span className="text-sm text-slate-300 uppercase font-bold tracking-wider block mb-1">
               <Database className="w-3 h-3 inline mr-1" />
               Domain Server
             </span>
             <span className="text-sm font-bold text-white font-mono">40100</span>
           </div>
           <div className="glass-card">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">
+            <span className="text-sm text-slate-300 uppercase font-bold tracking-wider block mb-1">
               <Server className="w-3 h-3 inline mr-1" />
               Frontend
             </span>

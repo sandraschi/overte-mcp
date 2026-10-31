@@ -246,7 +246,7 @@ export function ScriptingPage() {
             <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               JavaScript Scripting Sandbox
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-sm text-slate-300">
               Compose and inject live ES6 scripts to govern in-world entities
             </p>
           </div>
@@ -255,9 +255,9 @@ export function ScriptingPage() {
 
       {/* Controls Toolbar */}
       <div className="glass-panel">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end text-sm">
           <div className="md:col-span-3 flex flex-col gap-1">
-            <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+            <label className="font-bold text-slate-300 uppercase tracking-wider text-sm">
               Target Entity UUID
             </label>
             <input
@@ -271,12 +271,12 @@ export function ScriptingPage() {
                 padding: "8px 12px",
                 color: "white",
               }}
-              className="focus:outline-none focus:border-amber-500/50 font-mono text-[11px]"
+              className="focus:outline-none focus:border-amber-500/50 font-mono text-sm"
             />
           </div>
 
           <div className="md:col-span-4 flex flex-col gap-1">
-            <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+            <label className="font-bold text-slate-300 uppercase tracking-wider text-sm">
               Hosted Script URL
             </label>
             <input
@@ -290,12 +290,12 @@ export function ScriptingPage() {
                 padding: "8px 12px",
                 color: "white",
               }}
-              className="focus:outline-none focus:border-amber-500/50 font-mono text-[11px]"
+              className="focus:outline-none focus:border-amber-500/50 font-mono text-sm"
             />
           </div>
 
           <div className="md:col-span-2 flex flex-col gap-1">
-            <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+            <label className="font-bold text-slate-300 uppercase tracking-wider text-sm">
               Speed (Scope Variable)
             </label>
             <input
@@ -324,7 +324,7 @@ export function ScriptingPage() {
                 padding: "8px 14px",
                 color: "white",
                 cursor: "pointer",
-                fontSize: "11px",
+                fontSize: "14px",
               }}
               className="font-bold hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all active:scale-95 flex items-center justify-center gap-1.5 flex-1"
             >
@@ -345,7 +345,7 @@ export function ScriptingPage() {
                 padding: "8px 10px",
                 color: "white",
                 cursor: "pointer",
-                fontSize: "11px",
+                fontSize: "14px",
               }}
               data-testid="scripting-file-upload"
               className="font-bold hover:bg-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-1.5"
@@ -371,7 +371,7 @@ export function ScriptingPage() {
                 padding: "8px 10px",
                 color: "white",
                 cursor: "pointer",
-                fontSize: "11px",
+                fontSize: "14px",
               }}
               data-testid="scripting-load-url"
               className="font-bold hover:bg-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-1.5"
@@ -398,7 +398,7 @@ export function ScriptingPage() {
                 borderRadius: "8px",
                 padding: "8px 12px",
                 color: "white",
-                fontSize: "11px",
+                fontSize: "14px",
               }}
               className="focus:outline-none focus:border-amber-500/50 font-mono"
             />
@@ -411,7 +411,7 @@ export function ScriptingPage() {
                 padding: "8px 14px",
                 color: "white",
                 cursor: "pointer",
-                fontSize: "11px",
+                fontSize: "14px",
               }}
               className="font-bold hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all active:scale-95"
             >
@@ -421,7 +421,7 @@ export function ScriptingPage() {
         )}
 
         {injectMutation.isSuccess && (
-          <div className="mt-3 p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg flex items-center gap-2 text-xs">
+          <div className="mt-3 p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg flex items-center gap-2 text-sm">
             <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
             <span>Script injected into Sandbox simulation</span>
           </div>
@@ -441,17 +441,17 @@ export function ScriptingPage() {
             </div>
 
             {manifestLoading ? (
-              <div className="flex items-center gap-2 text-xs text-slate-400 py-4">
+              <div className="flex items-center gap-2 text-sm text-slate-300 py-4">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Loading manifest...
               </div>
             ) : !manifest?.scripts?.length ? (
-              <p className="text-xs text-slate-500 py-4">No scripts registered.</p>
+              <p className="text-sm text-slate-300 py-4">No scripts registered.</p>
             ) : (
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
                 {Object.entries(scriptsByCategory).map(([category, scripts]) => (
                   <div key={category}>
-                    <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    <h4 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">
                       {category}
                     </h4>
                     <div className="space-y-2">
@@ -469,7 +469,7 @@ export function ScriptingPage() {
                             }
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-bold text-white truncate">
+                              <span className="text-sm font-bold text-white truncate">
                                 {script.name}
                               </span>
                               <button
@@ -491,14 +491,14 @@ export function ScriptingPage() {
                                 Load
                               </button>
                             </div>
-                            <p className="text-[10px] text-slate-400 leading-relaxed">
+                            <p className="text-sm text-slate-300 leading-relaxed">
                               {script.description}
                             </p>
                           </button>
                           {selectedDetail === script.name && scriptDetails[script.name] && (
-                            <div className="mt-1 mb-2 bg-black/30 border border-white/5 rounded-lg p-3 space-y-2 text-[10px]">
+                            <div className="mt-1 mb-2 bg-black/30 border border-white/5 rounded-lg p-3 space-y-2 text-sm">
                               <div>
-                                <p className="text-[9px] font-bold uppercase tracking-wider text-amber-500 mb-0.5">
+                                <p className="text-sm font-bold uppercase tracking-wider text-amber-500 mb-0.5">
                                   How to use
                                 </p>
                                 <p className="text-slate-300 whitespace-pre-line">
@@ -506,23 +506,23 @@ export function ScriptingPage() {
                                 </p>
                               </div>
                               <div>
-                                <p className="text-[9px] font-bold uppercase tracking-wider text-indigo-400 mb-0.5">
+                                <p className="text-sm font-bold uppercase tracking-wider text-indigo-400 mb-0.5">
                                   Requires
                                 </p>
-                                <p className="text-slate-400">
+                                <p className="text-slate-300">
                                   {scriptDetails[script.name].requires}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 mb-0.5">
+                                <p className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-0.5">
                                   Configuration
                                 </p>
-                                <p className="text-slate-400">
+                                <p className="text-slate-300">
                                   {scriptDetails[script.name].config}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-[9px] font-bold uppercase tracking-wider text-sky-400 mb-0.5">
+                                <p className="text-sm font-bold uppercase tracking-wider text-sky-400 mb-0.5">
                                   Example
                                 </p>
                                 <pre className="font-mono text-[9px] text-sky-400 bg-black/40 p-2 rounded-lg mt-0.5 whitespace-pre-wrap">
@@ -551,7 +551,7 @@ export function ScriptingPage() {
                   Script Editor
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-slate-400 bg-black/30 border border-white/10 px-2 py-0.5 rounded-md">
+              <span className="text-sm font-mono text-slate-300 bg-black/30 border border-white/10 px-2 py-0.5 rounded-md">
                 {currentFilename}
               </span>
             </div>
@@ -568,7 +568,7 @@ export function ScriptingPage() {
                 padding: "16px",
                 color: "#38bdf8",
                 fontFamily: "monospace",
-                fontSize: "11px",
+                fontSize: "14px",
                 lineHeight: "1.6",
                 resize: "vertical",
               }}
@@ -587,7 +587,7 @@ export function ScriptingPage() {
                   padding: "7px 12px",
                   color: "white",
                   cursor: scriptCode === originalCode ? "not-allowed" : "pointer",
-                  fontSize: "11px",
+                  fontSize: "14px",
                   opacity: scriptCode === originalCode ? 0.5 : 1,
                 }}
                 className="font-bold hover:bg-white/10 transition-all flex items-center gap-1.5"
@@ -604,7 +604,7 @@ export function ScriptingPage() {
                   padding: "7px 12px",
                   color: "white",
                   cursor: "pointer",
-                  fontSize: "11px",
+                  fontSize: "14px",
                 }}
                 className="font-bold hover:bg-indigo-500/20 transition-all flex items-center gap-1.5"
               >
@@ -638,11 +638,11 @@ export function ScriptingPage() {
                   borderRadius: "8px",
                   padding: "10px",
                   color: "white",
-                  fontSize: "11px",
+                  fontSize: "14px",
                   lineHeight: "1.5",
                   resize: "none",
                 }}
-                className="focus:outline-none focus:border-amber-500/30 placeholder:text-slate-600"
+                className="focus:outline-none focus:border-amber-500/30 placeholder:text-slate-300"
               />
 
               <button
@@ -658,7 +658,7 @@ export function ScriptingPage() {
                   padding: "9px 14px",
                   color: "white",
                   cursor: aiLoading || !aiPrompt.trim() ? "not-allowed" : "pointer",
-                  fontSize: "11px",
+                  fontSize: "14px",
                   width: "100%",
                 }}
                 className="font-bold hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -672,7 +672,7 @@ export function ScriptingPage() {
               </button>
 
               {aiError && (
-                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-lg text-[10px] leading-relaxed">
+                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-lg text-sm leading-relaxed">
                   {aiError}
                 </div>
               )}

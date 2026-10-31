@@ -100,9 +100,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <div className="flex flex-col flex-1 animate-in fade-in duration-300">
             <span className="font-extrabold text-sm tracking-wider text-white">Overte</span>
-            <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">
-              MCP
-            </span>
+            <span className="text-sm text-amber-500 uppercase tracking-widest font-bold">MCP</span>
           </div>
         )}
         <button
@@ -113,7 +111,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             outline: "none",
             borderRadius: "8px",
           }}
-          className="p-1.5 text-slate-500 hover:bg-white/5 hover:text-white cursor-pointer hover:border-white/10 transition-all"
+          className="p-1.5 text-slate-300 hover:bg-white/5 hover:text-white cursor-pointer hover:border-white/10 transition-all"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -131,7 +129,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <button
                   onClick={() => toggleSection(sec)}
                   style={{ background: "none", border: "none", outline: "none" }}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-white cursor-pointer transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-sm font-bold text-slate-300 uppercase tracking-[0.2em] hover:text-white cursor-pointer transition-colors"
                 >
                   <span>{sections[sec]}</span>
                   <ChevronDown
@@ -139,7 +137,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       transform: expandedSections[sec] ? "rotate(0)" : "rotate(-90deg)",
                       transition: "transform 0.2s ease",
                     }}
-                    className="h-3 w-3 text-slate-500"
+                    className="h-3 w-3 text-slate-300"
                   />
                 </button>
               )}
@@ -166,7 +164,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                           justifyContent: collapsed ? "center" : "flex-start",
                         }}
                         className={cn(
-                          "group relative px-3 py-2.5 text-xs font-semibold transition-all hover:text-white hover:bg-white/5",
+                          "group relative px-3 py-2.5 text-sm font-semibold transition-all hover:text-white hover:bg-white/5",
                           collapsed ? "" : "gap-3",
                         )}
                       >
@@ -183,7 +181,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                               background: "#0f172a",
                               border: "1px solid var(--border-color)",
                             }}
-                            className="absolute hidden group-hover:block px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white z-50 whitespace-nowrap shadow-2xl glass-morphism animate-in fade-in slide-in-from-left-1"
+                            className="absolute hidden group-hover:block px-2.5 py-1.5 rounded-lg text-sm font-bold text-white z-50 whitespace-nowrap shadow-2xl glass-morphism animate-in fade-in slide-in-from-left-1"
                           >
                             {item.label}
                           </span>
