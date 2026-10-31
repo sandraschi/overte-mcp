@@ -116,7 +116,7 @@ export function Dashboard() {
               Domain Control Panel
               <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
             </h2>
-            <p className="text-xs text-slate-400">Overte domain-server node monitoring</p>
+            <p className="text-sm text-slate-300">Overte domain-server node monitoring</p>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export function Dashboard() {
               padding: "8px 12px",
               cursor: "pointer",
             }}
-            className="text-slate-400 hover:text-white hover:bg-white/5 active:scale-95 transition-all"
+            className="text-slate-300 hover:text-white hover:bg-white/5 active:scale-95 transition-all"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading || isRefetching ? "animate-spin" : ""}`} />
           </button>
@@ -160,7 +160,7 @@ export function Dashboard() {
               href="https://overte.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-500 hover:text-amber-400 transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               overte.org
@@ -171,13 +171,13 @@ export function Dashboard() {
               <p className="text-2xl font-bold text-white">
                 {domain?.nodes?.length ?? (isLoading ? "..." : "0")}
               </p>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">Nodes</p>
+              <p className="text-sm uppercase tracking-wider text-slate-300">Nodes</p>
             </div>
             <div className="text-center px-4" data-testid="kpi-server">
               <p className="text-2xl font-bold text-white font-mono text-sm">
                 {domain?.host ?? host}
               </p>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">Server</p>
+              <p className="text-sm uppercase tracking-wider text-slate-300">Server</p>
             </div>
           </div>
         </div>
@@ -192,9 +192,9 @@ export function Dashboard() {
           </h3>
         </div>
         {!appDetect ? (
-          <p className="text-xs text-slate-400 animate-pulse">Detecting installation...</p>
+          <p className="text-sm text-slate-300 animate-pulse">Detecting installation...</p>
         ) : !appDetect.installed ? (
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <Download className="w-3.5 h-3.5" />
             <span>
               Not installed.{" "}
@@ -226,8 +226,8 @@ export function Dashboard() {
                     style={{ background: running ? "#10b981" : installed ? "#6b7280" : "#ef4444" }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-white truncate">{APP_LABELS[key]}</p>
-                    <p className="text-[10px] text-slate-500">
+                    <p className="text-sm font-bold text-white truncate">{APP_LABELS[key]}</p>
+                    <p className="text-sm text-slate-300">
                       {!installed ? "Not found" : running ? "Running" : "Stopped"}
                     </p>
                   </div>
@@ -263,7 +263,7 @@ export function Dashboard() {
       </div>
 
       {data?.source === "unreachable" && (
-        <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-xs">
+        <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-sm">
           <ShieldAlert className="w-4 h-4 shrink-0" />
           <span>{data.warning ?? "No domain-server reachable."}</span>
         </div>
@@ -273,7 +273,7 @@ export function Dashboard() {
       <div className="glass-panel" style={{ padding: "16px" }}>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
-            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+            <label className="text-sm uppercase font-bold text-slate-300 tracking-wider">
               Domain Host
             </label>
             <input
@@ -286,13 +286,13 @@ export function Dashboard() {
                 borderRadius: "8px",
                 padding: "8px 12px",
                 color: "white",
-                fontSize: "12px",
+                fontSize: "14px",
               }}
               className="focus:outline-none focus:border-amber-500/50"
             />
           </div>
           <div className="flex flex-col gap-1 w-28">
-            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+            <label className="text-sm uppercase font-bold text-slate-300 tracking-wider">
               Port
             </label>
             <input
@@ -305,7 +305,7 @@ export function Dashboard() {
                 borderRadius: "8px",
                 padding: "8px 12px",
                 color: "white",
-                fontSize: "12px",
+                fontSize: "14px",
               }}
               className="focus:outline-none focus:border-amber-500/50"
             />
@@ -326,16 +326,16 @@ export function Dashboard() {
             </div>
 
             {isLoading ? (
-              <p className="text-xs text-slate-400 animate-pulse">Querying server node...</p>
+              <p className="text-sm text-slate-300 animate-pulse">Querying server node...</p>
             ) : !domain ? (
-              <div className="flex items-center gap-2 text-rose-400 text-xs">
+              <div className="flex items-center gap-2 text-rose-400 text-sm">
                 <ShieldAlert className="w-4 h-4" />
                 <span>Domain Server Offline. Verify port and try again.</span>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
                 <div className="space-y-1">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                  <span className="text-slate-300 font-bold uppercase tracking-wider text-sm">
                     Server Target
                   </span>
                   <p className="text-sm font-bold text-white font-mono">
@@ -343,7 +343,7 @@ export function Dashboard() {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                  <span className="text-slate-300 font-bold uppercase tracking-wider text-sm">
                     Connected Nodes
                   </span>
                   <p className="text-sm font-bold text-white">{domain.nodes?.length ?? 0}</p>
@@ -361,20 +361,18 @@ export function Dashboard() {
               </h3>
             </div>
             {isLoading ? (
-              <p className="text-xs text-slate-400 animate-pulse">Reading node list...</p>
+              <p className="text-sm text-slate-300 animate-pulse">Reading node list...</p>
             ) : !domain || avatarNodes.length === 0 ? (
-              <p className="text-xs text-slate-400">No avatar nodes in this domain</p>
+              <p className="text-sm text-slate-300">No avatar nodes in this domain</p>
             ) : (
               <div className="space-y-2">
                 {avatarNodes.map((n, i) => (
                   <div key={n.uuid ?? i} className="glass-card flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-white">{n.type}</p>
-                      <p className="text-[10px] text-slate-500 font-mono">{n.uuid}</p>
+                      <p className="text-sm font-bold text-white">{n.type}</p>
+                      <p className="text-sm text-slate-300 font-mono">{n.uuid}</p>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-mono">
-                      {n.public?.ip ?? "unknown"}
-                    </p>
+                    <p className="text-sm text-slate-300 font-mono">{n.public?.ip ?? "unknown"}</p>
                   </div>
                 ))}
               </div>
@@ -392,17 +390,17 @@ export function Dashboard() {
               </h3>
             </div>
             {isLoading ? (
-              <p className="text-xs text-slate-400 animate-pulse">Reading configuration...</p>
+              <p className="text-sm text-slate-300 animate-pulse">Reading configuration...</p>
             ) : !domain || Object.keys(domain.settings || {}).length === 0 ? (
-              <p className="text-xs text-slate-400">No settings returned</p>
+              <p className="text-sm text-slate-300">No settings returned</p>
             ) : (
-              <div className="space-y-3 text-xs">
+              <div className="space-y-3 text-sm">
                 {Object.entries(domain.settings).map(([key, value]) => (
                   <div
                     key={key}
                     className="flex justify-between border-b border-white/[0.03] pb-1.5"
                   >
-                    <span className="text-slate-500 capitalize">{key.replace("_", " ")}</span>
+                    <span className="text-slate-300 capitalize">{key.replace("_", " ")}</span>
                     <span className="font-bold text-white">{String(value)}</span>
                   </div>
                 ))}

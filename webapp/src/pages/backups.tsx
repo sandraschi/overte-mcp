@@ -62,14 +62,14 @@ export function BackupsPage() {
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white">Backups</h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-slate-300">
             Zip snapshots of the scripts/models/textures depots + tracked entities. Local to this
             server — does not back up the Overte domain-server's own world data.
           </p>
         </div>
       </div>
 
-      <div className="glass-panel border border-amber-500/20 flex items-start gap-2 text-amber-300 text-xs px-4 py-3">
+      <div className="glass-panel border border-amber-500/20 flex items-start gap-2 text-amber-300 text-sm px-4 py-3">
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
         <span>
           Restoring overwrites current depot files with the backup's versions (matching names only —
@@ -91,7 +91,7 @@ export function BackupsPage() {
               padding: "8px 14px",
               color: "white",
               cursor: "pointer",
-              fontSize: "11px",
+              fontSize: "14px",
             }}
             className="font-bold hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all active:scale-95 flex items-center gap-2"
           >
@@ -101,17 +101,17 @@ export function BackupsPage() {
         </div>
 
         {isLoading ? (
-          <p className="text-xs text-slate-400 animate-pulse">Loading...</p>
+          <p className="text-sm text-slate-300 animate-pulse">Loading...</p>
         ) : (
           <div className="space-y-2">
             {backups.map((b) => (
               <div
                 key={b.name}
-                className="flex items-center justify-between text-[11px] bg-black/20 px-3 py-2.5 rounded-lg border border-white/[0.03]"
+                className="flex items-center justify-between text-sm bg-black/20 px-3 py-2.5 rounded-lg border border-white/[0.03]"
               >
                 <div>
                   <p className="text-white font-mono">{b.name}</p>
-                  <p className="text-slate-500">
+                  <p className="text-slate-300">
                     {formatBytes(b.size)} · {new Date(b.created_at).toLocaleString()}
                   </p>
                 </div>
@@ -128,7 +128,7 @@ export function BackupsPage() {
                     borderRadius: "8px",
                     padding: "6px 10px",
                   }}
-                  className="text-[10px] font-bold text-indigo-300 hover:text-white cursor-pointer transition-all flex items-center gap-1.5"
+                  className="text-sm font-bold text-indigo-300 hover:text-white cursor-pointer transition-all flex items-center gap-1.5"
                 >
                   <RotateCcw className="w-3 h-3" />
                   Restore
@@ -136,7 +136,7 @@ export function BackupsPage() {
               </div>
             ))}
             {backups.length === 0 && (
-              <p className="text-xs text-slate-500 text-center py-4">No backups yet.</p>
+              <p className="text-sm text-slate-300 text-center py-4">No backups yet.</p>
             )}
           </div>
         )}

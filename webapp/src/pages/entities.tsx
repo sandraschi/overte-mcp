@@ -188,12 +188,12 @@ export function EntitiesPage() {
           <div className="flex items-center gap-2">
             <Box className="w-4 h-4 text-amber-500 flex-shrink-0" />
             <div>
-              <p className="text-xs font-bold text-white">{name}</p>
-              <p className="text-[9px] text-slate-500 font-mono tracking-tighter uppercase">{id}</p>
+              <p className="text-sm font-bold text-white">{name}</p>
+              <p className="text-sm text-slate-300 font-mono tracking-tighter uppercase">{id}</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-bold uppercase tracking-wider bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-slate-400">
+            <span className="text-sm font-bold uppercase tracking-wider bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-slate-300">
               {type}
             </span>
             <button
@@ -201,23 +201,23 @@ export function EntitiesPage() {
               disabled={deleteMutation.isPending}
               title="Delete entity"
               style={{ background: "none", border: "1px solid transparent", borderRadius: "6px" }}
-              className="p-1 text-slate-500 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 cursor-pointer transition-all"
+              className="p-1 text-slate-300 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 cursor-pointer transition-all"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-[10px] bg-black/20 p-2.5 rounded-lg border border-white/[0.03]">
+        <div className="grid grid-cols-2 gap-4 text-sm bg-black/20 p-2.5 rounded-lg border border-white/[0.03]">
           <div className="flex justify-between">
-            <span className="text-slate-500">Position:</span>
+            <span className="text-slate-300">Position:</span>
             <span className="font-mono text-slate-300">
               [{position.map((n) => n.toFixed(1)).join(", ")}]
             </span>
           </div>
           {scale && (
             <div className="flex justify-between">
-              <span className="text-slate-500">Scale:</span>
+              <span className="text-slate-300">Scale:</span>
               <span className="font-mono text-slate-300">
                 [{scale.map((n) => n.toFixed(1)).join(", ")}]
               </span>
@@ -226,7 +226,7 @@ export function EntitiesPage() {
         </div>
 
         {scriptUrlVal && (
-          <div className="flex items-center gap-1.5 text-[9px] text-slate-400 bg-indigo-500/5 border border-indigo-500/10 p-2 rounded-lg">
+          <div className="flex items-center gap-1.5 text-sm text-slate-300 bg-indigo-500/5 border border-indigo-500/10 p-2 rounded-lg">
             <Code className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
             <span className="font-mono text-ellipsis overflow-hidden whitespace-nowrap w-full">
               {scriptUrlVal}
@@ -251,7 +251,7 @@ export function EntitiesPage() {
                 padding: "4px 6px",
                 color: "white",
                 width: "100%",
-                fontSize: "10px",
+                fontSize: "14px",
               }}
             />
           ))}
@@ -291,7 +291,7 @@ export function EntitiesPage() {
                 padding: "4px 8px",
                 flex: 1,
               }}
-              className="text-[9px] font-bold uppercase tracking-wider text-amber-400 hover:bg-amber-500/15 cursor-pointer transition-all flex items-center justify-center gap-1"
+              className="text-sm font-bold uppercase tracking-wider text-amber-400 hover:bg-amber-500/15 cursor-pointer transition-all flex items-center justify-center gap-1"
             >
               {mode === "spin" ? <RotateCw className="w-3 h-3" /> : <Waves className="w-3 h-3" />}
               {mode} 5s
@@ -317,7 +317,7 @@ export function EntitiesPage() {
             <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               Entity Tree Explorer
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-sm text-slate-300">
               Spawn, move, animate, and delete interactive domain entities
             </p>
           </div>
@@ -325,7 +325,7 @@ export function EntitiesPage() {
       </div>
 
       {data?.bridge_connected === false && (
-        <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-xs px-4 py-2">
+        <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-sm px-4 py-2">
           <ShieldAlert className="w-4 h-4 shrink-0" />
           <span>
             Bridge disconnected: showing only server-tracked entities. Run overte_bridge_install
@@ -345,9 +345,9 @@ export function EntitiesPage() {
               </h3>
             </div>
 
-            <div className="space-y-4 text-xs">
+            <div className="space-y-4 text-sm">
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                <label className="font-bold text-slate-300 uppercase tracking-wider text-sm">
                   Entity Name
                 </label>
                 <input
@@ -365,7 +365,7 @@ export function EntitiesPage() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                <label className="font-bold text-slate-300 uppercase tracking-wider text-sm">
                   Type
                 </label>
                 <select
@@ -392,7 +392,7 @@ export function EntitiesPage() {
 
               {spawnType === "Model" && (
                 <div className="flex flex-col gap-1">
-                  <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  <label className="font-bold text-slate-300 uppercase tracking-wider text-sm">
                     Model Resource URL
                   </label>
                   <input
@@ -412,7 +412,7 @@ export function EntitiesPage() {
               )}
 
               <div className="flex flex-col gap-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                <label className="font-bold text-slate-300 uppercase tracking-wider text-sm">
                   Attach JavaScript URL
                 </label>
                 <input
@@ -431,7 +431,7 @@ export function EntitiesPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                <label className="font-bold text-slate-300 uppercase tracking-wider text-sm">
                   Spawn Coordinates
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -493,7 +493,7 @@ export function EntitiesPage() {
                   padding: "10px 14px",
                   color: "white",
                   cursor: "pointer",
-                  fontSize: "12px",
+                  fontSize: "14px",
                   width: "100%",
                 }}
                 className="font-bold hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -512,7 +512,7 @@ export function EntitiesPage() {
                 Nearby (Live)
               </h3>
             </div>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-sm text-slate-300">
               Queries the actual world via Entities.findEntities — includes anything already there,
               not just what this backend spawned.
             </p>
@@ -530,7 +530,7 @@ export function EntitiesPage() {
                   width: "80px",
                 }}
               />
-              <span className="text-[10px] text-slate-500">meters, around you</span>
+              <span className="text-sm text-slate-300">meters, around you</span>
               <button
                 onClick={() => refetchNearby()}
                 disabled={nearbyLoading}
@@ -540,7 +540,7 @@ export function EntitiesPage() {
                   borderRadius: "8px",
                   padding: "8px 12px",
                 }}
-                className="text-[10px] font-bold text-indigo-300 hover:text-white cursor-pointer transition-all ml-auto"
+                className="text-sm font-bold text-indigo-300 hover:text-white cursor-pointer transition-all ml-auto"
               >
                 {nearbyLoading ? "Searching..." : "Search"}
               </button>
@@ -550,16 +550,16 @@ export function EntitiesPage() {
                 {nearbyData.items.map((it) => (
                   <div
                     key={it.id}
-                    className="flex items-center justify-between text-[10px] bg-black/20 px-2.5 py-1.5 rounded-lg border border-white/[0.03]"
+                    className="flex items-center justify-between text-sm bg-black/20 px-2.5 py-1.5 rounded-lg border border-white/[0.03]"
                   >
                     <span className="text-slate-300 truncate">{it.name || "(unnamed)"}</span>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className="text-slate-500 uppercase">{it.type}</span>
+                      <span className="text-slate-300 uppercase">{it.type}</span>
                       <button
                         onClick={() => deleteMutation.mutate(it.id)}
                         title="Delete"
                         style={{ background: "none", border: "none" }}
-                        className="text-slate-500 hover:text-red-400 cursor-pointer"
+                        className="text-slate-300 hover:text-red-400 cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -567,9 +567,7 @@ export function EntitiesPage() {
                   </div>
                 ))}
                 {nearbyData.items.length === 0 && (
-                  <p className="text-[10px] text-slate-500 text-center py-2">
-                    Nothing found in range.
-                  </p>
+                  <p className="text-sm text-slate-300 text-center py-2">Nothing found in range.</p>
                 )}
               </div>
             )}
@@ -586,17 +584,17 @@ export function EntitiesPage() {
                   Server-Tracked Entities
                 </h3>
               </div>
-              <span className="text-[10px] bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2 py-0.5 rounded-full">
+              <span className="text-sm bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2 py-0.5 rounded-full">
                 {entities.length} items
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 -mt-2">
+            <p className="text-sm text-slate-300 -mt-2">
               Only entities spawned by this backend since it last restarted. Use Nearby (Live) on
               the left for anything else already in the world.
             </p>
 
             {isLoading ? (
-              <p className="text-xs text-slate-400 animate-pulse">Loading scene graph...</p>
+              <p className="text-sm text-slate-300 animate-pulse">Loading scene graph...</p>
             ) : (
               <div className="space-y-4">
                 {entities.map((ent) =>

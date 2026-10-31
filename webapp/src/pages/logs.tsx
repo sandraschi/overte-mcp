@@ -61,7 +61,7 @@ export function LogsPage() {
           </div>
           <div>
             <h2 className="text-xl font-bold tracking-tight text-white">Logs</h2>
-            <p className="text-xs text-slate-400">Server event log stream</p>
+            <p className="text-sm text-slate-300">Server event log stream</p>
           </div>
         </div>
 
@@ -76,7 +76,7 @@ export function LogsPage() {
               borderRadius: "8px",
               padding: "6px 10px",
               color: "white",
-              fontSize: "12px",
+              fontSize: "14px",
             }}
             className="focus:outline-none focus:border-amber-500/50"
           >
@@ -97,7 +97,7 @@ export function LogsPage() {
               padding: "8px",
               cursor: "pointer",
             }}
-            className="text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+            className="text-slate-300 hover:text-white hover:bg-white/5 transition-all"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -112,7 +112,7 @@ export function LogsPage() {
               padding: "8px",
               cursor: "pointer",
             }}
-            className={`transition-all ${autoRefresh ? "text-amber-500" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+            className={`transition-all ${autoRefresh ? "text-amber-500" : "text-slate-300 hover:text-white hover:bg-white/5"}`}
             title={autoRefresh ? "Stop auto-refresh" : "Auto-refresh every 5s"}
           >
             {autoRefresh ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -121,7 +121,7 @@ export function LogsPage() {
       </div>
 
       {autoRefresh && (
-        <div className="flex items-center gap-2 text-[10px] text-amber-500">
+        <div className="flex items-center gap-2 text-sm text-amber-500">
           <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
           Auto-refreshing every 5s
         </div>
@@ -137,15 +137,15 @@ export function LogsPage() {
       >
         {isLoading && logs.length === 0 ? (
           <div className="p-6">
-            <p className="text-xs text-slate-500 animate-pulse">Loading logs...</p>
+            <p className="text-sm text-slate-300 animate-pulse">Loading logs...</p>
           </div>
         ) : logs.length === 0 ? (
           <div className="p-6">
-            <p className="text-xs text-slate-500">No log entries found.</p>
+            <p className="text-sm text-slate-300">No log entries found.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-sm">
               <thead>
                 <tr
                   style={{
@@ -153,16 +153,16 @@ export function LogsPage() {
                     background: "rgba(0,0,0,0.2)",
                   }}
                 >
-                  <th className="text-left px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-2.5 text-sm font-bold text-slate-300 uppercase tracking-wider">
                     Timestamp
                   </th>
-                  <th className="text-left px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-2.5 text-sm font-bold text-slate-300 uppercase tracking-wider">
                     Source
                   </th>
-                  <th className="text-left px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-2.5 text-sm font-bold text-slate-300 uppercase tracking-wider">
                     Level
                   </th>
-                  <th className="text-left px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-2.5 text-sm font-bold text-slate-300 uppercase tracking-wider">
                     Message
                   </th>
                 </tr>
@@ -179,22 +179,22 @@ export function LogsPage() {
                       }}
                       className="hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="px-4 py-2.5 text-slate-500 font-mono text-[10px] whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-slate-300 font-mono text-sm whitespace-nowrap">
                         {entry.timestamp || "—"}
                       </td>
-                      <td className="px-4 py-2.5 text-slate-400 font-mono text-[10px] whitespace-nowrap max-w-[150px] truncate">
+                      <td className="px-4 py-2.5 text-slate-300 font-mono text-sm whitespace-nowrap max-w-[150px] truncate">
                         {entry.source || "—"}
                       </td>
                       <td className="px-4 py-2.5">
                         <span
                           style={{ color: cfg.color }}
-                          className="flex items-center gap-1.5 text-[10px] font-bold"
+                          className="flex items-center gap-1.5 text-sm font-bold"
                         >
                           <Icon className="w-3 h-3" />
                           {entry.level || "INFO"}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-slate-300 font-mono text-[10px] whitespace-pre-wrap">
+                      <td className="px-4 py-2.5 text-slate-300 font-mono text-sm whitespace-pre-wrap">
                         {entry.message}
                       </td>
                     </tr>
@@ -206,7 +206,7 @@ export function LogsPage() {
         )}
       </div>
 
-      <p className="text-[10px] text-slate-600">
+      <p className="text-sm text-slate-300">
         Showing {logs.length} entry{logs.length !== 1 ? "ies" : "y"}
         {level !== "ALL" ? ` at level ${level}` : ""}
       </p>

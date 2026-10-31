@@ -252,7 +252,7 @@ export function ChatPage() {
               AI Chat
               <Sparkles className="w-4 h-4 text-indigo-400" />
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-sm text-slate-300">
               {providerStatus === "probing"
                 ? "Detecting local LLM..."
                 : providerStatus === "detected"
@@ -273,7 +273,7 @@ export function ChatPage() {
               borderRadius: "8px",
               padding: "6px 10px",
               color: "white",
-              fontSize: "12px",
+              fontSize: "14px",
             }}
             className="focus:outline-none focus:border-amber-500/50"
           >
@@ -294,7 +294,7 @@ export function ChatPage() {
                 borderRadius: "8px",
                 padding: "6px 10px",
                 color: "white",
-                fontSize: "12px",
+                fontSize: "14px",
               }}
               className="focus:outline-none focus:border-amber-500/50"
             >
@@ -318,7 +318,7 @@ export function ChatPage() {
               cursor: messages.length === 0 ? "default" : "pointer",
               opacity: messages.length === 0 ? 0.4 : 1,
             }}
-            className="text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+            className="text-slate-300 hover:text-white hover:bg-white/5 transition-all"
             title="Export chat"
           >
             <Download className="w-4 h-4" />
@@ -336,7 +336,7 @@ export function ChatPage() {
               cursor: messages.length === 0 ? "default" : "pointer",
               opacity: messages.length === 0 ? 0.4 : 1,
             }}
-            className="text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+            className="text-slate-300 hover:text-white hover:bg-white/5 transition-all"
             title="Clear conversation"
           >
             <Eraser className="w-4 h-4" />
@@ -345,7 +345,7 @@ export function ChatPage() {
       </div>
 
       {personalityId !== "custom" && (
-        <div className="glass-card px-3 py-1.5 text-[10px] text-slate-500 flex items-center gap-2">
+        <div className="glass-card px-3 py-1.5 text-sm text-slate-300 flex items-center gap-2">
           <Bot className="w-3 h-3 text-amber-500" />
           <span>
             Persona: <span className="text-white font-semibold">{personalityName}</span>
@@ -369,8 +369,8 @@ export function ChatPage() {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-16">
             <Bot className="w-12 h-12 text-slate-700 mb-4" />
-            <p className="text-sm text-slate-500 mb-2">Start a conversation</p>
-            <p className="text-xs text-slate-600">
+            <p className="text-sm text-slate-300 mb-2">Start a conversation</p>
+            <p className="text-sm text-slate-300">
               {providerStatus === "detected"
                 ? `Using ${provider?.name} with model ${selectedModel || "default"}`
                 : "No local LLM detected — responses unavailable"}
@@ -386,17 +386,15 @@ export function ChatPage() {
           >
             <div className="flex items-center gap-2 mb-1">
               <span
-                className={`text-[10px] font-bold uppercase ${msg.role === "user" ? "text-amber-500" : "text-indigo-400"}`}
+                className={`text-sm font-bold uppercase ${msg.role === "user" ? "text-amber-500" : "text-indigo-400"}`}
               >
                 {msg.role === "user" ? "You" : "Assistant"}
               </span>
               {msg.ts && (
-                <span className="text-[9px] text-slate-600">
-                  {new Date(msg.ts).toLocaleString()}
-                </span>
+                <span className="text-sm text-slate-300">{new Date(msg.ts).toLocaleString()}</span>
               )}
             </div>
-            <p className="text-xs text-slate-300 whitespace-pre-wrap">{msg.content}</p>
+            <p className="text-sm text-slate-300 whitespace-pre-wrap">{msg.content}</p>
           </div>
         ))}
 
@@ -404,7 +402,7 @@ export function ChatPage() {
           <div className="glass-card" style={{ padding: "12px 16px" }}>
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-              <span className="text-xs text-slate-500">Thinking...</span>
+              <span className="text-sm text-slate-300">Thinking...</span>
             </div>
           </div>
         )}
@@ -416,7 +414,7 @@ export function ChatPage() {
         <div data-testid="example-prompts" className="space-y-3">
           {examplePrompts.map((group) => (
             <div key={group.group}>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+              <p className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-2">
                 {group.group}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -430,7 +428,7 @@ export function ChatPage() {
                       borderRadius: "20px",
                       padding: "6px 14px",
                       cursor: "pointer",
-                      fontSize: "11px",
+                      fontSize: "14px",
                       color: "#f59e0b",
                     }}
                     className="hover:bg-amber-500/15 hover:text-amber-400 transition-all"
@@ -466,7 +464,7 @@ export function ChatPage() {
             borderRadius: "8px",
             padding: "10px 14px",
             color: "white",
-            fontSize: "13px",
+            fontSize: "14px",
           }}
           className="focus:outline-none focus:border-amber-500/50 disabled:opacity-40"
         />

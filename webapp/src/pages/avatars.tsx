@@ -42,7 +42,7 @@ export function AvatarsPage() {
             <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               Avatar Mixer Console
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-sm text-slate-300">
               Live spatial audio feeds and presence coordinates
             </p>
           </div>
@@ -57,7 +57,7 @@ export function AvatarsPage() {
             padding: "8px 12px",
             cursor: "pointer",
           }}
-          className="text-slate-400 hover:text-white hover:bg-white/5 active:scale-95 transition-all"
+          className="text-slate-300 hover:text-white hover:bg-white/5 active:scale-95 transition-all"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading || isRefetching ? "animate-spin" : ""}`} />
         </button>
@@ -72,9 +72,9 @@ export function AvatarsPage() {
         </div>
       ) : avatarNodes.length === 0 ? (
         <div className="glass-panel text-center py-12 space-y-2">
-          <User className="w-12 h-12 text-slate-600 mx-auto" />
-          <p className="text-sm text-slate-400 font-bold">No avatar nodes in the domain</p>
-          <p className="text-xs text-slate-500">
+          <User className="w-12 h-12 text-slate-300 mx-auto" />
+          <p className="text-sm text-slate-300 font-bold">No avatar nodes in the domain</p>
+          <p className="text-sm text-slate-300">
             Connect using the Overte Interface client to join.
           </p>
         </div>
@@ -88,7 +88,7 @@ export function AvatarsPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white">{n.type ?? "unknown"}</h4>
-                  <p className="text-[10px] text-slate-500 font-mono tracking-tighter uppercase">
+                  <p className="text-sm text-slate-300 font-mono tracking-tighter uppercase">
                     {n.uuid ?? "no-uuid"}
                   </p>
                 </div>
@@ -96,14 +96,14 @@ export function AvatarsPage() {
 
               {/* Overte server-side audio -- per-avatar gain isn't exposed by nodes.json,
                   so this panel is intentionally omitted until a real source for it exists. */}
-              <div className="flex items-center gap-2 text-[10px] text-slate-500 border-t border-white/[0.05] pt-3">
-                <Volume2 className="w-3.5 h-3.5 text-slate-600" />
+              <div className="flex items-center gap-2 text-sm text-slate-300 border-t border-white/[0.05] pt-3">
+                <Volume2 className="w-3.5 h-3.5 text-slate-300" />
                 Spatial audio gain not available from nodes.json
               </div>
 
               {/* Node IP telemetry */}
-              <div className="flex justify-between items-center text-[10px] bg-black/25 p-2.5 rounded-lg border border-white/[0.03] font-mono">
-                <span className="text-slate-500 font-bold uppercase tracking-wide">IP</span>
+              <div className="flex justify-between items-center text-sm bg-black/25 p-2.5 rounded-lg border border-white/[0.03] font-mono">
+                <span className="text-slate-300 font-bold uppercase tracking-wide">IP</span>
                 <span className="text-slate-300">{n.public?.ip ?? "unknown"}</span>
               </div>
             </div>
