@@ -106,7 +106,13 @@ def domain_help(topic: str = "overview") -> str:
         ),
         "spawn": (
             "Use overte_entity_spawn to create Box, Sphere, Web, or Model entities in-world. "
-            "Requires the WebSocket bridge for live operation."
+            "Requires the bridge: run overte_bridge_install once so it runs headless on the "
+            "domain, or load it in Interface."
+        ),
+        "bridge": (
+            "overte_bridge_status says whether the bridge is connected and in which mode "
+            "(agent = headless persistent script, interface = desktop client). "
+            "overte_bridge_install registers it as a domain persistent script."
         ),
         "script": (
             "Use overte_script_inject to attach JavaScript behaviors to existing entities. "
@@ -133,8 +139,8 @@ async def overte_domain_status(
 ) -> dict:
     """Retrieve connected-node telemetry and settings from an Overte Domain Server.
 
-    Real live path against /nodes.json and /settings.json. Falls back to clearly
-    labeled simulated data if no domain-server is reachable.
+    Live path against /nodes.json and /settings.json. If no domain-server answers,
+    returns success=false with a domain_unreachable message (no placeholder data).
 
     ## Return Format
     {"success": bool, "message": str, "data": {"source": str, "domain": {...}}}
@@ -155,6 +161,90 @@ async def overte_domain_status(
             "source": result.get("source"),
             "domain": result.get("domain"),
         },
+    }
+
+
+_BACKEND = os.environ.get("OVERTE_MCP_BACKEND", "http://127.0.0.1:11110")
+
+
+@mcp.tool(annotations=_READ_ONLY)
+async def overte_bridge_status(ctx: Any = None) -> dict:
+    """Report whether the in-world bridge is connected and how it runs.
+
+    mode "agent" = headless persistent script on the domain (no GUI needed);
+    mode "interface" = loaded in the Overte desktop client. can_rez=false means the
+    bridge is connected but the domain does not let it create entities.
+
+    ## Return Format
+    {"success": bool, "message": str, "data": {"connected": bool, "bridge": {...} | null, "script_url": str}}
+
+    ## Examples
+    overte_bridge_status()
+    """
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            r = await client.get(f"{_BACKEND}/api/overte/bridge")
+            r.raise_for_status()
+            data = r.json()
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"overte-mcp backend unreachable at {_BACKEND}: {e}",
+            "data": None,
+        }
+    connected = bool(data.get("connected"))
+    mode = (data.get("bridge") or {}).get("mode")
+    return {
+        "success": True,
+        "message": f"bridge connected ({mode})" if connected else "no bridge connected",
+        "data": data,
+    }
+
+
+@mcp.tool(annotations=_MUTATING)
+async def overte_bridge_install(
+    script_url: Annotated[
+        str | None,
+        Field(
+            description="Override the bridge URL the domain fetches. Default: this backend's /bridge/overte-mcp-bridge.js."
+        ),
+    ] = None,
+    ctx: Any = None,
+) -> dict:
+    """Register the bridge as a domain persistent script so it runs headless.
+
+    Writes scripts.persistent_scripts through the domain-server admin API (credentials
+    from OVERTE_ADMIN_USER / OVERTE_ADMIN_PASSWORD, default admin/admin). Idempotent.
+    The domain-server restarts to apply it; an assignment-client must be running to
+    pick up the agent. Then poll overte_bridge_status until connected.
+
+    ## Return Format
+    {"success": bool, "message": str, "data": {"changed": bool, "script_url": str, "persistent_scripts": [...]}}
+
+    ## Examples
+    overte_bridge_install()
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            r = await client.post(
+                f"{_BACKEND}/api/overte/bridge/install",
+                json={"script_url": script_url} if script_url else {},
+            )
+            body = r.json()
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"overte-mcp backend unreachable at {_BACKEND}: {e}",
+            "data": None,
+        }
+    if r.status_code != 200:
+        return {"success": False, "message": body.get("detail", r.text), "data": None}
+    return {
+        "success": True,
+        "message": "bridge registered; domain restarting"
+        if body.get("changed")
+        else "bridge already registered",
+        "data": body,
     }
 
 
@@ -191,21 +281,37 @@ async def overte_entity_spawn(
     ] = False,
     parent_id: Annotated[
         str | None,
-        Field(description="Entity/avatar UUID to parent this to - position becomes relative. Use 'MyAvatar' to attach to the local user."),
+        Field(
+            description="Entity/avatar UUID to parent this to - position becomes relative. Use 'MyAvatar' to attach to the local user."
+        ),
     ] = None,
-    color: Annotated[list[float], Field(description="RGB as 0.0-1.0 floats, default white. Used by Light/Box/Sphere; harmless no-op on Model entities.")] = [1.0, 1.0, 1.0],
-    intensity: Annotated[float | None, Field(description="Light brightness. Only meaningful when entity_type='Light'.")] = None,
-    is_spotlight: Annotated[bool | None, Field(description="True for a directional cone, False/omitted for omnidirectional.")] = None,
-    falloff_radius: Annotated[float | None, Field(description="Distance in meters a Light's intensity falls off by.")] = None,
+    color: Annotated[
+        list[float],
+        Field(
+            description="RGB as 0.0-1.0 floats, default white. Used by Light/Box/Sphere; harmless no-op on Model entities."
+        ),
+    ] = [1.0, 1.0, 1.0],
+    intensity: Annotated[
+        float | None,
+        Field(description="Light brightness. Only meaningful when entity_type='Light'."),
+    ] = None,
+    is_spotlight: Annotated[
+        bool | None,
+        Field(description="True for a directional cone, False/omitted for omnidirectional."),
+    ] = None,
+    falloff_radius: Annotated[
+        float | None, Field(description="Distance in meters a Light's intensity falls off by.")
+    ] = None,
     ctx: Any = None,
 ) -> dict:
     """Spawn a virtual object, 3D GLB model, or Light in-world at the specified coordinates.
 
-    Live when scripts/overte-mcp-bridge.js is connected to the FastAPI WS hub;
-    otherwise returns a clearly labeled simulated confirmation.
+    Needs a connected bridge (headless agent via overte_bridge_install, or Interface).
+    Without one it returns success=false with bridge_not_connected; it never invents an
+    entity. In headless (agent) mode always pass a position: there is no avatar.
 
     ## Return Format
-    {"success": bool, "message": str, "data": {"source": str, "entity": {...}}}
+    {"success": bool, "message": str, "data": {"source": str, "entity_id": str, "entity": {...}}}
 
     ## Examples
     overte_entity_spawn(name="MyBox")
@@ -235,8 +341,9 @@ async def overte_entity_spawn(
         or ("Entity spawned." if success else "Failed to spawn entity."),
         "data": {
             "source": result.get("source"),
+            "bridge_mode": result.get("bridge_mode"),
+            "entity_id": result.get("entity_id"),
             "entity": result.get("entity"),
-            "warning": result.get("warning"),
         },
     }
 
@@ -253,8 +360,8 @@ async def overte_script_inject(
 ) -> dict:
     """Inject a JavaScript script to govern behavior of an in-world entity.
 
-    Live when the Overte bridge WebSocket client is connected; otherwise
-    returns a clearly labeled simulated confirmation.
+    Needs a connected bridge; without one it returns success=false
+    (bridge_not_connected), never a simulated confirmation.
 
     ## Return Format
     {"success": bool, "message": str, "data": {"source": str, "script": {...}}}
@@ -277,8 +384,6 @@ async def overte_script_inject(
         or ("Script injected." if success else "Failed to inject script."),
         "data": {
             "source": result.get("source"),
-            "script": result.get("script"),
-            "warning": result.get("warning"),
         },
     }
 
@@ -286,17 +391,24 @@ async def overte_script_inject(
 @mcp.tool(annotations=_MUTATING)
 async def overte_entity_update(
     entity_id: Annotated[str, Field(description="Overte target entity UUID.")],
-    position: Annotated[list[float] | None, Field(description="X, Y, Z translation coordinates.")] = None,
-    dimensions: Annotated[list[float] | None, Field(description="X, Y, Z bounding-box dimensions in meters.")] = None,
-    parent_id: Annotated[str | None, Field(description="Re-parent to a different entity/avatar UUID.")] = None,
-    visible: Annotated[bool | None, Field(description="Show/hide without deleting - e.g. toggle a light off.")] = None,
+    position: Annotated[
+        list[float] | None, Field(description="X, Y, Z translation coordinates.")
+    ] = None,
+    dimensions: Annotated[
+        list[float] | None, Field(description="X, Y, Z bounding-box dimensions in meters.")
+    ] = None,
+    parent_id: Annotated[
+        str | None, Field(description="Re-parent to a different entity/avatar UUID.")
+    ] = None,
+    visible: Annotated[
+        bool | None, Field(description="Show/hide without deleting - e.g. toggle a light off.")
+    ] = None,
     intensity: Annotated[float | None, Field(description="Light entity brightness.")] = None,
     color: Annotated[list[float] | None, Field(description="RGB as 0.0-1.0 floats.")] = None,
     ctx: Any = None,
 ) -> dict:
-    """Move, resize, re-parent, or toggle an existing in-world entity. Live-only (bridge
-    required) - there is nothing meaningful to simulate for an edit to something that may
-    not exist in the simulated world.
+    """Move, resize, re-parent, or toggle an existing in-world entity. Needs a connected
+    bridge (success=false with bridge_not_connected otherwise).
 
     ## Return Format
     {"success": bool, "message": str, "data": {"source": str}}
@@ -319,7 +431,8 @@ async def overte_entity_update(
     success = result.get("status") == "success"
     return {
         "success": success,
-        "message": result.get("message") or ("Entity updated." if success else "Failed to update entity."),
+        "message": result.get("message")
+        or ("Entity updated." if success else "Failed to update entity."),
         "data": {"source": result.get("source")},
     }
 
@@ -341,7 +454,8 @@ async def overte_entity_delete(
     success = result.get("status") == "success"
     return {
         "success": success,
-        "message": result.get("message") or ("Entity deleted." if success else "Failed to delete entity."),
+        "message": result.get("message")
+        or ("Entity deleted." if success else "Failed to delete entity."),
         "data": {"source": result.get("source")},
     }
 
@@ -349,11 +463,33 @@ async def overte_entity_delete(
 @mcp.tool(annotations=_MUTATING)
 async def overte_entity_animate(
     entity_id: Annotated[str, Field(description="Overte target entity UUID.")],
-    mode: Annotated[str, Field(description="'spin' (continuous rotation), 'bob' (smooth sinusoidal oscillation), or 'bounce' (real drop-and-rebound physics with energy loss, not a sine wave).")] = "spin",
-    axis: Annotated[list[float], Field(description="Rotation axis for 'spin' (normalized).")] = [0.0, 1.0, 0.0],
-    speed: Annotated[float, Field(description="'spin': radians/second. 'bob': oscillations/second. 'bounce': overall pace (scales effective gravity).")] = 1.0,
-    amplitude: Annotated[float, Field(description="'bob'/'bounce': peak height above the settled position, in meters.")] = 0.1,
-    damping: Annotated[float, Field(description="'bounce' only: energy retained per bounce, 0-1 (0.6 = each bounce reaches 60% of the previous height).")] = 0.6,
+    mode: Annotated[
+        str,
+        Field(
+            description="'spin' (continuous rotation), 'bob' (smooth sinusoidal oscillation), or 'bounce' (real drop-and-rebound physics with energy loss, not a sine wave)."
+        ),
+    ] = "spin",
+    axis: Annotated[list[float], Field(description="Rotation axis for 'spin' (normalized).")] = [
+        0.0,
+        1.0,
+        0.0,
+    ],
+    speed: Annotated[
+        float,
+        Field(
+            description="'spin': radians/second. 'bob': oscillations/second. 'bounce': overall pace (scales effective gravity)."
+        ),
+    ] = 1.0,
+    amplitude: Annotated[
+        float,
+        Field(description="'bob'/'bounce': peak height above the settled position, in meters."),
+    ] = 0.1,
+    damping: Annotated[
+        float,
+        Field(
+            description="'bounce' only: energy retained per bounce, 0-1 (0.6 = each bounce reaches 60% of the previous height)."
+        ),
+    ] = 0.6,
     duration_s: Annotated[float, Field(description="How long to animate before stopping.")] = 5.0,
     tick_hz: Annotated[float, Field(description="Update rate over the bridge.")] = 10.0,
     ctx: Any = None,
@@ -373,21 +509,31 @@ async def overte_entity_animate(
     """
     result = await animate_entity_impl(
         EntityAnimateInput(
-            entity_id=entity_id, mode=mode, axis=axis, speed=speed, amplitude=amplitude,
-            damping=damping, duration_s=duration_s, tick_hz=tick_hz,
+            entity_id=entity_id,
+            mode=mode,
+            axis=axis,
+            speed=speed,
+            amplitude=amplitude,
+            damping=damping,
+            duration_s=duration_s,
+            tick_hz=tick_hz,
         )
     )
     success = result.get("status") == "success"
     return {
         "success": success,
-        "message": result.get("message") or ("Animation finished." if success else "Animation failed."),
+        "message": result.get("message")
+        or ("Animation finished." if success else "Animation failed."),
         "data": {"source": result.get("source")},
     }
 
 
 @mcp.tool(annotations=_READ_ONLY)
 async def overte_nearby_entities(
-    position: Annotated[list[float] | None, Field(description="Search center. Omit to search around the local user.")] = None,
+    position: Annotated[
+        list[float] | None,
+        Field(description="Search center. Omit to search around the local user."),
+    ] = None,
     radius: Annotated[float, Field(description="Search radius in meters.")] = 20.0,
     ctx: Any = None,
 ) -> dict:
@@ -405,8 +551,13 @@ async def overte_nearby_entities(
     success = result.get("status") == "success"
     return {
         "success": success,
-        "message": result.get("message") or ("Found nearby entities." if success else "Search failed."),
-        "data": {"source": result.get("source"), "items": result.get("items", []), "count": result.get("count", 0)},
+        "message": result.get("message")
+        or ("Found nearby entities." if success else "Search failed."),
+        "data": {
+            "source": result.get("source"),
+            "items": result.get("items", []),
+            "count": result.get("count", 0),
+        },
     }
 
 
@@ -415,11 +566,22 @@ async def overte_fixture_spawn(
     fixture: Annotated[str, Field(description="Preset name: box, cup, ball, table, or chair.")],
     position: Annotated[
         list[float] | None,
-        Field(description="Where to place it. Omit to spawn in front of the local user's current facing direction."),
+        Field(
+            description="Where to place it. Omit to spawn in front of the local user's current facing direction."
+        ),
     ] = None,
-    forward_distance: Annotated[float, Field(description="Meters in front of the user when position is omitted.")] = 1.5,
-    name: Annotated[str | None, Field(description="Override the entity name (defaults to the fixture name).")] = None,
-    color: Annotated[list[float], Field(description="RGB as 0.0-1.0 floats, default white. Applied uniformly to every part of a multi-part fixture.")] = [1.0, 1.0, 1.0],
+    forward_distance: Annotated[
+        float, Field(description="Meters in front of the user when position is omitted.")
+    ] = 1.5,
+    name: Annotated[
+        str | None, Field(description="Override the entity name (defaults to the fixture name).")
+    ] = None,
+    color: Annotated[
+        list[float],
+        Field(
+            description="RGB as 0.0-1.0 floats, default white. Applied uniformly to every part of a multi-part fixture."
+        ),
+    ] = [1.0, 1.0, 1.0],
     ctx: Any = None,
 ) -> dict:
     """Spawn a preset test fixture for gripper/manipulation testing: box, cup, ball, table,
@@ -438,13 +600,18 @@ async def overte_fixture_spawn(
     """
     result = await spawn_fixture_impl(
         FixtureSpawnInput(
-            fixture=fixture, position=position, forward_distance=forward_distance, name=name, color=color
+            fixture=fixture,
+            position=position,
+            forward_distance=forward_distance,
+            name=name,
+            color=color,
         )
     )
     success = result.get("status") == "success"
     return {
         "success": success,
-        "message": result.get("message") or ("Fixture spawned." if success else "Failed to spawn fixture."),
+        "message": result.get("message")
+        or ("Fixture spawned." if success else "Failed to spawn fixture."),
         "data": {
             "source": result.get("source"),
             "entity_ids": result.get("entity_ids", []),
@@ -495,6 +662,39 @@ async def overte_sampling_assist(
         "success": True,
         "message": "Static plan (sampling not available on this host).",
         "data": {"plan": plan, "sampling_used": False},
+    }
+
+
+@mcp.tool(annotations=_DESTRUCTIVE)
+async def overte_shutdown(
+    confirm: Annotated[
+        bool, Field(description="Must be True to terminate the server process.")
+    ] = False,
+) -> dict:
+    """Orderly self-termination for agents and the fleet launcher.
+
+    Responds immediately, then exits the process ~500 ms later so depot
+    writes and in-flight jobs can flush.
+
+    ## Return Format
+    {"success": bool, "message": str, "data": {}}
+
+    ## Examples
+    overte_shutdown(confirm=True)
+    """
+    if not confirm:
+        return {
+            "success": False,
+            "message": "Shutdown requires confirm=True.",
+            "data": None,
+        }
+    import threading
+
+    threading.Timer(0.5, lambda: os._exit(0)).start()
+    return {
+        "success": True,
+        "message": "overte-mcp shutting down in ~500 ms",
+        "data": {},
     }
 
 

@@ -6,12 +6,12 @@
   "author": { "name": "sandraschi" },
   "server": {
     "type": "python",
-    "entry_point": "run_server.py",
+    "entry_point": "src/overte_mcp/server.py",
     "mcp_config": {
-      "command": "uv",
-      "args": ["run","--directory","${PWD}","run_server.py"],
+      "command": "python",
+      "args": ["-m", "overte_mcp"],
       "env": {
-        "PYTHONPATH": "${PWD}/src",
+        "PYTHONPATH": "${__dirname}/src",
         "PYTHONUNBUFFERED": "1"
       }
     }

@@ -7,9 +7,12 @@
 		"dev": "vite",
 		"build": "tsc -b && vite build",
 		"lint": "biome check src",
+		"biome:ci": "biome check src",
+		"check": "tsc --noEmit",
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@tauri-apps/api": "^2.2.0",
 		"@tanstack/react-query": "^5.101.2",
 		"lucide-react": "^1.25.0",
 		"react": "^19.2.7",

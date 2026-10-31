@@ -10,13 +10,15 @@ import os
 import subprocess
 import time
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
+import httpx
 import uvicorn
-from fastapi import FastAPI, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from .models import (
@@ -30,8 +32,6 @@ from .models import (
     ScriptInjectInput,
 )
 from .tools.domain import get_domain_status_impl
-from .tools.entities import spawn_entity_impl
-from .tools.scripting import inject_script_impl
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,22 @@ def _log(source: str, level: str, message: str):
 # WebSocket bridge state
 _active_ws: WebSocket | None = None
 _pending_requests: dict[str, asyncio.Future] = {}
+# Last "hello" the connected bridge sent: {"mode": "agent"|"interface", "version", "can_rez", ...}
+_bridge_info: dict[str, Any] = {}
+
+NO_BRIDGE_DETAIL = (
+    "bridge_not_connected: no Overte bridge is connected. Headless: run "
+    "overte_bridge_install (or POST /api/overte/bridge/install) and make sure the "
+    "domain-server and an assignment-client are running. Desktop: load "
+    "/bridge/overte-mcp-bridge.js in Interface (Edit > Running Scripts)."
+)
+
+
+def _require_bridge() -> None:
+    if not _active_ws:
+        raise HTTPException(status_code=503, detail=NO_BRIDGE_DETAIL)
+
+
 # Tracked entities (spawned via bridge, survives server restarts via log)
 _tracked_entities: dict[str, dict] = {}
 
@@ -83,10 +99,24 @@ def _git_sha() -> str:
 
 GIT_SHA = _git_sha()
 
+
+@asynccontextmanager
+async def _lifespan(parent_app):
+    """Compose the FastMCP session manager so /mcp does not 404/terminate (BUG-038)."""
+    try:
+        from .server import mcp as _mcp
+
+        async with _mcp.lifespan(parent_app):
+            yield
+    except Exception:
+        yield
+
+
 app = FastAPI(
     title="Overte MCP REST Server",
     description="HTTP REST interface complementing standard Stdio MCP",
     version="0.2.0",
+    lifespan=_lifespan,
 )
 
 # Enable CORS for frontend dashboard connection per CORS_STANDARD.md
@@ -145,6 +175,16 @@ async def list_tools():
                     "username": {"type": "string"},
                     "password": {"type": "string"},
                 },
+            },
+            {
+                "name": "overte_bridge_status",
+                "description": "Is the in-world bridge connected, and in which mode (agent = headless, interface = desktop).",
+                "inputSchema": {},
+            },
+            {
+                "name": "overte_bridge_install",
+                "description": "Register the bridge as a domain persistent script so it runs headless on an assignment client.",
+                "inputSchema": {"script_url": {"type": "string"}},
             },
             {
                 "name": "overte_entity_spawn",
@@ -252,7 +292,9 @@ async def get_skill(name: str):
     """Return one skill's full content, read from its SKILL.md - same source of truth as the
     MCP skill://<name> resource in server.py."""
     if name not in _SKILLS_REGISTRY:
-        raise HTTPException(status_code=404, detail=f"Unknown skill {name!r}. Known: {sorted(_SKILLS_REGISTRY)}")
+        raise HTTPException(
+            status_code=404, detail=f"Unknown skill {name!r}. Known: {sorted(_SKILLS_REGISTRY)}"
+        )
     skill_path = _SKILLS_DIR / name / "SKILL.md"
     if not skill_path.exists():
         raise HTTPException(status_code=404, detail=f"SKILL.md missing on disk for {name!r}")
@@ -271,6 +313,8 @@ async def diagnostics():
         "tool_count": 9,
         "tools": [
             {"name": "overte_domain_status"},
+            {"name": "overte_bridge_status"},
+            {"name": "overte_bridge_install"},
             {"name": "overte_entity_spawn"},
             {"name": "overte_script_inject"},
             {"name": "overte_entity_update"},
@@ -283,6 +327,40 @@ async def diagnostics():
         "system": {"windows": True},
         "errors": [],
     }
+
+
+@app.get("/api/capabilities")
+async def capabilities():
+    """Standard fleet capabilities shape for webapp discovery."""
+    return {
+        "server": "overte-mcp",
+        "version": "0.2.0",
+        "tools": [
+            "overte_domain_status",
+            "overte_bridge_status",
+            "overte_bridge_install",
+            "overte_entity_spawn",
+            "overte_script_inject",
+            "overte_entity_update",
+            "overte_entity_delete",
+            "overte_entity_animate",
+            "overte_nearby_entities",
+            "overte_fixture_spawn",
+            "overte_sampling_assist",
+            "overte_shutdown",
+        ],
+        "transports": ["stdio", "http", "mcp"],
+        "health_path": "/api/health",
+    }
+
+
+@app.post("/api/shutdown")
+async def api_shutdown():
+    """Orderly exit for the fleet launcher: 200 now, process exits ~500 ms later."""
+    import threading
+
+    threading.Timer(0.5, lambda: os._exit(0)).start()
+    return {"status": "shutting_down"}
 
 
 @app.get("/api/logs")
@@ -307,8 +385,11 @@ async def get_domain_status(
             DomainStatusInput(host=host, port=port, username=username, password=password)
         )
         if result["status"] == "error":
-            raise HTTPException(status_code=400, detail=result["message"])
+            code = 502 if result.get("source") == "unreachable" else 400
+            raise HTTPException(status_code=code, detail=result["message"])
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to query domain status: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -321,17 +402,7 @@ async def get_avatar_state():
     No domain-server admin API involved - this goes through the same bridge script as
     spawn/inject, so it needs Interface running with overte-mcp-bridge.js loaded.
     """
-    if not _active_ws:
-        return {
-            "status": "success",
-            "source": "simulated",
-            "warning": (
-                "No active WebSocket bridge client connected. Using placeholder data. "
-                "Connect scripts/overte-mcp-bridge.js inside Overte."
-            ),
-            "position": {"x": 0.0, "y": 0.0, "z": 0.0},
-            "orientation": {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0},
-        }
+    _require_bridge()
     res = await _send_ws_command("get_avatar", {})
     if not res or res.get("status") != "success":
         msg = res.get("message", "WebSocket timeout/error.") if res else "WebSocket timeout/error."
@@ -487,11 +558,17 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     logger.info("Overte MCP WebSocket Bridge client connected")
     _active_ws = websocket
+    _bridge_info.clear()
+    _bridge_info["connected_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     try:
         while True:
             data_str = await websocket.receive_text()
             try:
                 data = json.loads(data_str)
+                if data.get("type") == "hello":
+                    _bridge_info.update({k: v for k, v in data.items() if k != "type"})
+                    _log("bridge", "INFO", f"bridge hello: {data}")
+                    continue
                 req_id = data.get("request_id")
                 if req_id and req_id in _pending_requests:
                     future = _pending_requests[req_id]
@@ -504,6 +581,7 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         if _active_ws == websocket:
             _active_ws = None
+            _bridge_info.clear()
 
 
 # Scripts depot root - entity scripts stored under data/scripts/
@@ -713,7 +791,9 @@ def _register_binary_depot(
         name = file.filename
         fp = depot / name
         if fp.exists():
-            raise HTTPException(status_code=409, detail=f"{kind.capitalize()} {name!r} already exists")
+            raise HTTPException(
+                status_code=409, detail=f"{kind.capitalize()} {name!r} already exists"
+            )
         depot.mkdir(parents=True, exist_ok=True)
         content = await file.read()
         fp.write_bytes(content)
@@ -729,7 +809,9 @@ def _register_binary_depot(
         }
 
     @app.put(api_prefix + "/{name}", name=f"update_{kind}_metadata")
-    async def update_item_metadata(name: str, description: str | None = None, category: str | None = None):
+    async def update_item_metadata(
+        name: str, description: str | None = None, category: str | None = None
+    ):
         fp = depot / name
         if not fp.exists():
             raise HTTPException(status_code=404, detail=f"{kind.capitalize()} not found")
@@ -744,7 +826,13 @@ def _register_binary_depot(
                 found = True
                 break
         if not found:
-            manifest.append({"name": name, "description": description or "", "category": category or "uncategorized"})
+            manifest.append(
+                {
+                    "name": name,
+                    "description": description or "",
+                    "category": category or "uncategorized",
+                }
+            )
         _save_depot_manifest(manifest_path, manifest)
         _log(kind + "s", "INFO", f"Updated {kind} metadata: {name}")
         return {"status": "success", "name": name}
@@ -761,7 +849,9 @@ def _register_binary_depot(
         return {"status": "success", "name": name}
 
 
-def _reconcile_manifest_with_disk(depot: Path, manifest_path: Path, allowed_extensions: set[str]) -> None:
+def _reconcile_manifest_with_disk(
+    depot: Path, manifest_path: Path, allowed_extensions: set[str]
+) -> None:
     """models/ predates this manifest system (Nekomimi-chan.glb, a living-room GLB, ... were
     already sitting there) - back-fill manifest entries for any recognized-extension file on
     disk that isn't tracked yet, so the depot listing reflects what's actually there instead
@@ -817,7 +907,11 @@ async def create_backup():
     backup_path = _BACKUPS_DIR / f"overte-mcp-backup-{ts}.zip"
 
     with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for depot, arc_prefix in [(_SCRIPTS_DEPOT, "scripts"), (_MODELS_DEPOT, "models"), (_TEXTURES_DEPOT, "textures")]:
+        for depot, arc_prefix in [
+            (_SCRIPTS_DEPOT, "scripts"),
+            (_MODELS_DEPOT, "models"),
+            (_TEXTURES_DEPOT, "textures"),
+        ]:
             if not depot.exists():
                 continue
             for fp in depot.rglob("*"):
@@ -837,7 +931,13 @@ async def list_backups():
         return {"backups": [], "count": 0}
     items = sorted(
         (
-            {"name": p.name, "size": p.stat().st_size, "created_at": datetime.datetime.fromtimestamp(p.stat().st_mtime, tz=datetime.timezone.utc).isoformat()}
+            {
+                "name": p.name,
+                "size": p.stat().st_size,
+                "created_at": datetime.datetime.fromtimestamp(
+                    p.stat().st_mtime, tz=datetime.timezone.utc
+                ).isoformat(),
+            }
             for p in _BACKUPS_DIR.glob("*.zip")
         ),
         key=lambda x: x["created_at"],
@@ -857,7 +957,11 @@ async def restore_backup(name: str):
     if not backup_path.exists() or backup_path.suffix != ".zip":
         raise HTTPException(status_code=404, detail="Backup not found")
 
-    depot_by_prefix = {"scripts": _SCRIPTS_DEPOT, "models": _MODELS_DEPOT, "textures": _TEXTURES_DEPOT}
+    depot_by_prefix = {
+        "scripts": _SCRIPTS_DEPOT,
+        "models": _MODELS_DEPOT,
+        "textures": _TEXTURES_DEPOT,
+    }
     restored = 0
     with zipfile.ZipFile(backup_path, "r") as zf:
         for member in zf.namelist():
@@ -883,7 +987,8 @@ async def list_tracked_entities():
     """Return all entities tracked by this server (spawned via bridge)."""
     return {
         "status": "success",
-        "source": "live" if _active_ws else "simulated",
+        "source": "tracked",
+        "bridge_connected": _active_ws is not None,
         "items": list(_tracked_entities.values()),
         "count": len(_tracked_entities),
     }
@@ -909,7 +1014,8 @@ def _rgb01_to_overte(rgb: list[float]) -> dict[str, int]:
 
 @app.post("/api/overte/spawn")
 async def post_entity_spawn(request: EntitySpawnInput):
-    """Spawn an in-world entity (via WebSocket bridge if connected, else falls back to simulated)."""
+    """Spawn an in-world entity via the bridge. 503 bridge_not_connected if there is none."""
+    _require_bridge()
     try:
         if _active_ws:
             properties: dict[str, Any] = {
@@ -966,8 +1072,10 @@ async def post_entity_spawn(request: EntitySpawnInput):
                 return {
                     "status": "success",
                     "source": "live",
+                    "bridge_mode": _bridge_info.get("mode"),
                     "entity_id": entity_id,
-                    "message": "Entity successfully spawned in-world via WebSocket bridge.",
+                    "entity": _tracked_entities[entity_id],
+                    "message": "Entity spawned in-world via the bridge.",
                 }
             else:
                 msg = (
@@ -976,11 +1084,7 @@ async def post_entity_spawn(request: EntitySpawnInput):
                     else "WebSocket timeout/error."
                 )
                 raise HTTPException(status_code=400, detail=msg)
-
-        result = await spawn_entity_impl(request)
-        if result["status"] == "error":
-            raise HTTPException(status_code=400, detail=result["message"])
-        return result
+        raise HTTPException(status_code=503, detail=NO_BRIDGE_DETAIL)
     except HTTPException:
         raise
     except Exception as e:
@@ -990,16 +1094,15 @@ async def post_entity_spawn(request: EntitySpawnInput):
 
 @app.post("/api/overte/update")
 async def post_entity_update(request: EntityUpdateInput):
-    """Move/resize an existing entity in-world (via WebSocket bridge, live-only - no
-    simulated fallback since there's nothing meaningful to simulate for an edit)."""
-    if not _active_ws:
-        raise HTTPException(
-            status_code=400,
-            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
-        )
+    """Move/resize an existing entity in-world via the bridge (503 without one)."""
+    _require_bridge()
     properties: dict[str, Any] = {}
     if request.position and len(request.position) == 3:
-        properties["position"] = {"x": request.position[0], "y": request.position[1], "z": request.position[2]}
+        properties["position"] = {
+            "x": request.position[0],
+            "y": request.position[1],
+            "z": request.position[2],
+        }
     if request.dimensions and len(request.dimensions) == 3:
         properties["dimensions"] = {
             "x": request.dimensions[0],
@@ -1017,11 +1120,19 @@ async def post_entity_update(request: EntityUpdateInput):
     if request.extra_properties:
         properties.update(request.extra_properties)
     if not properties:
-        raise HTTPException(status_code=400, detail="Nothing to update - pass position and/or dimensions.")
+        raise HTTPException(
+            status_code=400, detail="Nothing to update - pass position and/or dimensions."
+        )
 
-    res = await _send_ws_command("update", {"entity_id": request.entity_id, "properties": properties})
+    res = await _send_ws_command(
+        "update", {"entity_id": request.entity_id, "properties": properties}
+    )
     if not res or res.get("status") != "success":
-        msg = res.get("message", "WebSocket client failed to update entity.") if res else "WebSocket timeout/error."
+        msg = (
+            res.get("message", "WebSocket client failed to update entity.")
+            if res
+            else "WebSocket timeout/error."
+        )
         raise HTTPException(status_code=400, detail=msg)
     if request.entity_id in _tracked_entities:
         if "position" in properties:
@@ -1121,11 +1232,7 @@ async def post_fixture_spawn(request: FixtureSpawnInput):
     """Spawn a preset test fixture (box/cup/ball/table/chair) for gripper testing. Multi-part
     fixtures (table, chair) spawn as several independent Box entities near each other - not
     parented, since they're static set-dressing that never needs to move as a unit."""
-    if not _active_ws:
-        raise HTTPException(
-            status_code=400,
-            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
-        )
+    _require_bridge()
     parts = FIXTURE_PRESETS.get(request.fixture)
     if not parts:
         raise HTTPException(
@@ -1136,9 +1243,16 @@ async def post_fixture_spawn(request: FixtureSpawnInput):
     if request.position and len(request.position) == 3:
         base = tuple(request.position)
     else:
+        if _bridge_info.get("mode") == "agent":
+            raise HTTPException(
+                status_code=400,
+                detail="position_required: the bridge runs headless (agent mode), there is no avatar to place the fixture in front of.",
+            )
         avatar_res = await _send_ws_command("get_avatar", {})
         if not avatar_res or avatar_res.get("status") != "success":
-            raise HTTPException(status_code=400, detail="Could not read avatar position to place the fixture.")
+            raise HTTPException(
+                status_code=400, detail="Could not read avatar position to place the fixture."
+            )
         pos = avatar_res["position"]
         rot = avatar_res["orientation"]
         forward = _rotate_vector((rot["x"], rot["y"], rot["z"], rot["w"]), (0.0, 0.0, -1.0))
@@ -1192,17 +1306,15 @@ async def post_entity_animate(request: EntityAnimateInput):
     lowering bounces from energy loss, not a constant-period sine wave). Server-driven, same
     pattern as norirobotics-mcp's Resonite wave-demo script - repeated 'update' calls over
     the bridge, not a client-side animation clip."""
-    if not _active_ws:
-        raise HTTPException(
-            status_code=400,
-            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
-        )
+    _require_bridge()
     if request.mode not in ("spin", "bob", "bounce"):
         raise HTTPException(status_code=400, detail="mode must be 'spin', 'bob', or 'bounce'")
 
     start_res = await _send_ws_command("get_entity", {"entity_id": request.entity_id})
     if not start_res or start_res.get("status") != "success":
-        raise HTTPException(status_code=400, detail=f"Could not read entity {request.entity_id} - does it exist?")
+        raise HTTPException(
+            status_code=400, detail=f"Could not read entity {request.entity_id} - does it exist?"
+        )
     props = start_res["properties"]
     rest_rot = props.get("rotation") or {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0}
     rest_rot_t = (rest_rot["x"], rest_rot["y"], rest_rot["z"], rest_rot["w"])
@@ -1227,7 +1339,9 @@ async def post_entity_animate(request: EntityAnimateInput):
             properties = {
                 "position": {"x": rest_pos["x"], "y": rest_pos["y"] + offset, "z": rest_pos["z"]}
             }
-        res = await _send_ws_command("update", {"entity_id": request.entity_id, "properties": properties})
+        res = await _send_ws_command(
+            "update", {"entity_id": request.entity_id, "properties": properties}
+        )
         if not res or res.get("status") != "success":
             raise HTTPException(status_code=400, detail="Bridge update failed mid-animation.")
         ticks += 1
@@ -1245,30 +1359,35 @@ async def post_nearby_entities(request: NearbyEntitiesInput):
     """Find real in-world entities near a point (default: the local user) via
     Entities.findEntities - unlike GET /api/overte/entities, this queries the live world
     instead of this server's own spawn-tracking memory."""
-    if not _active_ws:
-        raise HTTPException(
-            status_code=400,
-            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
-        )
+    _require_bridge()
     payload: dict[str, Any] = {"radius": request.radius}
     if request.position and len(request.position) == 3:
-        payload["position"] = {"x": request.position[0], "y": request.position[1], "z": request.position[2]}
+        payload["position"] = {
+            "x": request.position[0],
+            "y": request.position[1],
+            "z": request.position[2],
+        }
     res = await _send_ws_command("find_nearby", payload)
     if not res or res.get("status") != "success":
-        msg = res.get("message", "WebSocket client failed to search.") if res else "WebSocket timeout/error."
+        msg = (
+            res.get("message", "WebSocket client failed to search.")
+            if res
+            else "WebSocket timeout/error."
+        )
         raise HTTPException(status_code=400, detail=msg)
-    return {"status": "success", "source": "live", "items": res.get("items", []), "count": len(res.get("items", []))}
+    return {
+        "status": "success",
+        "source": "live",
+        "items": res.get("items", []),
+        "count": len(res.get("items", [])),
+    }
 
 
 @app.get("/api/overte/entity/{entity_id}")
 async def get_entity_properties(entity_id: str, properties: str | None = None):
     """Read one entity's live properties. `properties`: comma-separated property names, or
     'all' for every property Overte has for it. Omit for a sensible common-fields default."""
-    if not _active_ws:
-        raise HTTPException(
-            status_code=400,
-            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
-        )
+    _require_bridge()
     payload: dict[str, Any] = {"entity_id": entity_id}
     if properties == "all":
         payload["properties"] = []
@@ -1284,14 +1403,14 @@ async def get_entity_properties(entity_id: str, properties: str | None = None):
 @app.post("/api/overte/delete")
 async def post_entity_delete(request: EntityDeleteInput):
     """Delete an entity from the world (via WebSocket bridge, live-only)."""
-    if not _active_ws:
-        raise HTTPException(
-            status_code=400,
-            detail="No active WebSocket bridge client connected. Connect scripts/overte-mcp-bridge.js inside Overte.",
-        )
+    _require_bridge()
     res = await _send_ws_command("delete", {"entity_id": request.entity_id})
     if not res or res.get("status") != "success":
-        msg = res.get("message", "WebSocket client failed to delete entity.") if res else "WebSocket timeout/error."
+        msg = (
+            res.get("message", "WebSocket client failed to delete entity.")
+            if res
+            else "WebSocket timeout/error."
+        )
         raise HTTPException(status_code=400, detail=msg)
     _tracked_entities.pop(request.entity_id, None)
     return {
@@ -1303,7 +1422,8 @@ async def post_entity_delete(request: EntityDeleteInput):
 
 @app.post("/api/overte/inject")
 async def post_script_inject(request: ScriptInjectInput):
-    """Inject a JavaScript entity script (via WebSocket bridge if connected, else falls back to simulated)."""
+    """Inject a JavaScript entity script via the bridge. 503 bridge_not_connected if there is none."""
+    _require_bridge()
     try:
         if _active_ws:
             payload = {
@@ -1325,16 +1445,159 @@ async def post_script_inject(request: ScriptInjectInput):
                     else "WebSocket timeout/error."
                 )
                 raise HTTPException(status_code=400, detail=msg)
-
-        result = await inject_script_impl(request)
-        if result["status"] == "error":
-            raise HTTPException(status_code=400, detail=result["message"])
-        return result
+        raise HTTPException(status_code=503, detail=NO_BRIDGE_DETAIL)
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to inject script: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# ---------------------------------------------------------------------------
+# Headless bridge: serve the bridge script and register it as a domain persistent script
+# ---------------------------------------------------------------------------
+
+_BRIDGE_FILE = Path(__file__).resolve().parent.parent.parent / "scripts" / "overte-mcp-bridge.js"
+_BRIDGE_ROUTE = "/bridge/overte-mcp-bridge.js"
+_BRIDGE_WS_PLACEHOLDER = "ws://localhost:11110/api/overte/ws"
+
+
+def _domain_admin_auth() -> httpx.BasicAuth:
+    user = os.environ.get("OVERTE_ADMIN_USER", "admin")
+    password = os.environ.get("OVERTE_ADMIN_PASSWORD", "admin")
+    return httpx.BasicAuth(user, password)
+
+
+def _domain_admin_base() -> str:
+    host = os.environ.get("OVERTE_DOMAIN_HOST", "localhost")
+    port = os.environ.get("OVERTE_DOMAIN_ADMIN_PORT", "40100")
+    return f"http://{host}:{port}"
+
+
+def _bridge_script_url() -> str:
+    """URL the domain's assignment client fetches the bridge from. Assignment clients run
+    on the domain host, so loopback is right unless OVERTE_BRIDGE_PUBLIC_URL says otherwise."""
+    override = os.environ.get("OVERTE_BRIDGE_PUBLIC_URL")
+    if override:
+        return override
+    port = int(os.environ.get("MCP_PORT") or os.environ.get("PORT") or BACKEND_PORT)
+    return f"http://127.0.0.1:{port}{_BRIDGE_ROUTE}"
+
+
+@app.get(_BRIDGE_ROUTE, response_class=PlainTextResponse)
+async def get_bridge_script(request: Request):
+    """The bridge script, with its WebSocket URL rewritten to point back at this server."""
+    if not _BRIDGE_FILE.exists():
+        raise HTTPException(status_code=404, detail=f"bridge script missing: {_BRIDGE_FILE}")
+    text = _BRIDGE_FILE.read_text(encoding="utf-8")
+    host = request.headers.get("host") or f"127.0.0.1:{BACKEND_PORT}"
+    text = text.replace(_BRIDGE_WS_PLACEHOLDER, f"ws://{host}/api/overte/ws")
+    return PlainTextResponse(text, media_type="application/javascript")
+
+
+@app.get("/api/overte/bridge")
+async def get_bridge_status():
+    """Is a bridge connected, and in which mode (agent = headless, interface = desktop)."""
+    return {
+        "status": "success",
+        "connected": _active_ws is not None,
+        "bridge": dict(_bridge_info) if _active_ws else None,
+        "script_url": _bridge_script_url(),
+    }
+
+
+async def _read_domain_settings(client: httpx.AsyncClient) -> dict[str, Any]:
+    r = await client.get(f"{_domain_admin_base()}/settings.json")
+    if r.status_code == 401:
+        raise HTTPException(
+            status_code=401,
+            detail="domain-server admin API returned 401: set OVERTE_ADMIN_USER / OVERTE_ADMIN_PASSWORD",
+        )
+    r.raise_for_status()
+    data = r.json()
+    return data.get("values", data)
+
+
+async def _write_persistent_scripts(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    async with httpx.AsyncClient(timeout=10.0, auth=_domain_admin_auth()) as client:
+        r = await client.post(
+            f"{_domain_admin_base()}/settings.json",
+            json={"scripts": {"persistent_scripts": rows}},
+        )
+        if r.status_code == 401:
+            raise HTTPException(status_code=401, detail="domain-server admin API returned 401")
+        r.raise_for_status()
+        try:
+            return r.json()
+        except Exception:
+            return {"raw": r.text}
+
+
+@app.post("/api/overte/bridge/install")
+async def install_bridge(data: dict | None = None):
+    """Register the bridge as a domain persistent script so an assignment client runs it
+    headless. Idempotent. The domain-server restarts itself to apply the change; a running
+    assignment-client then picks up the agent assignment and the bridge connects back here."""
+    url = (data or {}).get("script_url") or _bridge_script_url()
+    try:
+        async with httpx.AsyncClient(timeout=10.0, auth=_domain_admin_auth()) as client:
+            values = await _read_domain_settings(client)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail=f"domain_unreachable: {_domain_admin_base()} ({e})"
+        ) from e
+    rows = list((values.get("scripts") or {}).get("persistent_scripts") or [])
+    if any(r.get("url") == url for r in rows):
+        return {
+            "status": "success",
+            "changed": False,
+            "script_url": url,
+            "persistent_scripts": rows,
+        }
+    rows.append({"url": url, "num_instances": 1, "pool": ""})
+    try:
+        result = await _write_persistent_scripts(rows)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"settings write failed: {e}") from e
+    _log("bridge", "INFO", f"registered persistent script {url}")
+    return {
+        "status": "success",
+        "changed": True,
+        "script_url": url,
+        "persistent_scripts": rows,
+        "domain_response": result,
+        "next": "the domain-server restarts to apply this; poll GET /api/overte/bridge until connected",
+    }
+
+
+@app.post("/api/overte/bridge/uninstall")
+async def uninstall_bridge(data: dict | None = None):
+    """Remove the bridge from the domain's persistent scripts. Idempotent."""
+    url = (data or {}).get("script_url") or _bridge_script_url()
+    try:
+        async with httpx.AsyncClient(timeout=10.0, auth=_domain_admin_auth()) as client:
+            values = await _read_domain_settings(client)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail=f"domain_unreachable: {_domain_admin_base()} ({e})"
+        ) from e
+    rows = list((values.get("scripts") or {}).get("persistent_scripts") or [])
+    kept = [r for r in rows if r.get("url") != url]
+    if len(kept) == len(rows):
+        return {"status": "success", "changed": False, "persistent_scripts": rows}
+    result = await _write_persistent_scripts(kept)
+    return {
+        "status": "success",
+        "changed": True,
+        "persistent_scripts": kept,
+        "domain_response": result,
+    }
 
 
 # Model files (FBX/GLB) are now served via the models depot's own static mount, registered
@@ -1359,7 +1622,7 @@ async def get_saschirob_pendant():
 try:
     from .server import mcp
 
-    mcp_asgi = mcp.http_app()
+    mcp_asgi = mcp.http_app(path="/")
     app.mount("/mcp", mcp_asgi)
     _log("http_server", "INFO", "MCP protocol mounted at /mcp")
 except Exception as e:
