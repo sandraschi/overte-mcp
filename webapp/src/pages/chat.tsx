@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Bot, Download, Eraser, MessageSquare, Send, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiUrl } from "../lib/api-base";
+import { useLlmStore } from "../store/llm";
 
 const STORAGE_KEY = "overte-mcp-chat-history";
 const PERSONALITY_KEY = "overte-mcp-chat-personality";
@@ -49,40 +50,6 @@ const examplePrompts = [
   },
 ];
 
-const PROVIDER_PORTS: Record<string, { port: number; modelEndpoint: string }> = {
-  ollama: { port: 11434, modelEndpoint: "/api/tags" },
-  lmstudio: { port: 1234, modelEndpoint: "/v1/models" },
-  vllm: { port: 8000, modelEndpoint: "/v1/models" },
-};
-
-async function detectProvider(): Promise<{ name: string; base: string } | null> {
-  for (const [name, cfg] of Object.entries(PROVIDER_PORTS)) {
-    try {
-      const r = await fetch(`http://127.0.0.1:${cfg.port}${cfg.modelEndpoint}`, {
-        signal: AbortSignal.timeout(3000),
-      });
-      if (r.ok) return { name, base: `http://127.0.0.1:${cfg.port}` };
-    } catch {}
-  }
-  return null;
-}
-
-async function fetchModels(provider: string): Promise<string[]> {
-  const cfg = PROVIDER_PORTS[provider];
-  if (!cfg) return [];
-  try {
-    const r = await fetch(`http://127.0.0.1:${cfg.port}${cfg.modelEndpoint}`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!r.ok) return [];
-    const data = await r.json();
-    if (provider === "ollama") return (data.models || []).map((m: any) => m.name);
-    return (data.data || []).map((m: any) => m.id);
-  } catch {
-    return [];
-  }
-}
-
 function buildSystemPrompt(
   skillContent: string,
   personalityId: string,
@@ -106,15 +73,9 @@ export function ChatPage() {
   const [personalityId, setPersonalityId] = useState(
     () => localStorage.getItem(PERSONALITY_KEY) || "research",
   );
-  const [provider, setProvider] = useState<{ name: string; base: string } | null>(null);
-  const [models, setModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState(
-    () => localStorage.getItem("overte-mcp-chat-model") || "",
-  );
-  const [providerStatus, setProviderStatus] = useState<"probing" | "detected" | "not_found">(
-    "probing",
-  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { provider, model, models, status, refresh, setModel, chat } = useLlmStore();
 
   const { data: skillList } = useQuery({
     queryKey: ["skills"],
@@ -136,6 +97,10 @@ export function ChatPage() {
   });
 
   useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-100)));
   }, [messages]);
 
@@ -144,33 +109,16 @@ export function ChatPage() {
   }, [personalityId]);
 
   useEffect(() => {
-    if (selectedModel) localStorage.setItem("overte-mcp-chat-model", selectedModel);
-  }, [selectedModel]);
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      setProviderStatus("probing");
-      const p = await detectProvider();
-      setProvider(p);
-      setProviderStatus(p ? "detected" : "not_found");
-      if (p) {
-        const m = await fetchModels(p.name);
-        setModels(m);
-        if (m.length > 0 && !selectedModel) setSelectedModel(m[0]);
-      }
-    })();
-  }, [selectedModel]);
-
   const personality = personalities.find((p) => p.id === personalityId) || personalities[0];
   const systemPrompt = buildSystemPrompt(skillContent || "", personalityId, personality.prompt);
+  const providerReady = status === "detected" && !!provider && !!model;
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || sending || !provider) return;
+    if (!text || sending || !providerReady) return;
     setInput("");
     const userMsg: ChatMessage = { role: "user", content: text, ts: new Date().toISOString() };
     setMessages((prev) => [...prev, userMsg]);
@@ -178,29 +126,13 @@ export function ChatPage() {
 
     try {
       const history = messages.map((m) => ({ role: m.role, content: m.content }));
-      const r = await fetch(
-        `http://127.0.0.1:${PROVIDER_PORTS[provider.name].port}/v1/chat/completions`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: selectedModel,
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...history,
-              { role: "user", content: text },
-            ],
-          }),
-          signal: AbortSignal.timeout(30000),
-        },
+      const reply = await chat(
+        [...history, { role: "user", content: text }],
+        systemPrompt || undefined,
       );
-
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const data = await r.json();
-      const reply = data.choices?.[0]?.message?.content || "No response";
       const assistantMsg: ChatMessage = {
         role: "assistant",
-        content: reply,
+        content: reply || "No response",
         ts: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
@@ -214,7 +146,7 @@ export function ChatPage() {
     } finally {
       setSending(false);
     }
-  }, [input, sending, provider, messages, selectedModel, systemPrompt]);
+  }, [input, sending, providerReady, messages, systemPrompt, chat]);
 
   const handleExport = () => {
     if (messages.length === 0) return;
@@ -253,11 +185,11 @@ export function ChatPage() {
               <Sparkles className="w-4 h-4 text-indigo-400" />
             </h2>
             <p className="text-sm text-slate-300">
-              {providerStatus === "probing"
-                ? "Detecting local LLM..."
-                : providerStatus === "detected"
-                  ? `Connected to ${provider?.name} on :${provider ? PROVIDER_PORTS[provider.name]?.port : "?"}`
-                  : "No local LLM detected"}
+              {status === "probing"
+                ? "Detecting local LLM via backend..."
+                : status === "detected"
+                  ? `Connected via backend proxy to ${provider}${model ? ` / ${model}` : ""}`
+                  : "No local LLM detected - see Settings"}
             </p>
           </div>
         </div>
@@ -286,8 +218,8 @@ export function ChatPage() {
 
           {models.length > 0 && (
             <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
               style={{
                 background: "rgba(0,0,0,0.3)",
                 border: "1px solid var(--border-color)",
@@ -368,12 +300,12 @@ export function ChatPage() {
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-16">
-            <Bot className="w-12 h-12 text-slate-700 mb-4" />
+            <Bot className="w-12 h-12 text-slate-300 mb-4" />
             <p className="text-sm text-slate-300 mb-2">Start a conversation</p>
             <p className="text-sm text-slate-300">
-              {providerStatus === "detected"
-                ? `Using ${provider?.name} with model ${selectedModel || "default"}`
-                : "No local LLM detected — responses unavailable"}
+              {status === "detected"
+                ? `Using ${provider} with model ${model || "default"} via backend proxy`
+                : "No local LLM detected - responses unavailable until one is (see Settings)"}
             </p>
           </div>
         )}
@@ -455,8 +387,8 @@ export function ChatPage() {
               handleSend();
             }
           }}
-          placeholder={provider ? "Type a message..." : "No LLM provider available"}
-          disabled={!provider || sending}
+          placeholder={providerReady ? "Type a message..." : "No LLM provider available"}
+          disabled={!providerReady || sending}
           style={{
             flex: 1,
             background: "rgba(0,0,0,0.3)",
@@ -471,14 +403,15 @@ export function ChatPage() {
         <button
           data-testid="chat-send"
           onClick={handleSend}
-          disabled={!input.trim() || !provider || sending}
+          disabled={!input.trim() || !providerReady || sending}
           style={{
-            background: input.trim() && provider && !sending ? "#f59e0b" : "var(--border-color)",
+            background:
+              input.trim() && providerReady && !sending ? "#f59e0b" : "var(--border-color)",
             border: "none",
             borderRadius: "8px",
             padding: "10px",
-            cursor: input.trim() && provider && !sending ? "pointer" : "default",
-            opacity: input.trim() && provider && !sending ? 1 : 0.4,
+            cursor: input.trim() && providerReady && !sending ? "pointer" : "default",
+            opacity: input.trim() && providerReady && !sending ? 1 : 0.4,
           }}
           className="transition-all hover:bg-amber-400"
         >

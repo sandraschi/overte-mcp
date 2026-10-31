@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Cpu, Database, Gpu, Network, Server, Wifi } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { apiUrl } from "../lib/api-base";
+import { useLlmStore } from "../store/llm";
 
 interface HealthData {
   status: string;
@@ -9,55 +10,7 @@ interface HealthData {
   version: string;
   uptime_seconds: number;
   tool_count: number;
-  providers?: Record<string, any>;
-}
-
-const PROVIDERS = [
-  {
-    id: "ollama",
-    name: "Ollama",
-    port: 11434,
-    endpoint: "/api/tags",
-    modelKey: "models",
-    nameKey: "name",
-  },
-  {
-    id: "lmstudio",
-    name: "LM Studio",
-    port: 1234,
-    endpoint: "/v1/models",
-    modelKey: "data",
-    nameKey: "id",
-  },
-  { id: "vllm", name: "vLLM", port: 8000, endpoint: "/v1/models", modelKey: "data", nameKey: "id" },
-];
-
-async function probeProvider(
-  provider: (typeof PROVIDERS)[0],
-): Promise<"detected" | "not_found" | "probing"> {
-  try {
-    const r = await fetch(`http://127.0.0.1:${provider.port}${provider.endpoint}`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    return r.ok ? "detected" : "not_found";
-  } catch {
-    return "not_found";
-  }
-}
-
-async function fetchProviderModels(provider: (typeof PROVIDERS)[0]): Promise<string[]> {
-  try {
-    const r = await fetch(`http://127.0.0.1:${provider.port}${provider.endpoint}`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!r.ok) return [];
-    const data = await r.json();
-    const items = data[provider.modelKey as keyof typeof data] as any[] | undefined;
-    if (!items) return [];
-    return items.map((m: any) => m[provider.nameKey] as string).filter(Boolean);
-  } catch {
-    return [];
-  }
+  providers?: Record<string, unknown>;
 }
 
 function formatUptime(seconds: number): string {
@@ -71,24 +24,19 @@ function formatUptime(seconds: number): string {
   return parts.join(" ");
 }
 
-const LLM_STORAGE_PROVIDER_KEY = "settings_llm_provider";
-const LLM_STORAGE_MODEL_KEY = "settings_llm_model";
-
 export function SettingsPage() {
-  const [providerStatuses, setProviderStatuses] = useState<
-    Record<string, "probing" | "detected" | "not_found">
-  >({
-    ollama: "probing",
-    lmstudio: "probing",
-    vllm: "probing",
-  });
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState(
-    () => localStorage.getItem(LLM_STORAGE_PROVIDER_KEY) || "",
-  );
-  const [selectedModel, setSelectedModel] = useState(
-    () => localStorage.getItem(LLM_STORAGE_MODEL_KEY) || "",
-  );
+  const {
+    providers,
+    provider: selectedProvider,
+    model: selectedModel,
+    models: availableModels,
+    modelsLive,
+    status,
+    gpu,
+    refresh,
+    setProvider,
+    setModel,
+  } = useLlmStore();
 
   const { data: health, isLoading: healthLoading } = useQuery<HealthData>({
     queryKey: ["health"],
@@ -101,43 +49,10 @@ export function SettingsPage() {
   });
 
   useEffect(() => {
-    (async () => {
-      const results: Record<string, "probing" | "detected" | "not_found"> = {};
-      for (const p of PROVIDERS) {
-        results[p.id] = "probing";
-      }
-      setProviderStatuses({ ...results });
+    void refresh();
+  }, [refresh]);
 
-      for (const p of PROVIDERS) {
-        const status = await probeProvider(p);
-        results[p.id] = status;
-        setProviderStatuses({ ...results });
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedProvider) return;
-    (async () => {
-      const p = PROVIDERS.find((x) => x.id === selectedProvider);
-      if (!p) return;
-      const models = await fetchProviderModels(p);
-      setAvailableModels(models);
-      if (models.length > 0 && !models.includes(selectedModel)) {
-        setSelectedModel(models[0]);
-      }
-    })();
-  }, [selectedProvider, selectedModel]);
-
-  useEffect(() => {
-    if (selectedProvider) localStorage.setItem(LLM_STORAGE_PROVIDER_KEY, selectedProvider);
-  }, [selectedProvider]);
-
-  useEffect(() => {
-    if (selectedModel) localStorage.setItem(LLM_STORAGE_MODEL_KEY, selectedModel);
-  }, [selectedModel]);
-
-  const detectedProviders = PROVIDERS.filter((p) => providerStatuses[p.id] === "detected");
+  const detectedProviders = providers.filter((p) => p.available);
 
   return (
     <div data-testid="settings-page" className="space-y-8 animate-fade-in">
@@ -210,7 +125,7 @@ export function SettingsPage() {
         )}
       </div>
 
-      {/* LLM Provider Detection */}
+      {/* LLM Provider Detection (via backend proxy - the browser never probes providers) */}
       <div className="glass-panel space-y-4">
         <div className="flex items-center gap-2 border-b border-white/[0.05] pb-3">
           <Cpu className="w-5 h-5 text-amber-500" />
@@ -220,44 +135,44 @@ export function SettingsPage() {
         </div>
 
         <div className="space-y-3">
-          {PROVIDERS.map((p) => {
-            const status = providerStatuses[p.id];
+          {providers.map((p) => {
+            const dot =
+              status === "probing"
+                ? "bg-gray-500 animate-pulse"
+                : p.available
+                  ? "bg-green-500"
+                  : "bg-gray-600";
+            const label =
+              status === "probing" ? "Probing..." : p.available ? "Detected" : "Not found";
             return (
-              <div key={p.id} className="glass-card flex items-center justify-between">
+              <div key={p.name} className="glass-card flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      status === "probing"
-                        ? "bg-gray-500 animate-pulse"
-                        : status === "detected"
-                          ? "bg-green-500"
-                          : "bg-gray-600"
-                    }`}
-                  />
-                  <span className="text-sm font-semibold text-white">{p.name}</span>
-                  <span className="text-sm text-slate-300 font-mono">:{p.port}</span>
+                  <div className={`w-2 h-2 rounded-full ${dot}`} />
+                  <span className="text-sm font-semibold text-white capitalize">{p.name}</span>
                 </div>
                 <span
                   className={`text-sm font-bold ${
-                    status === "probing"
-                      ? "text-slate-300"
-                      : status === "detected"
-                        ? "text-green-400"
-                        : "text-slate-300"
+                    p.available && status !== "probing" ? "text-green-400" : "text-slate-300"
                   }`}
                 >
-                  {status === "probing"
-                    ? "Probing..."
-                    : status === "detected"
-                      ? "Detected"
-                      : "Not found"}
+                  {label}
                 </span>
               </div>
             );
           })}
         </div>
 
-        {detectedProviders.length === 0 && (
+        <div className="glass-card flex items-center gap-2 text-sm text-slate-300">
+          <Gpu className="w-4 h-4 shrink-0 text-amber-500" />
+          <span>
+            {gpu.available
+              ? `GPU: ${gpu.gpus.join("; ")}`
+              : "No NVIDIA GPU detected on the backend host."}
+            {!modelsLive && availableModels.length > 0 && " Showing curated fallback models."}
+          </span>
+        </div>
+
+        {detectedProviders.length === 0 && status !== "probing" && (
           <div className="glass-card border border-amber-500/20 text-sm text-amber-400 flex items-center gap-2">
             <Gpu className="w-4 h-4 shrink-0" />
             <span>Install Ollama or LM Studio to enable AI features.</span>
@@ -274,8 +189,7 @@ export function SettingsPage() {
                 data-testid="llm-provider-select"
                 value={selectedProvider}
                 onChange={(e) => {
-                  setSelectedProvider(e.target.value);
-                  setSelectedModel("");
+                  setProvider(e.target.value);
                 }}
                 style={{
                   width: "100%",
@@ -290,7 +204,7 @@ export function SettingsPage() {
               >
                 <option value="">Select a provider</option>
                 {detectedProviders.map((p) => (
-                  <option key={p.id} value={p.id}>
+                  <option key={p.name} value={p.name} className="capitalize">
                     {p.name}
                   </option>
                 ))}
@@ -304,7 +218,7 @@ export function SettingsPage() {
               <select
                 data-testid="llm-model-select"
                 value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
+                onChange={(e) => setModel(e.target.value)}
                 disabled={availableModels.length === 0}
                 style={{
                   width: "100%",

@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiUrl } from "../lib/api-base";
 
 interface DomainNode {
@@ -39,6 +40,35 @@ const APP_LABELS: Record<string, string> = {
   "domain-server": "Domain Server",
   interface: "Interface Client",
 };
+
+function LlmOpportunity() {
+  const { data } = useQuery<{ required: boolean; detected: string[] } | null>({
+    queryKey: ["llmOnboarding"],
+    queryFn: async () => {
+      const r = await fetch(apiUrl("/api/llm/onboarding"));
+      if (!r.ok) return null;
+      return r.json();
+    },
+    refetchInterval: 30000,
+  });
+  if (!data?.required) return null;
+  return (
+    <div
+      className="glass-panel border border-amber-500/30 flex items-center gap-3 text-amber-300 text-sm"
+      style={{ padding: "12px 16px" }}
+      data-testid="onboarding-cue"
+      data-onboarding="llm"
+    >
+      <Cpu className="w-4 h-4 shrink-0" />
+      <span>
+        No local LLM detected - install Ollama or LM Studio to enable AI Chat and script generation.{" "}
+        <Link to="/settings" className="underline font-bold">
+          Configure in Settings
+        </Link>
+      </span>
+    </div>
+  );
+}
 
 export function Dashboard() {
   const [host, setHost] = useState("localhost");
@@ -182,6 +212,9 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* LLM opportunity prompt (fail-open: only renders when no provider detected) */}
+      <LlmOpportunity />
 
       {/* App Status */}
       <div className="glass-panel" style={{ padding: "16px" }} data-testid="app-status">

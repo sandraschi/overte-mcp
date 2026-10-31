@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { apiUrl } from "../lib/api-base";
+import { useLlmStore } from "../store/llm";
 
 interface Script {
   name: string;
@@ -53,6 +54,7 @@ export function ScriptingPage() {
 
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const { provider: llmProvider, model: llmModel } = useLlmStore();
   const [selectedDetail, setSelectedDetail] = useState<string | null>(null);
 
   const scriptDetails: Record<
@@ -167,28 +169,35 @@ export function ScriptingPage() {
 
   const handleAiGenerate = async () => {
     if (!aiPrompt.trim()) return;
+    if (!llmProvider || !llmModel) {
+      setAiError("No LLM provider/model selected - pick one in Settings first.");
+      return;
+    }
     setAiLoading(true);
     setAiError(null);
     try {
-      const res = await fetch("http://localhost:11434/v1/chat/completions", {
+      const res = await fetch(apiUrl("/api/llm/chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "llama3",
+          provider: llmProvider,
+          model: llmModel,
           messages: [
             {
-              role: "system",
-              content:
-                "You are an Overte scripting expert. Generate Overte-compatible JavaScript entity scripts using the IIFE pattern: (function() { ... }); Use Entities.getEntityProperties and Entities.editEntity for entity manipulation, Script.setTimeout for timers, Quat and Vec3 for math. Return ONLY the raw JavaScript code, no explanation.",
+              role: "user",
+              content: aiPrompt,
             },
-            { role: "user", content: aiPrompt },
           ],
-          temperature: 0.3,
+          system:
+            "You are an Overte scripting expert. Generate Overte-compatible JavaScript entity scripts using the IIFE pattern: (function() { ... }); Use Entities.getEntityProperties and Entities.editEntity for entity manipulation, Script.setTimeout for timers, Quat and Vec3 for math. Return ONLY the raw JavaScript code, no explanation.",
         }),
       });
-      if (!res.ok) throw new Error(`LLM returned ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || `LLM proxy HTTP ${res.status}`);
+      }
       const data = await res.json();
-      const content = data.choices?.[0]?.message?.content || "";
+      const content = data.reply || "";
       const codeMatch = content.match(/```(?:js|javascript)?\n?([\s\S]*?)```/);
       const code = codeMatch ? codeMatch[1].trim() : content.trim();
       if (code) {
