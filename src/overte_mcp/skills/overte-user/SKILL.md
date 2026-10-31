@@ -68,5 +68,6 @@ endpoint list if you need the raw routes.
   stretched/squished to fit, not scaled proportionally.
 - Forgetting `overte_entity_animate` blocks - don't call it and then immediately try to
   interact with the entity in the same turn; wait for the response.
-- Assuming `overte_entity_spawn`'s `"source": "simulated"` response means the object exists
-  in-world. It doesn't - it's a dry-run confirmation only.
+- Overte-mcp has no simulated mode: every in-world tool either does the real thing
+  (`source: "live"`) or fails with `bridge_not_connected` / `domain_unreachable`.
+  A failed call means the object does not exist in-world - never treat it as placed.

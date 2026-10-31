@@ -1,11 +1,11 @@
 {
   "name": "overte-mcp",
   "displayName": "Overte MCP Server",
-  "description": "Model Context Protocol (MCP) server for the Overte open-source VR/metaverse platform. Domain-server administration (verified live), in-world entity spawning and JavaScript script injection via WebSocket bridge (verified live). Supports permanent entities with cross-restart persistence.",
-  "version": "0.2.0",
+  "description": "Model Context Protocol (MCP) server for the Overte open-source VR/metaverse platform. Domain-server administration (verified live), in-world entity lifecycle (spawn/update/animate/delete), nearby search, fixture spawns and JavaScript script injection via WebSocket bridge (verified live). No simulated mode: tools fail honestly with bridge_not_connected or domain_unreachable.",
+  "version": "0.2.1",
   "badges": {
     "status": "beta",
-    "verified": "All 3 tools verified live against Overte 2026.04.1"
+    "verified": "All 12 tools verified live against Overte 2026.04.1"
   },
   "homepage": "https://github.com/sandraschi/overte-mcp",
   "repository": "https://github.com/sandraschi/overte-mcp.git",
@@ -20,7 +20,7 @@
   "tools": [
     {
       "name": "overte_domain_status",
-      "description": "Retrieve connected-node telemetry and settings from an Overte Domain Server via /nodes.json and /settings.json. Verified live against Overte 2026.04.1 (:40100). Falls back to labeled simulated data if unreachable.",
+      "description": "Retrieve connected-node telemetry and settings from an Overte Domain Server via /nodes.json and /settings.json. Fails honestly with domain_unreachable when no domain-server answers (no placeholder data).",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -46,8 +46,29 @@
       }
     },
     {
+      "name": "overte_bridge_status",
+      "description": "Report whether the in-world bridge is connected and how it runs (agent=headless persistent script, interface=desktop client) plus whether it may create entities (can_rez).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "overte_bridge_install",
+      "description": "Register the bridge as a domain persistent script so it runs headless (idempotent). Admin credentials from OVERTE_ADMIN_USER / OVERTE_ADMIN_PASSWORD. Then poll overte_bridge_status until connected.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "script_url": {
+            "type": "string",
+            "description": "Override the bridge URL the domain fetches. Default: this backend's /bridge/overte-mcp-bridge.js."
+          }
+        }
+      }
+    },
+    {
       "name": "overte_entity_spawn",
-      "description": "Spawn an entity (Box, Sphere, Web, Model) in the Overte world. Verified live via WebSocket bridge (2026-07-30). Supports permanent=True for cross-restart persistence (lifetime=-1). Falls back to simulated when bridge disconnected.",
+      "description": "Spawn an entity (Box, Sphere, Web, Model, Light) in the Overte world. Verified live via WebSocket bridge. Supports permanent=True for cross-restart persistence (lifetime=-1). Fails with bridge_not_connected when no bridge is connected; never invents entities.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -58,19 +79,18 @@
           "type": {
             "type": "string",
             "default": "Box",
-            "description": "Entity type: Box, Sphere, Web, Model"
+            "description": "Entity type: Box, Sphere, Web, Model, Light"
           },
           "position": {
             "type": "array",
             "items": { "type": "number" },
             "default": [0, 0, 0],
-            "description": "X, Y, Z translation coordinates"
+            "description": "X, Y, Z translation coordinates (required in headless agent mode)"
           },
           "scale": {
             "type": "array",
             "items": { "type": "number" },
-            "default": [1, 1, 1],
-            "description": "X, Y, Z dimensions"
+            "description": "X, Y, Z bounding-box dimensions in meters"
           },
           "model_url": {
             "type": "string",
@@ -79,6 +99,32 @@
           "script_url": {
             "type": "string",
             "description": "Optional JavaScript behavior script URL to attach"
+          },
+          "permanent": {
+            "type": "boolean",
+            "default": false,
+            "description": "Persist across domain-server restarts (lifetime=-1)"
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "Parent entity/avatar UUID (MyAvatar attaches to the local user)"
+          },
+          "color": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "RGB as 0.0-1.0 floats, default white"
+          },
+          "intensity": {
+            "type": "number",
+            "description": "Light brightness (Light entities only)"
+          },
+          "is_spotlight": {
+            "type": "boolean",
+            "description": "True for a directional cone, False/omitted for omnidirectional"
+          },
+          "falloff_radius": {
+            "type": "number",
+            "description": "Distance in meters a Light's intensity falls off by"
           }
         },
         "required": ["name"]
@@ -86,7 +132,7 @@
     },
     {
       "name": "overte_script_inject",
-      "description": "Inject JavaScript behavior onto an Overte entity. Live when WebSocket bridge is connected; simulated fallback when disconnected. Every response indicates its data source.",
+      "description": "Inject JavaScript behavior onto an Overte entity. Live when WebSocket bridge is connected; fails with bridge_not_connected otherwise. Every response indicates its data source.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -104,6 +150,190 @@
           }
         },
         "required": ["entity_id", "script_url"]
+      }
+    },
+    {
+      "name": "overte_entity_update",
+      "description": "Move, resize, re-parent, or toggle visibility of an existing in-world entity. Live-only (bridge required).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "description": "Overte target entity UUID"
+          },
+          "position": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "X, Y, Z translation coordinates"
+          },
+          "dimensions": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "X, Y, Z bounding-box dimensions in meters"
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "Re-parent to a different entity/avatar UUID"
+          },
+          "visible": {
+            "type": "boolean",
+            "description": "Show/hide without deleting"
+          },
+          "intensity": {
+            "type": "number",
+            "description": "Light entity brightness"
+          },
+          "color": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "RGB as 0.0-1.0 floats"
+          }
+        },
+        "required": ["entity_id"]
+      }
+    },
+    {
+      "name": "overte_entity_delete",
+      "description": "Permanently delete an in-world entity. Live-only (bridge required).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "description": "Overte target entity UUID"
+          }
+        },
+        "required": ["entity_id"]
+      }
+    },
+    {
+      "name": "overte_entity_animate",
+      "description": "Loop-animate an entity in place: spin, bob, or real drop-and-rebound bounce. Server-driven over the bridge; blocks for duration_s. Live-only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "description": "Overte target entity UUID"
+          },
+          "mode": {
+            "type": "string",
+            "default": "spin",
+            "description": "spin, bob, or bounce"
+          },
+          "axis": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Rotation axis for spin (normalized)"
+          },
+          "speed": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Radians/second (spin), oscillations/second (bob), pace (bounce)"
+          },
+          "amplitude": {
+            "type": "number",
+            "default": 0.1,
+            "description": "Peak height in meters (bob/bounce)"
+          },
+          "damping": {
+            "type": "number",
+            "default": 0.6,
+            "description": "Energy retained per bounce 0-1 (bounce only)"
+          },
+          "duration_s": {
+            "type": "number",
+            "default": 5.0,
+            "description": "How long to animate before stopping"
+          },
+          "tick_hz": {
+            "type": "number",
+            "default": 10.0,
+            "description": "Update rate over the bridge"
+          }
+        },
+        "required": ["entity_id"]
+      }
+    },
+    {
+      "name": "overte_nearby_entities",
+      "description": "Find entities near a position (defaults to the local user). Live-only (bridge required).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Search center; omit to search around the local user"
+          },
+          "radius": {
+            "type": "number",
+            "default": 20.0,
+            "description": "Search radius in meters"
+          }
+        }
+      }
+    },
+    {
+      "name": "overte_fixture_spawn",
+      "description": "Spawn a preset fixture (box, cup, ball, table, chair) in front of the local user or at a position. Live-only (bridge required).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fixture": {
+            "type": "string",
+            "description": "Preset name: box, cup, ball, table, or chair"
+          },
+          "position": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "Where to place it; omit to spawn in front of the user"
+          },
+          "forward_distance": {
+            "type": "number",
+            "default": 1.5,
+            "description": "Meters in front of the user when position is omitted"
+          },
+          "name": {
+            "type": "string",
+            "description": "Override the entity name (defaults to the fixture name)"
+          },
+          "color": {
+            "type": "array",
+            "items": { "type": "number" },
+            "description": "RGB as 0.0-1.0 floats, default white"
+          }
+        },
+        "required": ["fixture"]
+      }
+    },
+    {
+      "name": "overte_sampling_assist",
+      "description": "Get multi-step Overte operation guidance via MCP sampling when the host supports it; static plan otherwise. Read-only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "type": "string",
+            "description": "What you want to accomplish with Overte"
+          }
+        },
+        "required": ["goal"]
+      }
+    },
+    {
+      "name": "overte_shutdown",
+      "description": "Orderly self-termination for agents and the fleet launcher. Responds immediately, then exits the process ~500 ms later. Requires confirm=True.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "default": false,
+            "description": "Must be True to terminate the server process"
+          }
+        }
       }
     }
   ]

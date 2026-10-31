@@ -90,6 +90,78 @@ entity, confirmed it animates.
 Same bridge dependency as `overte_entity_spawn`; fails with `bridge_not_connected`
 when there is none.
 
+## `overte_entity_update`
+
+Moves, resizes, re-parents, or toggles an existing in-world entity. Live-only
+(bridge required).
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `entity_id` | str | required | Target entity UUID |
+| `position` | list[float] \| None | `None` | X, Y, Z translation coordinates |
+| `dimensions` | list[float] \| None | `None` | X, Y, Z bounding-box dimensions in meters |
+| `parent_id` | str \| None | `None` | Re-parent to a different entity/avatar UUID |
+| `visible` | bool \| None | `None` | Show/hide without deleting |
+| `intensity` | float \| None | `None` | Light entity brightness |
+| `color` | list[float] \| None | `None` | RGB as 0.0-1.0 floats |
+
+## `overte_entity_delete`
+
+Permanently deletes an in-world entity. DESTRUCTIVE, no undo. Live-only.
+Parameter: `entity_id` (required).
+
+## `overte_entity_animate`
+
+Loop-animates an entity in place: `spin` (continuous rotation), `bob`
+(sinusoidal oscillation), or `bounce` (real drop-and-rebound physics with
+per-landing energy loss, not a sine wave). Server-driven repeated WebSocket
+updates, not a baked clip — this call blocks for `duration_s`. Live-only.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `entity_id` | str | required | Target entity UUID |
+| `mode` | str | `"spin"` | `spin`, `bob`, or `bounce` |
+| `axis` | list[float] | `[0,1,0]` | Rotation axis for `spin` (normalized) |
+| `speed` | float | `1.0` | Radians/second (`spin`), oscillations/second (`bob`), pace (`bounce`) |
+| `amplitude` | float | `0.1` | Peak height above settled position, meters (`bob`/`bounce`) |
+| `damping` | float | `0.6` | Energy retained per bounce, 0–1 (`bounce` only) |
+| `duration_s` | float | `5.0` | How long to animate before stopping |
+| `tick_hz` | float | `10.0` | Update rate over the bridge |
+
+## `overte_nearby_entities`
+
+Finds entities near a point by querying the live world
+(`Entities.findEntities`), not just this server's own tracked-entity list.
+Live-only.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `position` | list[float] \| None | `None` | Search center; omit to search around the local user |
+| `radius` | float | `20.0` | Search radius in meters |
+
+## `overte_fixture_spawn`
+
+Spawns a preset gripper/manipulation test fixture: `box`, `cup`, `ball`,
+`table`, or `chair`. Box/Sphere primitive approximations (Overte has no
+cylinder primitive). Multi-part fixtures (table/chair) spawn as several
+same-colored Box parts; their entity_ids are all in the response's
+`data.entity_ids` list. Live-only.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `fixture` | str | required | `box`, `cup`, `ball`, `table`, or `chair` |
+| `position` | list[float] \| None | `None` | Omit to spawn in front of the local user's facing direction |
+| `forward_distance` | float | `1.5` | Meters in front of the user when position is omitted |
+| `name` | str \| None | `None` | Override the entity name |
+| `color` | list[float] | `[1,1,1]` | RGB 0.0-1.0, applied to every part of a multi-part fixture |
+
+## `overte_shutdown`
+
+Orderly self-termination for agents and the fleet launcher. Responds
+immediately, then exits the process ~500 ms later so depot writes and
+in-flight jobs can flush. Parameter: `confirm` (must be `True`).
+REST twin: `POST /api/shutdown`.
+
 ## `overte_sampling_assist`
 
 Multi-step planning helper via `ctx.sample()` when the MCP host supports

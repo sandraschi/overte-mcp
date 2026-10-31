@@ -14,7 +14,7 @@ Companion to [llms.txt](llms.txt). Curated tool, env, run, architecture, and tro
 - **Purpose:** Query connected nodes and settings via domain admin HTTP.
 - **Endpoints:** `GET /nodes.json`, `GET /settings.json`
 - **Input (`input_data`):** `host` (default `localhost`), `port` (default `40100`), optional `username` / `password` (Basic Auth)
-- **Output:** JSON with nodes/settings; `source: "live"` or `source: "simulated"` if unreachable
+- **Output:** JSON with nodes/settings; `source: "live"`. No domain-server answering is an honest `domain_unreachable` failure (there is no simulated mode)
 - **Status:** Verified against live local domain-server
 
 ### overte_entity_spawn
@@ -22,7 +22,7 @@ Companion to [llms.txt](llms.txt). Curated tool, env, run, architecture, and tro
 - **Purpose:** Spawn Box / Sphere / Web / Model entities in-world
 - **Input:** `name` (required), `type`, `position`, `scale`, optional `model_url`, `script_url`, `permanent`
 - `permanent: True` sets `lifetime: -1` so entity persists across domain-server restarts
-- **Path:** Prefer local FastAPI/bridge; if no WS client → labeled simulated
+- **Path:** Live FastAPI/bridge only; with no WS client the call fails with `bridge_not_connected` (never a simulated confirmation)
 - **Bridge:** Load `scripts/overte-mcp-bridge.js` in Overte Interface while backend listens on `11110`
 - **Example:** `overte_entity_spawn(name="Neko", type="Model", model_url="http://localhost:11110/models/Nekomimi-chan.glb", permanent=True)`
 
@@ -30,16 +30,27 @@ Companion to [llms.txt](llms.txt). Curated tool, env, run, architecture, and tro
 
 - **Purpose:** Attach a JavaScript behavior URL (+ optional `script_data`) to an entity UUID
 - **Input:** `entity_id`, `script_url`, optional `script_data`
-- **Path:** Same live-or-simulated contract as spawn
+- **Path:** Same live-only contract as spawn (fails with `bridge_not_connected`, no simulation)
+
+### overte_entity_update / overte_entity_delete / overte_entity_animate
+
+- **Purpose:** Move/resize/re-parent/toggle, permanently delete, or loop-animate (spin/bob/bounce) an existing entity. All live-only via the bridge.
+
+### overte_nearby_entities / overte_fixture_spawn
+
+- **Purpose:** Live-world entity search (`position` optional, `radius` default 20m); preset gripper fixtures (`box`/`cup`/`ball`/`table`/`chair`, `forward_distance` default 1.5m).
+
+### overte_bridge_status / overte_bridge_install / overte_sampling_assist / overte_shutdown
+
+- **Purpose:** Bridge presence + install (idempotent persistent-script registration); sampling-assisted multi-step plans; orderly self-termination (`confirm=True`).
 
 ## Environment
 
 | Variable / need | Notes |
 |-----------------|--------|
-| `PYTHONPATH` | MCPB sets `${PWD}/src` |
+| `PYTHONPATH` | MCPB sets `${__dirname}/src` |
 | `PYTHONUNBUFFERED` | `1` in MCPB manifest |
 | Python | 3.12+ |
-| `uv` | Required for stdio / MCPB `uv run` |
 | Overte domain-server | For live status |
 | Bridge script + backend | For live spawn/inject |
 
@@ -50,28 +61,13 @@ No API keys required for local Overte admin (Basic Auth optional).
 ```powershell
 uv sync
 ./start.ps1                          # FastAPI 11110 + Vite 11111
-uv run overte-mcp                    # stdio MCP
+uv run python -m overte_mcp          # stdio MCP
 just mcpb-pack                       # dist/overte-mcp.mcpb
 ```
 
-Claude Desktop (repo):
-
-```json
-{
-  "mcpServers": {
-    "overte-mcp": {
-      "command": "uv",
-      "args": ["--directory", "D:/Dev/repos/overte-mcp", "run", "overte-mcp"],
-      "env": {
-        "PYTHONPATH": "D:/Dev/repos/overte-mcp/src",
-        "PYTHONUNBUFFERED": "1"
-      }
-    }
-  }
-}
-```
-
-Or install `dist/overte-mcp.mcpb` (pack from `mcpb/`; see INSTALL.md).
+Claude Desktop (repo): point the server at `python -m overte_mcp` with
+`PYTHONPATH` set to `<repo>/src` (no machine-specific paths — derive from the
+checkout location). Or install `dist/overte-mcp.mcpb` (pack from `mcpb/`; see INSTALL.md).
 
 ## Architecture
 
@@ -88,8 +84,8 @@ Canonical code: `src/overte_mcp/`. Pack sync copies into `mcpb/src/overte_mcp`.
 
 | Artifact | Path |
 |----------|------|
-| Manifest | `mcpb/manifest.json` (v0.2) |
-| Entry | `mcpb/run_server.py` |
+| Manifest | `mcpb/manifest.json` (v0.2, stdio `python -m overte_mcp`, `${__dirname}` only) |
+| Entry | `src/overte_mcp/server.py` (`__main__` delegates) |
 | Ignore | `mcpb/.mcpbignore` (and root `.mcpbignore`) |
 | Prompts | `mcpb/assets/prompts/{system,user}.md`, `examples.json` |
 | Icon | `mcpb/assets/icon.png` |
@@ -104,8 +100,8 @@ Complements `resonite-mcp`, `vrchat-mcp`, `godot-mcp`, `unity3d-mcp`, `gazebo-mc
 
 ## Troubleshooting
 
-1. **Status simulated / connection refused** — start `domain-server.exe`; confirm admin port `40100`; firewall; Basic Auth.
-2. **Spawn/inject simulated** — backend up on `11110`; load `scripts/overte-mcp-bridge.js` in Interface; check WS connect.
+1. **Status domain_unreachable / connection refused** — start `domain-server.exe`; confirm admin port `40100`; firewall; Basic Auth.
+2. **Spawn/inject bridge_not_connected** — backend up on `11110`; install the bridge (`overte_bridge_install`) with an assignment-client running, or load `scripts/overte-mcp-bridge.js` in Interface; check WS connect.
 3. **MCPB / stdio won't start** — install `uv` and Python 3.12+; run from correct `--directory`.
 4. **Wrong product** — user asked for Vircadia World; these tools are Overte-only.
 5. **Port conflict** — backend `11110`, frontend `11111` (not legacy `10988`/`10989`).

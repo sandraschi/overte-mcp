@@ -5,8 +5,8 @@ monitor connected nodes, manage the full entity lifecycle (spawn/update/animate/
 inject JavaScript behaviors, and manage the model/texture asset depot - all via the MCP tool
 surface and, for depot/backup operations, the REST API directly.
 
-Refreshed 2026-09-02 - this replaces an earlier version that only documented 3 of the 9 MCP
-tools that exist today.
+Refreshed 2026-10-31 - documents all 12 MCP tools that exist today
+(including overte_shutdown).
 
 ## MCP Tools
 
@@ -74,6 +74,10 @@ Attach or update a JavaScript behavior script on an existing entity.
 ### overte_sampling_assist (READ_ONLY)
 Get multi-step Overte operation guidance via MCP sampling (FastMCP 3.1+) when the host
 supports it; falls back to a static plan otherwise. Parameters: `goal`.
+
+### overte_shutdown (DESTRUCTIVE)
+Orderly self-termination for agents and the fleet launcher. Responds immediately,
+then exits the process ~500 ms later. Parameters: `confirm` (must be True).
 
 ## REST-only endpoints (not MCP tools - use the webapp or call these directly)
 
