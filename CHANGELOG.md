@@ -1,10 +1,12 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/latest/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0/).
 
 ---
 
-## [Unreleased] - 2026-10-31 - Headless bridge, no simulated success
+## [Unreleased]
+
+## [0.2.1] - 2026-11-01 - Headless bridge, no simulated success
 
 ### Assfix 2026-10-31 p2 (fix-all remaining: self-assessed SOTA 23 -> 95)
 - Backend LLM proxy: GET /api/llm/discover|providers|models|onboarding, POST /api/llm/chat|/api/llm/chat/stream (SSE byte-relay), server-side GPU detect; versions 0.2.1; 8 proxy tests.

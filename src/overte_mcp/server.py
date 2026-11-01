@@ -703,7 +703,18 @@ async def overte_shutdown(
 
 
 def main():
-    """Entry point with stdio proxy pattern - probes HTTP daemon first, falls back to direct stdio."""
+    """Entry point: stdio proxy pattern, or HTTP daemon when MCP_TRANSPORT=http.
+
+    The fleet pack probe (and NSSM-style launchers) set MCP_TRANSPORT=http with
+    MCP_PORT to verify the bundle serves HTTP standalone; stdio stays default.
+    """
+    if os.environ.get("MCP_TRANSPORT", "").lower() == "http":
+        from .http_server import start_server
+
+        port = int(os.environ.get("MCP_PORT") or os.environ.get("PORT") or 11110)
+        start_server(port=port)
+        return
+
     http_url = os.getenv("SERVER_API_URL", "http://127.0.0.1:11110")
     mcp_url = f"{http_url}/mcp"
 
