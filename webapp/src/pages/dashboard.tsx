@@ -422,7 +422,23 @@ export function Dashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-white truncate">{APP_LABELS[key]}</p>
                     <p className="text-sm text-slate-300">
-                      {!installed ? "Not found" : running ? "Running" : "Stopped"}
+                      {!installed ? (
+                        <span>
+                          Not found —{" "}
+                          <a
+                            href="https://overte.org/download"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-amber-500 underline"
+                          >
+                            Download
+                          </a>
+                        </span>
+                      ) : running ? (
+                        "Running"
+                      ) : (
+                        "Stopped"
+                      )}
                     </p>
                   </div>
                   {installed &&
@@ -457,9 +473,54 @@ export function Dashboard() {
       </div>
 
       {data?.source === "unreachable" && (
-        <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-sm">
+        <div
+          className="glass-panel border border-amber-500/30 flex flex-wrap items-center gap-3 text-amber-300 text-sm"
+          style={{ padding: "12px 16px" }}
+          data-testid="domain-unreachable"
+        >
           <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>{data.warning ?? "No domain-server reachable."}</span>
+          <span className="flex-1 min-w-[200px]">
+            {data.warning ?? "No domain-server reachable."}
+          </span>
+          {domainInstalled ? (
+            <button
+              data-testid="domain-unreachable-start"
+              onClick={() => {
+                void appAction("domain-server", "start").then(() =>
+                  setTimeout(() => refetch(), 8000),
+                );
+              }}
+              disabled={domainBusy}
+              style={{
+                background: "#10b981",
+                border: "1px solid #10b981",
+                borderRadius: "8px",
+                padding: "6px 12px",
+                cursor: domainBusy ? "default" : "pointer",
+                opacity: domainBusy ? 0.4 : 1,
+                color: "white",
+                fontSize: "14px",
+                fontWeight: "bold",
+              }}
+              className="flex items-center gap-2 transition-all hover:brightness-110 active:scale-95"
+            >
+              {domainBusy ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+              Start domain server
+            </button>
+          ) : (
+            <a
+              href="https://overte.org/download"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-bold underline"
+            >
+              Download Overte
+            </a>
+          )}
         </div>
       )}
 

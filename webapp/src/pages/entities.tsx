@@ -45,6 +45,33 @@ export function EntitiesPage() {
   const [posZ, setPosZ] = useState(0.0);
   const [modelUrl, setModelUrl] = useState("");
   const [scriptUrl, setScriptUrl] = useState("");
+  const [bridgeBusy, setBridgeBusy] = useState(false);
+  const [bridgeNote, setBridgeNote] = useState<string | null>(null);
+
+  const installBridge = async () => {
+    setBridgeBusy(true);
+    setBridgeNote(null);
+    try {
+      const res = await fetch(apiUrl("/api/overte/bridge/install"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBridgeNote(body.detail || `Install failed (HTTP ${res.status})`);
+      } else {
+        setBridgeNote(
+          body.changed ? "Bridge registered — domain restarting." : "Bridge already registered.",
+        );
+        setTimeout(() => refetch(), 8000);
+      }
+    } catch {
+      setBridgeNote("Backend unreachable — is the stack running?");
+    } finally {
+      setBridgeBusy(false);
+    }
+  };
 
   const [searchRadius, setSearchRadius] = useState(20);
   const [moveTarget, setMoveTarget] = useState<Record<string, { x: string; y: string; z: string }>>(
@@ -325,12 +352,39 @@ export function EntitiesPage() {
       </div>
 
       {data?.bridge_connected === false && (
-        <div className="glass-panel border border-amber-500/30 flex items-center gap-2 text-amber-300 text-sm px-4 py-2">
+        <div
+          className="glass-panel border border-amber-500/30 flex flex-wrap items-center gap-3 text-amber-300 text-sm px-4 py-2"
+          data-testid="bridge-disconnected"
+        >
           <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>
-            Bridge disconnected: showing only server-tracked entities. Run overte_bridge_install
-            (headless) or load the bridge in Interface for live operations.
+          <span className="flex-1 min-w-[200px]">
+            Bridge disconnected: showing only server-tracked entities. Install the bridge (headless)
+            or load it in Interface for live operations.
           </span>
+          <button
+            data-testid="bridge-install"
+            onClick={installBridge}
+            disabled={bridgeBusy}
+            style={{
+              background: "rgba(245, 158, 11, 0.08)",
+              border: "1px solid rgba(245, 158, 11, 0.25)",
+              borderRadius: "8px",
+              padding: "6px 12px",
+              cursor: bridgeBusy ? "default" : "pointer",
+              opacity: bridgeBusy ? 0.4 : 1,
+              color: "#f59e0b",
+              fontSize: "14px",
+              fontWeight: "bold",
+            }}
+            className="transition-all hover:bg-amber-500/15 active:scale-95"
+          >
+            {bridgeBusy ? "Installing..." : "Install bridge"}
+          </button>
+          {bridgeNote && (
+            <span data-testid="bridge-note" className="text-sm text-slate-300 w-full">
+              {bridgeNote}
+            </span>
+          )}
         </div>
       )}
 
