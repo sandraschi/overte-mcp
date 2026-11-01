@@ -1,10 +1,10 @@
 # Status — overte-mcp
 
-**Status**: v0.2.0-beta. `overte_domain_status`, spawn and script inject were verified live on 2026-07-30 through an Interface-hosted bridge. **2026-10-31: headless bridge implemented** (bridge runs as a domain persistent script on an assignment-client, no GUI) and the simulated-success fallbacks were removed. Headless mode is verified against a protocol harness only; the live run against a real Overte domain is still pending (see "Headless bridge" below). FastAPI backend, React dashboard, Tauri 2.0 native wrapper.
+**Status**: v0.2.1. `overte_domain_status`, spawn and script inject were verified live on 2026-07-30 through an Interface-hosted bridge. **2026-10-31: headless bridge implemented** (bridge runs as a domain persistent script on an assignment-client, no GUI) and the simulated-success fallbacks were removed. **2026-10-31 assfix (SOTA 0 → 95 self-assessed):** 12 MCP tools, backend LLM proxy (`/api/llm/*`) with the dashboard fully behind it, Inbox page, domain switcher + hero actions, e2e green on Goliath (29 passed), ruff + format + pyright + biome + tsc all clean, MCPB audit `clean, BROKEN 0`. Headless mode is verified against a protocol harness only; the live run against a real Overte domain is still pending (see "Headless bridge" below). FastAPI backend, React dashboard, Tauri 2.0 native wrapper.
 
 **Repo**: `D:\Dev\repos\overte-mcp`
 **Ports**: Backend 11110, Frontend 11111, Overte domain-server admin 40100
-**Updated**: 2026-10-31
+**Updated**: 2026-11-01
 
 ## Runtime
 
@@ -51,14 +51,13 @@ connected; callers that only checked `status` believed entities existed.
 - `tests/bridge_harness/run_harness.py`: 14/14. Runs the real bridge script under Node
   in a fake agent engine against the real backend. Found and fixed the filtered-read bug.
 
-**Not verified yet (Goliath was at ~95% CPU / 92% RAM; Python took minutes to start):**
-- `just e2e-headless` against the real Overte 2026.04.1 install. Open questions it
+**Not verified yet:**
+- `just e2e-headless` against a real Overte install. Open questions it
   answers: does the persistent-script agent get `can_rez` true; does posting
   `scripts.persistent_scripts` via `/settings.json` restart the domain-server and start
   the agent; does `WebSocket` to localhost work from the agent in practice; do
   `permanent=True` entities survive a restart.
-- Windows `just test` (unit + e2e) on Goliath.
-- Biome on the webapp edits (TypeScript `tsc -p tsconfig.app.json --noEmit` passed in the VM).
+- Playwright browser nav walk (dashboard renders are covered by `just cua-webapp-test`; clicked-through browser verification is manual until Playwright is wired).
 
 ## MCP tools
 
@@ -68,6 +67,10 @@ connected; callers that only checked `status` believed entities existed.
 | `overte_entity_spawn` | **Real & verified** (2026-07-30) — spawned Box entity in-world via WebSocket bridge. Supports `permanent=True` for cross-restart persistence. Returns `source: "live"` with real entity UUID. |
 | `overte_script_inject` | **Verified live** (2026-07-30) — injected dance-script.js onto entity `{717ad8f1-...}` via WebSocket bridge. Entity bobs up/down + spins. |
 | `overte_bridge_status` / `overte_bridge_install` | New 2026-10-31. Unit + protocol-harness tested; **not yet run against a live domain**. |
+| `overte_entity_update` / `delete` / `animate` | Live-only entity lifecycle (assfix 2026-10-31). Covered by unit + e2e gates; in-world run pending a live domain. |
+| `overte_nearby_entities` / `fixture_spawn` | Live world search + gripper fixtures (assfix 2026-10-31). Same verification state. |
+| `overte_sampling_assist` | Sampling-assisted plans when the host supports it. |
+| `overte_shutdown` | Orderly self-termination + `POST /api/shutdown` (assfix 2026-10-31). |
 
 ## Native app
 
@@ -82,9 +85,10 @@ connected; callers that only checked `status` believed entities existed.
 |----------|--------|-------|
 | `glama.json` | ✅ | Root |
 | `llms.txt` + `llms-full.txt` | ✅ | Root |
-| `justfile` | ✅ | 10 recipes |
+| `justfile` | ✅ | 14 recipes (serve/test/lint/fmt/gates-green/mcpb-pack/build-native/cua-*/precommit/...) |
 | `start.ps1` + `start.bat` | ✅ | SOTA pattern with zombie kill, health poll, browser auto-open |
-| Tauri NSIS build | ✅ | `native/build.ps1` full pipeline |
+| `pyright` + CI gates | ✅ | ruff, ruff format, pyright, pytest, biome:ci, tsc check, build |
+| Tauri NSIS build | ✅ | `native/build.ps1` full pipeline + mcp-clients register/unregister |
 | CORS origins | ✅ | Tauri + Tailscale + LAN |
 | Session context injection | ✅ | `.cursorrules` + `.claude-plugin/` |
 | `AGENTS.md` | ✅ | Root — agent navigation map |
@@ -138,7 +142,7 @@ on it.
 - Dependencies: gsplat, scipy, trimesh, plyfile installed
 
 ### Dashboard SOTA pages
-Chat, Settings, Tools, Skills, and Logs pages built and verified. TypeScript and Biome check clean. Production build passes (463 KB JS + 28 KB CSS). All pages have `data-testid` attributes for CUA/Playwright targeting.
+Chat (backend LLM proxy, 4 personalities), Settings (proxy-based LLM detect + GPU), Inbox, Tools, Skills, Logs, domain switcher + hero actions (domain/bridge start), hosting + invite docs, and Logs pages built and verified. TypeScript and Biome check clean. All pages have `data-testid` attributes for CUA/Playwright targeting.
 
 ## Remaining
 

@@ -44,6 +44,15 @@ Companion to [llms.txt](llms.txt). Curated tool, env, run, architecture, and tro
 
 - **Purpose:** Bridge presence + install (idempotent persistent-script registration); sampling-assisted multi-step plans; orderly self-termination (`confirm=True`).
 
+## Local LLM proxy (backend-for-frontend)
+
+The browser never touches providers directly (LAN/Tailscale tabs would die on CORS; keys stay server-side).
+
+- **Discovery:** `GET /api/llm/discover` (loopback probe of Ollama/LM Studio/vLLM + `default_provider` + `chat_proxy: true`), `GET /api/llm/providers` (registry + cloud-configured flags, no values), `GET /api/llm/models?provider=` (live list or curated fallback + `live` flag), `GET /api/llm/onboarding` (fail-open setup state for the dashboard cue).
+- **Chat:** `POST /api/llm/chat` + `POST /api/llm/chat/stream` (SSE byte-relay; Ollama NDJSON and OpenAI SSE both pass through). 502/400 with reason on failure — never invented text.
+- **GPU:** server-side `nvidia-smi` inventory surfaced in discover (fail-soft).
+- **Dashboard:** Zustand `store/llm.ts` (`llm_provider`/`llm_model` keys), same-host `apiUrl()` (LAN tabs work), under-hero opportunity cue when no provider is detected.
+
 ## Environment
 
 | Variable / need | Notes |
@@ -106,6 +115,7 @@ Complements `resonite-mcp`, `vrchat-mcp`, `godot-mcp`, `unity3d-mcp`, `gazebo-mc
 4. **Wrong product** — user asked for Vircadia World; these tools are Overte-only.
 5. **Port conflict** — backend `11110`, frontend `11111` (not legacy `10988`/`10989`).
 6. **Dashboard only** — MCPB does not include the Vite app; use `start.ps1`.
+7. **Watching vs acting** — the dashboard's domain switcher changes the domain you *look at*; spawns act through the bridge (the domain your assignment-client or Interface joined). To host a joinable domain and invite people (`hifi://` links, Connect permissions, UDP 40102): see ONBOARDING.md "Hosting a domain others can join" + the Help Hub hosting panel.
 
 ## Quality
 

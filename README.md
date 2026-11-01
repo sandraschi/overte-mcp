@@ -50,7 +50,7 @@ works when you want to watch. See [docs/ONBOARDING.md](docs/ONBOARDING.md).
 | **Hands-in** | Entity properties (position, scale, type), JS behavior scripts, GLB/FBX/OBJ model URLs | Via MCP tool calls or the dashboard's Entities/Scripting pages |
 | **Hands-out** | Live domain-server telemetry, spawned in-world entities, animated/scripted entities | Real result or an error saying why (`bridge_not_connected`, `domain_unreachable`, ...); no simulated mode |
 
-**Tools** — all three core tools verified live against Overte 2026.04.1 (2026-07-30):
+**Tools** — 12 MCP tools (verified live against Overte 2026.04.1 unless noted):
 
 | Tool | Status |
 |------|--------|
@@ -58,7 +58,10 @@ works when you want to watch. See [docs/ONBOARDING.md](docs/ONBOARDING.md).
 | `overte_bridge_status` / `overte_bridge_install` | New 2026-10-31: bridge mode (agent/interface) and headless install as a persistent script. See STATUS.md for live verification state. |
 | `overte_entity_spawn` | **Verified live** — in-world entity spawning via WebSocket bridge; `permanent=True` for cross-restart persistence |
 | `overte_script_inject` | **Verified live** — in-world JS behavior injection via WebSocket bridge |
+| `overte_entity_update` / `delete` / `animate` | Live-only entity lifecycle (move/resize, delete, spin/bob/bounce) |
+| `overte_nearby_entities` / `fixture_spawn` | Live world search + gripper test fixtures (box/cup/ball/table/chair) |
 | `overte_sampling_assist` | Multi-step planning via `ctx.sample()` when host supports it |
+| `overte_shutdown` | Orderly self-termination (`confirm=True`) + `POST /api/shutdown` |
 
 **Dashboard pages**:
 
@@ -73,7 +76,8 @@ works when you want to watch. See [docs/ONBOARDING.md](docs/ONBOARDING.md).
 | Tools | `/tools` | Dynamic tool discovery + search |
 | Skills | `/skills` | Skill content viewer (markdown) |
 | Logs | `/logs` | Ring-buffer log viewer with level filter |
-| Help | `/help` | Domain setup + JS API reference |
+| Inbox | `/inbox` | Server events needing attention (search/filter/sort/paginate) |
+| Help | `/help` | Domain setup, hosting + invites, JS API reference |
 
 ## Quick Install
 

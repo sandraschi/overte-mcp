@@ -137,7 +137,7 @@ Only one bridge is active at a time: the most recent WebSocket connection wins.
 
 1. Run `domain-server.exe` and `assignment-client.exe -n 9` (six static assignments
    plus one agent, with headroom).
-2. Start the backend (`just serve` or `uv run python run_server.py`).
+2. Start the backend (`just serve`, or `uv run python -m overte_mcp.http_server`).
 3. `overte_bridge_install` (or `POST /api/overte/bridge/install`). This reads
    `/settings.json` and posts `{"scripts":{"persistent_scripts":[...]}}` back, adding
    `http://127.0.0.1:11110/bridge/overte-mcp-bridge.js` once. Credentials:
@@ -251,8 +251,8 @@ Claude Desktop bundles are packed **from `mcpb/`**, not the repo root:
 
 ```
 mcpb/
-├── manifest.json          # v0.2
-├── run_server.py
+├── manifest.json          # stdio python -m overte_mcp, ${__dirname} only
+├── pack.ps1               # thin shim -> fleet-mcpb-pack.ps1 (never vendored)
 ├── pyproject.toml         # lean runtime deps
 ├── .mcpbignore
 ├── README.md
@@ -262,8 +262,8 @@ mcpb/
 └── src/overte_mcp/        # synced from src/overte_mcp by pack script
 ```
 
-- Build: `just mcpb-pack` → `dist/overte-mcp.mcpb`
-- Script: `scripts/build-mcpb-package.ps1` (sync → validate → pack)
+- Build: `just mcpb-pack` → `dist/overte-mcp.mcpb` (+ versioned archive + `install.ps1`)
+- Script: `scripts/mcpb-pack.ps1` (thin shim -> `mcp-central-docs/scripts/fleet-mcpb-pack.ps1`)
 - Never use `mcpb init` / `mcpb create` (fleet forbidden)
 
 ## Tauri 2.0 Desktop Wrapper
@@ -298,7 +298,9 @@ overte-mcp/
 │   ├── overte-mcp-bridge.js   # Bridge: headless agent or Interface (served at /bridge/...)
 │   ├── headless_e2e.py        # Live headless end-to-end check (no GUI)
 │   ├── dance-script.js        # VRM skeletal dance animation
-│   ├── build-mcpb-package.ps1 # MCPB pack builder
+│   ├── mcpb-pack.ps1          # fleet pack shim (scripts/)
+│   ├── cua-smoke.py           # CUA NSIS smoke (exit 2 = SKIP, no installer)
+│   ├── cua-webapp-test.py     # pre-Tauri webapp smoke (isolated backend + REST walk)
 │   ├── cua-nsis-config.json   # CUA smoke test config
 │   └── _gen_prompts.py        # 3-4-100 prompt generator
 ├── mcpb/                      # Claude Desktop pack root

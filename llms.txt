@@ -1,6 +1,6 @@
 # Overte MCP Server & Webapp Dashboard
 
-> FastMCP 3.4+ server for [Overte](https://overte.org) domain administration and in-world entity/script ops (live via WebSocket bridge when connected; otherwise labeled simulated). Not compatible with current Vircadia World — see README.md.
+> FastMCP 3.4+ server for [Overte](https://overte.org) domain administration and in-world entity/script ops (live via WebSocket bridge when connected; honest errors otherwise — no simulated mode). Not compatible with current Vircadia World — see README.md.
 
 **Full detail:** [llms-full.txt](llms-full.txt)
 
@@ -15,21 +15,30 @@
 
 ## System overview
 
-- **Stdio MCP**: `uv run overte-mcp` (also packaged as `dist/overte-mcp.mcpb`)
-- **Backend**: FastAPI on `11110` (REST + `/api/overte/ws` bridge)
-- **Frontend**: Vite React dashboard on `11111` (Bun/Biome)
+- **Stdio MCP**: `python -m overte_mcp` (also packaged as `dist/overte-mcp.mcpb`)
+- **Backend**: FastAPI on `11110` (REST + `/api/overte/ws` bridge + `/api/llm/*` proxy + `/mcp` protocol)
+- **Frontend**: Vite React dashboard on `11111` (Bun/Biome/Zustand)
 - **Overte domain admin**: `40100` (`/nodes.json`, `/settings.json`)
 
-## Tools (summary)
+## Tools (summary, 12 total)
 
-- `overte_domain_status` — live domain nodes/settings; simulated fallback if unreachable
-- `overte_entity_spawn` — live when bridge connected; supports `permanent=True` for persistence
-- `overte_script_inject` — live when bridge connected; else simulated
+- `overte_domain_status` — live domain nodes/settings; honest `domain_unreachable` if unreachable
+- `overte_bridge_status` / `overte_bridge_install` — bridge presence + headless persistent-script install
+- `overte_entity_spawn` — live spawn; `permanent=True` for cross-restart persistence
+- `overte_entity_update` / `overte_entity_delete` / `overte_entity_animate` — live entity lifecycle
+- `overte_nearby_entities` / `overte_fixture_spawn` — live world search + gripper fixtures
+- `overte_script_inject` — live script attach when bridge connected; else `bridge_not_connected`
 - `overte_sampling_assist` — multi-step planning via `ctx.sample()`
+- `overte_shutdown` — orderly self-termination (`confirm=True`)
+
+## Backend LLM proxy (browser never touches providers)
+
+- `GET /api/llm/discover|providers|models|onboarding` — server-side loopback probing, curated fallbacks, GPU inventory
+- `POST /api/llm/chat` + `POST /api/llm/chat/stream` (SSE byte-relay) — Chat/Settings/Scripting pages go through these; 502 with reason on failure, never invented text
 
 ## Webapp
 
-10-page React SPA (Vite + Tailwind + Zustand + React Query). Chat, Settings, Tools, Skills, Logs all built. Model FBX served at `/models/Nekomimi-chan.fbx`.
+14-page React SPA (Vite + Tailwind + Zustand + React Query). Dashboard (domain switcher + hero actions), Inbox, Chat (proxy, 4 personalities), Settings (proxy-based LLM detect), Entities, Scripting, Tools, Skills, Models, Textures, Backups, Avatars, Logs, Help (hosting + invites). Model FBX served at `/models/Nekomimi-chan.fbx`.
 
 ## Ports
 
@@ -42,5 +51,6 @@
 ## Commands
 
 - `just serve` / `./start.ps1` — full stack
-- `just test` / `just lint` — quality
-- `just mcpb-pack` — build Claude Desktop `.mcpb` from `mcpb/`
+- `just test` / `just lint` / `just gates-green` — quality
+- `just mcpb-pack` — build Claude Desktop `.mcpb` from `mcpb/` (fleet shim)
+- `just cua-webapp-test` / `just cua-nsis-test` — smoke tests (nsis: exit 2 = SKIP, no installer built)

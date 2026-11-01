@@ -26,7 +26,12 @@ All notable changes to this project will be documented in this file. The format 
 - Added .pre-commit-config.yaml, scripts/pre-commit-biome.ps1, .gitattributes, CLAUDE.md, .windsurfrules.
 - webapp/package.json: added @tauri-apps/api, biome:ci + check scripts.
 - pyproject.toml: added T20 + per-file-ignores; ruff format applied (4 files).
-- Deferred (no fix this run): backend LLM proxy (direct 11434 fetch), Inbox page, 5 e2e failures, glama tool list, fonts, skill drift.
+### Assfix 2026-11-01 p3 (docs + hero usability)
+
+- Dashboard hero: kicker (what this is), what Overte is, 3-step quickstart with links; hero action row (domain toggle, Interface toggle, Install bridge); every not-running report now ships its fix (domain banner start/download, card download link, entities bridge install).
+- Domain switcher: Local sandbox vs Join a domain presets + localStorage, explainer of watch-vs-act split; Copy invite link button (`hifi://`).
+- Docs: Help Hub hosting panel (host/join/gate/invite with official Overte doc links), ONBOARDING hosting + Steve walkthrough, README local-vs-join + one-liner/uvx, STATUS v0.2.1 refresh, llms.txt/llms-full/ARCHITECTURE/CONFIGURATION/mcpb-README de-simulated and de-hardcoded.
+- Deferred (no fix this run) in p1 below: backend LLM proxy, Inbox page, e2e failures, glama list, fonts, skill drift — **all fixed in p2/p3 above**.
 
 ### Added
 - Headless bridge: `scripts/overte-mcp-bridge.js` v2.0.0 runs as a domain persistent

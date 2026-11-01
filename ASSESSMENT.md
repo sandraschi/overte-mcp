@@ -125,4 +125,4 @@ GitHub repo and README.
 - [STATUS.md](STATUS.md) -- current verification status, remaining work, references
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) -- system architecture, bridge protocol, ports
 - [docs/](docs/) -- onboarding, configuration, dev setup, tool reference, troubleshooting
-- [MCP Central -- README standard](file:///D:/Dev/repos/mcp-central-docs/standards/README_STRUCTURE.md)
+- [MCP Central — README standard](../mcp-central-docs/standards/README_STRUCTURE.md)

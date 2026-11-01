@@ -1,49 +1,40 @@
 # overte-mcp (MCPB Bundle)
 
-Overte (open-source Vircadia-lineage metaverse) Model Context Protocol server for domain administration and in-world entity orchestration
+Overte (open-source social-VR metaverse) Model Context Protocol server for domain administration and in-world entity orchestration. Live-only: every tool does the real thing or fails with a reason (`bridge_not_connected`, `domain_unreachable`) — no simulated mode.
 
 ## Usage
 
-Add to \claude_desktop_config.json\:
-\\\json
+Claude Desktop: install `dist/overte-mcp.mcpb` (one-liner in README.md), or register the bundle manually. Other clients (Cursor / VS Code / Codex / Opencode):
+
+```json
 {
   "mcpServers": {
     "overte-mcp": {
-      "command": "uv",
-      "args": ["run", "--directory", "\D:\Dev\repos", "python", "-m", "overte_mcp"],
-      "env": { "PYTHONPATH": "\D:\Dev\repos/src" }
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/sandraschi/overte-mcp.git", "overte-mcp"]
     }
   }
 }
-\\\
+```
 
-## Tools
+## Tools (12)
 
-- **health_check**: Retrieve SOTA standard health telemetry.
-- **list_tools**: List MCP tools with descriptions and input schemas.
-- **list_skills**: List available Overte skills.
-- **get_overte_skill**: Return the overte-admin skill content.
-- **diagnostics**: CUA smoke-test required endpoint: tool list + system info.
-- **get_logs**: Query the ring-buffer log.
-- **get_domain_status**: Query domain-server status telemetry.
-- **detect_app**: Detect Overte installation and running processes.
-- **start_app**: Launch an Overte binary (domain-server or interface).
-- **stop_app**: Kill an Overte binary (domain-server or interface).
-- **list_scripts**: List all entity scripts with descriptions and metadata.
-- **get_script**: Get a script's content by name.
-- **create_script**: Create a new entity script.
-- **update_script**: Update a script's content and/or metadata.
-- **delete_script**: Delete a script and remove it from the manifest.
-- **list_tracked_entities**: Return all entities tracked by this server (spawned via bridge).
-- **clear_tracked_entities**: Clear the tracked entity list.
-- **post_entity_spawn**: Spawn an in-world entity (via WebSocket bridge if connected, else falls back to simulated).
-- **post_script_inject**: Inject a JavaScript entity script (via WebSocket bridge if connected, else falls back to simulated).
-- **overte_domain_status**: overte_domain_status
-- **overte_entity_spawn**: overte_entity_spawn
-- **overte_script_inject**: overte_script_inject
-- **overte_sampling_assist**: overte_sampling_assist
+- **overte_domain_status**: live domain-server nodes/settings via `/nodes.json` + `/settings.json`.
+- **overte_bridge_status**: bridge presence and mode (agent/interface), `can_rez` flag.
+- **overte_bridge_install**: register the headless bridge as a domain persistent script (idempotent).
+- **overte_entity_spawn**: spawn Box/Sphere/Web/Model/Light; `permanent=True` survives restarts.
+- **overte_entity_update**: move/resize/re-parent/toggle an existing entity.
+- **overte_entity_delete**: permanently delete an entity (destructive).
+- **overte_entity_animate**: spin/bob/real-bounce animation, server-driven over the bridge.
+- **overte_nearby_entities**: live-world search around a position or the local user.
+- **overte_fixture_spawn**: gripper test fixtures (box/cup/ball/table/chair).
+- **overte_script_inject**: attach a JavaScript behavior script to an entity.
+- **overte_sampling_assist**: multi-step Overte guidance via MCP sampling.
+- **overte_shutdown**: orderly self-termination (`confirm=True`).
+
+REST-only (dashboard/backend, not MCP tools): model/texture/script depots, backup/restore, avatar read, bridge install/uninstall, health/diagnostics/capabilities, logs, and the `/api/llm/*` local-LLM proxy (discover/providers/models/chat/stream/onboarding).
 
 ## Requirements
 
 - Python 3.12+
-- uv
+- The bundle registers `python -m overte_mcp` (stdio); the installer ensures a runtime.

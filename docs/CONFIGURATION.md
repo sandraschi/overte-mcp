@@ -33,19 +33,20 @@ Local sandbox convention is `admin`/`admin`, set at
 | Vite dashboard | `11111` |
 | Overte domain-server admin | `40100` |
 
-## Claude Desktop config
+## Claude Desktop config (dev checkout — end users: use the README one-liner)
 
 ```json
 {
   "mcpServers": {
     "overte-mcp": {
-      "command": "uv",
-      "args": ["--directory", "D:/Dev/repos/overte-mcp", "run", "overte-mcp"],
+      "command": "python",
+      "args": ["-m", "overte_mcp"],
       "env": {
-        "PYTHONPATH": "D:/Dev/repos/overte-mcp/src",
+        "PYTHONPATH": "<checkout>/src",
         "PYTHONUNBUFFERED": "1"
       }
     }
   }
 }
 ```
+Replace `<checkout>` with the repo location. Other clients: `uvx --from git+https://github.com/sandraschi/overte-mcp.git overte-mcp` (see README).
