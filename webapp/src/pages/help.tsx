@@ -1,4 +1,4 @@
-import { BookOpen, ExternalLink, HelpCircle, Info, Link2, Settings } from "lucide-react";
+import { BookOpen, ExternalLink, Globe, HelpCircle, Info, Link2, Settings } from "lucide-react";
 import { useState } from "react";
 
 export function HelpPage() {
@@ -105,6 +105,40 @@ export function HelpPage() {
                 <li>
                   Create an administrator username and password inside the control panel to
                   authenticate secure script injection requests.
+                </li>
+              </ul>
+            </div>
+
+            <div className="glass-panel space-y-3">
+              <div className="flex items-center gap-2 border-b border-white/[0.05] pb-2">
+                <Globe className="w-4 h-4 text-emerald-400" />
+                <h4 className="font-bold uppercase tracking-wider text-white">
+                  Local Sandbox vs Joining a Domain
+                </h4>
+              </div>
+              <p>
+                Overte has two ways to be in a world, and this dashboard keeps them separate on
+                purpose:
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>
+                  <strong>Local sandbox</strong> — your own domain-server on this machine (the
+                  default <code>localhost:40100</code> target). Free, private, and the only place
+                  the dashboard&apos;s Start/Stop buttons can launch things for you.
+                </li>
+                <li>
+                  <strong>Join a domain</strong> — point the dashboard&apos;s Watching switcher at
+                  someone else&apos;s domain-server (host + admin port) to monitor it: nodes,
+                  avatars, settings. In Interface you join the same way with{" "}
+                  <em>Connect to Domain…</em> and the address. You can look but you only get
+                  admin/scripting power if they gave you credentials.
+                </li>
+                <li>
+                  <strong>Spawning always follows the bridge</strong> — the Watching switcher
+                  changes which domain you <em>look at</em>. Entity spawn, inject, and animate act
+                  through the bridge, which lives in whatever domain your assignment-client or
+                  Interface joined. Watch one domain while standing in another and your spawns land
+                  where you stand, not where you look.
                 </li>
               </ul>
             </div>

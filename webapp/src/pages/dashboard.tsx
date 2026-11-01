@@ -72,8 +72,12 @@ function LlmOpportunity() {
 }
 
 export function Dashboard() {
-  const [host, setHost] = useState("localhost");
-  const [port, setPort] = useState(40100);
+  const [host, setHost] = useState(
+    () => localStorage.getItem("overte-mcp-domain-host") || "localhost",
+  );
+  const [port, setPort] = useState(() =>
+    Number(localStorage.getItem("overte-mcp-domain-port") || 40100),
+  );
   const [appDetect, setAppDetect] = useState<AppDetect | null>(null);
   const [appLoading, setAppLoading] = useState<Record<string, boolean>>({});
   const [bridgeBusy, setBridgeBusy] = useState(false);
@@ -524,8 +528,63 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Connection Config Bar */}
-      <div className="glass-panel" style={{ padding: "16px" }}>
+      {/* Connection Config Bar: which domain to watch */}
+      <div className="glass-panel" style={{ padding: "16px" }} data-testid="domain-switcher">
+        <div className="flex flex-wrap items-center gap-2 pb-3 mb-3 border-b border-white/[0.05]">
+          <Globe className="w-5 h-5 text-amber-500" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-white mr-2">Watching</h3>
+          <button
+            data-testid="domain-mode-local"
+            onClick={() => {
+              setHost("localhost");
+              setPort(40100);
+              localStorage.setItem("overte-mcp-domain-host", "localhost");
+              localStorage.setItem("overte-mcp-domain-port", "40100");
+            }}
+            style={{
+              background: host === "localhost" ? "#10b981" : "none",
+              border: "1px solid #10b981",
+              borderRadius: "8px",
+              padding: "6px 12px",
+              cursor: "pointer",
+              color: host === "localhost" ? "white" : "#10b981",
+              fontSize: "14px",
+              fontWeight: "bold",
+            }}
+            className="transition-all hover:brightness-110 active:scale-95"
+          >
+            Local sandbox
+          </button>
+          <button
+            data-testid="domain-mode-remote"
+            onClick={() => {
+              if (host === "localhost") setHost("");
+            }}
+            style={{
+              background: host !== "localhost" ? "#6366f1" : "none",
+              border: "1px solid #6366f1",
+              borderRadius: "8px",
+              padding: "6px 12px",
+              cursor: "pointer",
+              color: host !== "localhost" ? "white" : "#a5b4fc",
+              fontSize: "14px",
+              fontWeight: "bold",
+            }}
+            className="transition-all hover:brightness-110 active:scale-95"
+            title="Point the dashboard at someone else's domain-server"
+          >
+            Join a domain…
+          </button>
+          <span className="text-sm text-slate-300">
+            {host === "localhost"
+              ? "Your own domain on this machine."
+              : host
+                ? `Watching ${host}:${port}.`
+                : "Type a domain-server host below."}{" "}
+            Spawning and scripts always act through the bridge — which follows the domain your
+            assignment-client or Interface joined, not this watcher.
+          </span>
+        </div>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
             <label className="text-sm uppercase font-bold text-slate-300 tracking-wider">
@@ -534,7 +593,10 @@ export function Dashboard() {
             <input
               type="text"
               value={host}
-              onChange={(e) => setHost(e.target.value)}
+              onChange={(e) => {
+                setHost(e.target.value);
+                localStorage.setItem("overte-mcp-domain-host", e.target.value);
+              }}
               style={{
                 background: "rgba(0, 0, 0, 0.3)",
                 border: "1px solid var(--border-color)",
@@ -553,7 +615,10 @@ export function Dashboard() {
             <input
               type="number"
               value={port}
-              onChange={(e) => setPort(Number(e.target.value))}
+              onChange={(e) => {
+                setPort(Number(e.target.value));
+                localStorage.setItem("overte-mcp-domain-port", e.target.value);
+              }}
               style={{
                 background: "rgba(0, 0, 0, 0.3)",
                 border: "1px solid var(--border-color)",

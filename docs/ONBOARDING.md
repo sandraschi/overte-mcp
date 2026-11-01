@@ -54,6 +54,24 @@ To watch, or to use avatar-relative features (spawn in front of you, parent to
 (Edit > Running Scripts > Load from URL). The newest bridge connection wins, so an
 Interface bridge replaces the headless one until it disconnects.
 
+## Joining someone else's domain instead
+
+Everything above sets up a **local sandbox** (your machine, `localhost:40100`).
+To work in another domain instead:
+
+1. In Interface: *Connect to Domain…* and enter their domain-server address.
+   Load the bridge script there (URL above works from anywhere that can reach
+   your backend) so the tools act in that world.
+2. In this dashboard: use the **Watching** switcher on the Dashboard page to
+   point monitoring at their host/port.
+3. Pass their `host`/`port` (and admin `username`/`password`, if they gave you
+   any) to `overte_domain_status`. Without admin credentials you get reachability
+   only — spawning and script injection need a bridge *and* their permission.
+
+Remember the split: Watching selects the domain you *look at*; the bridge
+selects the domain you *act in*. They are only the same domain when you (or
+your assignment-client) joined the one you're watching.
+
 ## Common first-run pitfalls
 
 - **Dashboard loads but looks unstyled** — this was a real bug (Tailwind

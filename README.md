@@ -16,6 +16,23 @@ fleet's other virtual-world servers: `resonite-mcp`, `vrchat-mcp`,
 
 Plus a companion React web dashboard.
 
+## Local sandbox or join a domain
+
+Two ways to be in a world — the dashboard keeps them separate on purpose:
+
+- **Local sandbox** (default): your own `domain-server` on this machine
+  (`localhost:40100`). Private, free, and the only setup where the dashboard's
+  Start/Stop buttons can launch things for you.
+- **Join a domain**: point the dashboard's **Watching** switcher at someone
+  else's domain-server (host + admin port) to monitor it, and join it in
+  Interface with *Connect to Domain…*. You get admin/scripting power there only
+  if they gave you credentials.
+
+One rule for both: spawning, injecting, and animating always act through the
+**bridge**, which lives in whatever domain your assignment-client or Interface
+joined. The Watching switcher changes which domain you *look at*; your spawns
+land where you *stand*. See [docs/ONBOARDING.md](docs/ONBOARDING.md).
+
 ## What You Can Do
 
 **How it runs**: Overte (domain-server + assignment-client, optionally Interface) is a
