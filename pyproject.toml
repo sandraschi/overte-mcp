@@ -1,6 +1,6 @@
 [project]
 name = "overte-mcp"
-version = "0.2.1"
+version = "0.2.2"
 description = "Overte metaverse control: domain admin, entities, scripts, and a web dashboard"
 readme = "README.md"
 requires-python = ">=3.12"

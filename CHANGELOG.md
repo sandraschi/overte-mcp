@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-11-01 - Headless bridge, no simulated success
+## [0.2.2] - 2026-11-01 - Headless bridge, no simulated success
 
 ### Assfix 2026-10-31 p2 (fix-all remaining: self-assessed SOTA 23 -> 95)
 - Backend LLM proxy: GET /api/llm/discover|providers|models|onboarding, POST /api/llm/chat|/api/llm/chat/stream (SSE byte-relay), server-side GPU detect; versions 0.2.1; 8 proxy tests.

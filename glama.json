@@ -2,7 +2,7 @@
   "name": "overte-mcp",
   "displayName": "Overte MCP Server",
   "description": "Model Context Protocol (MCP) server for the Overte open-source VR/metaverse platform. Domain-server administration (verified live), in-world entity lifecycle (spawn/update/animate/delete), nearby search, fixture spawns and JavaScript script injection via WebSocket bridge (verified live). No simulated mode: tools fail honestly with bridge_not_connected or domain_unreachable.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "badges": {
     "status": "beta",
     "verified": "All 12 tools verified live against Overte 2026.04.1"

@@ -1,5 +1,5 @@
 {
-  "productName": "overte MCP", "version": "0.2.1", "identifier": "ai.fleet.overte-mcp",
+  "productName": "overte MCP", "version": "0.2.2", "identifier": "ai.fleet.overte-mcp",
   "build": { "frontendDist": "../webapp/dist", "devUrl": "http://localhost:11111", "beforeDevCommand": "pwsh -NoProfile -Command \"npm --prefix ../webapp run dev\"" },
   "app": { "windows": [{"label":"main","title":"overte MCP","width":1100,"height":750,"minWidth":700,"minHeight":500}], "security": { "csp": null } },
   "bundle": { "active": true, "targets": ["nsis"], "icon": ["icons/icon.ico","icons/icon.png"], "resources": ["resources/overte-mcp-backend.exe","resources/install-mcp-clients.ps1"],

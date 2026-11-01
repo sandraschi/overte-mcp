@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "overte-mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Overte (open-source Vircadia-lineage metaverse) Model Context Protocol server for domain administration and in-world entity orchestration",
   "author": { "name": "sandraschi" },
   "server": {

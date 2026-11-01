@@ -1,6 +1,6 @@
 [package]
 name = "overte_mcp-native"
-version = "0.2.1"
+version = "0.2.2"
 description = "Tauri 2.0 desktop app for overte MCP"
 edition = "2021"
 [build-dependencies]

@@ -117,7 +117,7 @@ async def _lifespan(_app):
 app = FastAPI(
     title="Overte MCP REST Server",
     description="HTTP REST interface complementing standard Stdio MCP",
-    version="0.2.1",
+    version="0.2.2",
 )
 
 # Enable CORS for frontend dashboard connection per CORS_STANDARD.md
@@ -151,7 +151,7 @@ async def health_check():
     return {
         "status": "ok",
         "server": "overte-mcp",
-        "version": "0.2.1",
+        "version": "0.2.2",
         "git_sha": GIT_SHA,
         "started_at": _STARTED.isoformat(),
         "uptime_seconds": int(uptime),
@@ -314,7 +314,7 @@ async def diagnostics():
     return {
         "status": "ok",
         "server": "overte-mcp",
-        "version": "0.2.1",
+        "version": "0.2.2",
         "uptime_seconds": int(uptime),
         "tool_count": 12,
         "tools": [
@@ -341,7 +341,7 @@ async def capabilities():
     """Standard fleet capabilities shape for webapp discovery."""
     return {
         "server": "overte-mcp",
-        "version": "0.2.1",
+        "version": "0.2.2",
         "tools": [
             "overte_domain_status",
             "overte_bridge_status",
