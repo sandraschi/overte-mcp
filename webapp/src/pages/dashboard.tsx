@@ -82,6 +82,7 @@ export function Dashboard() {
   const [appLoading, setAppLoading] = useState<Record<string, boolean>>({});
   const [bridgeBusy, setBridgeBusy] = useState(false);
   const [bridgeNote, setBridgeNote] = useState<string | null>(null);
+  const [inviteNote, setInviteNote] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(apiUrl("/api/overte/app/detect"))
@@ -584,6 +585,40 @@ export function Dashboard() {
             Spawning and scripts always act through the bridge — which follows the domain your
             assignment-client or Interface joined, not this watcher.
           </span>
+          <button
+            data-testid="domain-copy-invite"
+            disabled={!host}
+            onClick={async () => {
+              const link = `hifi://${host}:${port}`;
+              try {
+                await navigator.clipboard.writeText(link);
+                setInviteNote(`Copied ${link} — send it to whoever you want in.`);
+              } catch {
+                setInviteNote(`Copy this manually: ${link}`);
+              }
+              setTimeout(() => setInviteNote(null), 8000);
+            }}
+            style={{
+              background: "none",
+              border: "1px solid var(--border-color)",
+              borderRadius: "8px",
+              padding: "6px 12px",
+              cursor: !host ? "default" : "pointer",
+              opacity: !host ? 0.4 : 1,
+              color: "white",
+              fontSize: "14px",
+              fontWeight: "bold",
+            }}
+            className="transition-all hover:bg-white/5 active:scale-95"
+            title="Copy a hifi:// invite link for the watched domain"
+          >
+            Copy invite link
+          </button>
+          {inviteNote && (
+            <span data-testid="domain-invite-note" className="text-sm text-slate-300 w-full">
+              {inviteNote}
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-col gap-1 flex-1 min-w-[200px]">

@@ -143,6 +143,77 @@ export function HelpPage() {
               </ul>
             </div>
 
+            <div className="glass-panel space-y-3" data-testid="hosting-panel">
+              <div className="flex items-center gap-2 border-b border-white/[0.05] pb-2">
+                <Globe className="w-4 h-4 text-emerald-400" />
+                <h4 className="font-bold uppercase tracking-wider text-white">
+                  Host a Domain Others Can Join
+                </h4>
+              </div>
+              <p>
+                Your sandbox becomes joinable the moment another Interface can reach your
+                domain-server. Nobody needs an account on <em>your</em> machine — they need their
+                own Overte account plus a route to you:
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>
+                  <strong>Reachability.</strong> Same LAN usually just works. Over the internet, set
+                  automatic networking to <em>Full</em> (UDP hole punch, no router changes) or
+                  forward <strong>UDP 40102</strong> — the only port that must be public. Keep TCP
+                  40100 (admin) to yourself.
+                </li>
+                <li>
+                  <strong>Public.</strong> Grant <code>Connect</code> to <code>anonymous</code>{" "}
+                  and/or <code>logged-in</code> (Domain Settings → Permissions). Optionally list the
+                  domain in the Places app (Settings → Network/Directory services → Connect): anyone
+                  can walk in.
+                </li>
+                <li>
+                  <strong>Private (family-style, e.g. Steve).</strong> Grant <code>Connect</code> to
+                  nobody by default, then add the person by name (<em>Add Specific User</em>{" "}
+                  supersedes group permissions), or shake hands in-world and use the{" "}
+                  <code>friends</code> group. People you don&apos;t add can&apos;t enter; a
+                  username/IP/MAC/machine blocklist handles the rest.
+                </li>
+                <li>
+                  <strong>Invite = send the address.</strong> There is no built-in friend-request
+                  flow: in Interface, <em>Navigate → Copy Address to clipboard</em> and send the{" "}
+                  <code>hifi://</code> link (or place name / IP). They paste it into the Places app
+                  and teleport straight in. The dashboard&apos;s <em>Copy invite link</em> button
+                  copies the watched domain&apos;s address for you.
+                </li>
+              </ul>
+              <p>
+                Official walkthroughs:{" "}
+                <a
+                  href="https://docs.overte.org/en/latest/host/invite-users.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-500 underline"
+                >
+                  Bring Visitors to Your Domain
+                </a>
+                {" · "}
+                <a
+                  href="https://docs.overte.org/en/latest/host/configure-settings/permission-settings.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-500 underline"
+                >
+                  Assign User Permissions
+                </a>
+                {" · "}
+                <a
+                  href="https://docs.overte.org/en/latest/host/configure-settings/network-settings.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-500 underline"
+                >
+                  Network Settings
+                </a>
+              </p>
+            </div>
+
             <div className="glass-panel space-y-3">
               <div className="flex items-center gap-2 border-b border-white/[0.05] pb-2">
                 <Info className="w-4 h-4 text-indigo-400" />

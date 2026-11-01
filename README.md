@@ -31,7 +31,10 @@ Two ways to be in a world — the dashboard keeps them separate on purpose:
 One rule for both: spawning, injecting, and animating always act through the
 **bridge**, which lives in whatever domain your assignment-client or Interface
 joined. The Watching switcher changes which domain you *look at*; your spawns
-land where you *stand*. See [docs/ONBOARDING.md](docs/ONBOARDING.md).
+land where you *stand*. To flip it around — host a domain others can join,
+gate it to specific people, and send `hifi://` invites — see
+[docs/ONBOARDING.md](docs/ONBOARDING.md) ("Hosting a domain others can join")
+and the Help Hub in the dashboard.
 
 ## What You Can Do
 

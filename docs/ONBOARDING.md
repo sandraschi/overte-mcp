@@ -72,6 +72,36 @@ Remember the split: Watching selects the domain you *look at*; the bridge
 selects the domain you *act in*. They are only the same domain when you (or
 your assignment-client) joined the one you're watching.
 
+## Hosting a domain others can join (inviting Steve)
+
+Your sandbox becomes joinable the moment another Interface can reach your
+domain-server — no invites system to configure, because Overte has none:
+**the invitation is a `hifi://` address you send personally** (the dashboard's
+*Copy invite link* button copies the watched domain's address for you).
+
+1. **Reachability.** Steve on your LAN: it just works. Steve across the
+   internet: set automatic networking to *Full* (domain Settings → Networking;
+   UDP hole punch, no router changes) or forward **UDP 40102** on your router —
+   the only port that must be public. Never expose TCP 40100 (your admin UI).
+2. **Gating (Domain Settings → Permissions).** The `Connect` permission sets the
+   privacy level: grant it to `anonymous`/`logged-in` for a **public** domain
+   (optionally listed in the Places app via Settings → Network/Directory
+   services → Connect), or grant it to **nobody by default** and add Steve
+   specifically (*Add Specific User* overrides groups — best for family), or
+   shake hands in-world and use the `friends` group. A username/IP/MAC/machine
+   blocklist covers the rest.
+3. **Send the invite.** In Interface: *Navigate → Copy Address to clipboard*,
+   send Steve the `hifi://` link (or your place name / IP). He pastes it into
+   his Places app and teleports straight in. He needs his own Overte account
+   and the Interface client — nothing of yours.
+4. **Steve wants to build?** Grant his user `Rez` (permanent) or `Rez Temporary`
+   plus `Write Assets` as you see fit. Permissions sum across his groups, and
+   per-user grants beat group ones.
+
+Official references: [Bring Visitors to Your Domain](https://docs.overte.org/en/latest/host/invite-users.html),
+[Assign User Permissions](https://docs.overte.org/en/latest/host/configure-settings/permission-settings.html),
+[Network Settings](https://docs.overte.org/en/latest/host/configure-settings/network-settings.html).
+
 ## Common first-run pitfalls
 
 - **Dashboard loads but looks unstyled** — this was a real bug (Tailwind
